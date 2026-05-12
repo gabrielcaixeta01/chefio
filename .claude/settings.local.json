@@ -1,0 +1,37 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/enzop/OneDrive/Documentos/Claude/Projects/**)",
+      "Bash(npx create-next-app@latest Chefio --typescript --tailwind --app --no-src-dir --import-alias=\"@/*\" --no-eslint --yes)",
+      "Bash(npx create-next-app@latest . --typescript --tailwind --app --no-src-dir --import-alias=\"@/*\" --no-eslint --yes)",
+      "Bash(npm init *)",
+      "Bash(npm pkg *)",
+      "Bash(npm install *)",
+      "PowerShell(New-Item -ItemType Directory -Force -Path \"C:\\\\Users\\\\enzop\\\\OneDrive\\\\Documentos\\\\Claude\\\\Projects\\\\Chefio\\\\supabase\\\\migrations\")",
+      "Bash(npm run *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000)",
+      "Bash(curl -s http://localhost:3000)",
+      "Bash(cat /tmp/chefio-dev.log 2>/dev/null | tail -20)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(node -e \"const p = require\\('./package.json'\\); const deps = {...p.dependencies, ...p.devDependencies}; console.log\\(JSON.stringify\\(Object.keys\\(deps\\).filter\\(k => k.includes\\('dnd'\\) || k.includes\\('bunny'\\) || k.includes\\('tiptap'\\)\\)\\)\\)\")",
+      "Bash(npx tsc *)",
+      "Bash(node -e \"const p = require\\('./package.json'\\); const deps = {...p.dependencies, ...p.devDependencies}; console.log\\(JSON.stringify\\(Object.keys\\(deps\\).filter\\(k => k.includes\\('stripe'\\)\\)\\)\\)\")",
+      "Bash(node -e \"const s = require\\('stripe'\\); console.log\\(s.LATEST_API_VERSION ?? 'no export'\\)\")",
+      "Bash(node -e \"const p = require\\('./node_modules/stripe/package.json'\\); console.log\\(p.version\\)\")",
+      "Bash(node -e \"const Stripe = require\\('stripe'\\); const s = new Stripe\\('sk_test_x'\\); console.log\\(typeof s\\)\")",
+      "Bash(Get-ChildItem \"C:\\\\Users\\\\enzop\\\\OneDrive\\\\Documentos\\\\Claude\\\\Projects\\\\Chefio\\\\node_modules\\\\stripe\" -File)",
+      "Bash(Select-Object -First 10 -ExpandProperty Name)",
+      "Bash(ls /mnt/c/Users/enzop/OneDrive/Documentos/Claude/Projects/Chefio/node_modules/stripe/ | head -20)",
+      "Bash(npx next *)",
+      "Bash(node -e \"const p=require\\('./package.json'\\);const d={...p.dependencies,...p.devDependencies};console.log\\(Object.keys\\(d\\).filter\\(k=>k.includes\\('pdf'\\)||k.includes\\('jspdf'\\)\\)\\)\")",
+      "Bash(git --version)",
+      "Bash(gh --version)",
+      "Bash(vercel --version)",
+      "Bash(npm list *)",
+      "Bash(npx vercel *)",
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
+    ]
+  }
+}

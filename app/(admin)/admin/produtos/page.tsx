@@ -1,0 +1,73 @@
+import type { Metadata } from 'next'
+import { createClient } from '@/lib/supabase/server'
+import { formatCurrency } from '@/lib/utils'
+import { ProductForm } from '@/components/admin/ProductForm'
+import { Package, Plus } from 'lucide-react'
+
+export const metadata: Metadata = { title: 'Admin — Produtos' }
+
+export default async function AdminProductsPage() {
+  const supabase = await createClient()
+
+  const { data: products } = await supabase
+    .from('products')
+    .select('*')
+    .order('created_at', { ascending: false })
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Produtos</h1>
+          <p className="text-gray-500 mt-1">{products?.length ?? 0} produto(s) cadastrado(s)</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Lista */}
+        <div className="lg:col-span-2">
+          {!products || products.length === 0 ? (
+            <div className="bg-white rounded-xl border border-gray-200 p-16 text-center">
+              <Package className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-400 text-sm">Nenhum produto cadastrado.</p>
+              <p className="text-gray-400 text-xs mt-1">Adicione produtos usando o formulário ao lado.</p>
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
+              {products.map((product) => (
+                <div key={product.id} className="flex items-center gap-4 p-4">
+                  <div className="w-12 h-12 rounded-lg bg-gray-100 shrink-0 overflow-hidden">
+                    {product.image_url ? (
+                      <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Package className="h-5 w-5 text-gray-300" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900 truncate">{product.name}</p>
+                    {product.description && (
+                      <p className="text-xs text-gray-400 truncate mt-0.5">{product.description}</p>
+                    )}
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="font-semibold text-orange-600 text-sm">{formatCurrency(product.price)}</p>
+                    {!product.is_active && (
+                      <span className="text-xs text-gray-400">Inativo</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Formulário */}
+        <div className="lg:col-span-1">
+          <ProductForm />
+        </div>
+      </div>
+    </div>
+  )
+}

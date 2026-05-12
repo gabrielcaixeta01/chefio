@@ -1,0 +1,63 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
+
+export async function POST(req: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { lessonId, courseId, fileName } = await req.json()
+  if (!lessonId || !courseId) return NextResponse.json({ error: 'Missing params' }, { status: 400 })
+
+  // Verify teacher owns this lesson/course
+  const { data: lesson } = await supabase
+    .from('lessons')
+    .select('id, courses!inner(teacher_id)')
+    .eq('id', lessonId)
+    .single()
+
+  if (!lesson) return NextResponse.json({ error: 'Lesson not found' }, { status: 404 })
+
+  const course = (lesson as any).courses
+  if (course.teacher_id !== user.id) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
+  const libraryId = process.env.BUNNY_STREAM_LIBRARY_ID
+  const apiKey = process.env.BUNNY_STREAM_API_KEY
+
+  if (!libraryId || !apiKey) {
+    return NextResponse.json({ error: 'Bunny.net não configurado' }, { status: 503 })
+  }
+
+  // Create video object in Bunny.net
+  const title = fileName?.replace(/\.[^.]+$/, '') || `lesson-${lessonId}`
+  const createRes = await fetch(
+    `https://video.bunnycdn.com/library/${libraryId}/videos`,
+    {
+      method: 'POST',
+      headers: {
+        AccessKey: apiKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ title }),
+    }
+  )
+
+  if (!createRes.ok) {
+    const text = await createRes.text()
+    return NextResponse.json({ error: `Bunny error: ${text}` }, { status: 502 })
+  }
+
+  const { guid: videoId } = await createRes.json()
+
+  // Save videoId to lesson immediately
+  await supabase
+    .from('lessons')
+    .update({ bunny_video_id: videoId })
+    .eq('id', lessonId)
+
+  const uploadUrl = `https://video.bunnycdn.com/library/${libraryId}/videos/${videoId}`
+
+  return NextResponse.json({ uploadUrl, videoId })
+}
