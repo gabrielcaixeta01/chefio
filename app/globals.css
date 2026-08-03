@@ -19,14 +19,12 @@
   --radius: 0.5rem;
 }
 
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
-}
-
-body {
-  background: var(--color-background);
-  color: var(--color-foreground);
-  font-family: var(--font-sans);
+/* O preflight do Tailwind (@layer base) já aplica box-sizing/margin/padding reset.
+   Regras fora de layer venceriam as utilities, então estilos base vão em @layer base. */
+@layer base {
+  body {
+    background: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+  }
 }
