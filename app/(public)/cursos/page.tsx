@@ -1,11 +1,22 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import Image from 'next/image'
+import { Search, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
-import { formatCurrency, COURSE_CATEGORIES } from '@/lib/utils'
-import { ChefHat } from 'lucide-react'
+import { COURSE_CATEGORIES } from '@/lib/utils'
+import { CourseCard, type CourseCardData } from '@/components/curso/CourseCard'
+import { ActionLink } from '@/components/ui/action-link'
+import { cn } from '@/lib/utils'
 
-export const metadata: Metadata = { title: 'Explorar Cursos' }
+export const metadata: Metadata = { title: 'Explorar cursos' }
+
+/** Monta a querystring preservando o que já está filtrado. */
+function href(params: { category?: string; q?: string }) {
+  const sp = new URLSearchParams()
+  if (params.category) sp.set('category', params.category)
+  if (params.q) sp.set('q', params.q)
+  const s = sp.toString()
+  return s ? `/cursos?${s}` : '/cursos'
+}
 
 export default async function CourseCatalogPage({
   searchParams,
@@ -13,7 +24,8 @@ export default async function CourseCatalogPage({
   searchParams: Promise<{ category?: string; q?: string }>
 }) {
   const { category, q } = await searchParams
-  let courses: any[] = []
+
+  let courses: CourseCardData[] = []
   try {
     const supabase = await createClient()
     let query = supabase
@@ -24,77 +36,153 @@ export default async function CourseCatalogPage({
     if (category) query = query.eq('category', category)
     if (q) query = query.ilike('title', `%${q}%`)
     const { data } = await query
-    courses = data ?? []
+    courses = (data as CourseCardData[] | null) ?? []
   } catch {
     // Supabase não configurado
   }
 
+  const filtrando = Boolean(category || q)
+  const total = courses.length
+
+  // Montado por partes para não sair "Nenhum curso encontrado. em Panificação"
+  const contexto = [category && `em ${category}`, q && `para “${q}”`]
+    .filter(Boolean)
+    .join(' ')
+  const contagem =
+    total === 0
+      ? 'Nenhum curso encontrado'
+      : `${total} ${total === 1 ? 'curso' : 'cursos'}`
+  const resumo = contexto ? `${contagem} ${contexto}` : contagem
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <h1 className="text-3xl font-bold text-gray-900 mb-2">Explorar Cursos</h1>
-      <p className="text-gray-500 mb-8">{courses?.length ?? 0} cursos disponíveis</p>
-
-      {/* Filtros de categoria */}
-      <div className="flex flex-wrap gap-2 mb-10">
-        <Link
-          href="/cursos"
-          className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-            !category ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          }`}
-        >
-          Todos
-        </Link>
-        {COURSE_CATEGORIES.map((cat) => (
-          <Link
-            key={cat}
-            href={`/cursos?category=${encodeURIComponent(cat)}`}
-            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-              category === cat ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            {cat}
-          </Link>
-        ))}
-      </div>
-
-      {!courses || courses.length === 0 ? (
-        <div className="text-center py-20 text-gray-400">
-          <ChefHat className="h-12 w-12 mx-auto mb-4 opacity-50" />
-          <p>Nenhum curso encontrado.</p>
+    <>
+      {/* ---------- Cabeçalho ---------- */}
+      <section className="azulejo-escuro">
+        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+          <p className="olho text-brasa">Catálogo</p>
+          <h1 className="mt-4 font-display text-[clamp(2.5rem,5vw,4rem)] font-extrabold leading-[1.02] tracking-[-0.02em] text-cal">
+            Todos os cursos
+          </h1>
+          <p className="mt-4 text-cal/70">{resumo}</p>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {courses.map((course) => (
-            <Link
-              key={course.id}
-              href={`/curso/${course.slug}`}
-              className="group rounded-xl border border-gray-200 bg-white overflow-hidden hover:shadow-md transition-shadow"
+      </section>
+
+      {/* ---------- Filtros ---------- */}
+      <section className="border-b border-cobalto/15 bg-cal-fundo">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+          {/* GET nativo: busca sem client component nem JS */}
+          <form action="/cursos" method="get" className="flex max-w-lg gap-2">
+            {category && <input type="hidden" name="category" value={category} />}
+            <div className="relative flex-1">
+              <Search
+                aria-hidden="true"
+                className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-tinta-suave"
+              />
+              <input
+                type="search"
+                name="q"
+                defaultValue={q ?? ''}
+                placeholder="Buscar por título…"
+                aria-label="Buscar cursos por título"
+                className="h-12 w-full rounded-sm border-2 border-cobalto/20 bg-white pl-11 pr-3 text-tinta transition-colors placeholder:text-tinta-suave/60 hover:border-cobalto/40 focus:border-cobalto focus:outline-none"
+              />
+            </div>
+            <button
+              type="submit"
+              className="h-12 shrink-0 rounded-sm bg-cobalto px-5 text-sm font-semibold text-cal transition-colors hover:bg-cobalto-claro"
             >
-              <div className="relative aspect-video bg-gray-100">
-                {course.thumbnail_url ? (
-                  <Image src={course.thumbnail_url} alt={course.title} fill className="object-cover" />
-                ) : (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <ChefHat className="h-10 w-10 text-gray-300" />
-                  </div>
-                )}
-              </div>
-              <div className="p-4">
-                {course.category && (
-                  <span className="text-xs text-orange-600 font-medium">{course.category}</span>
-                )}
-                <h3 className="font-semibold text-gray-900 text-sm mt-1 line-clamp-2 group-hover:text-orange-600 transition-colors">
-                  {course.title}
-                </h3>
-                <p className="text-xs text-gray-500 mt-1">por {(course.teacher as any)?.name}</p>
-                <p className="text-orange-600 font-bold mt-2 text-sm">
-                  {course.price === 0 ? 'Grátis' : formatCurrency(course.price)}
+              Buscar
+            </button>
+          </form>
+
+          <div className="mt-6 flex flex-wrap items-center gap-2">
+            <Link
+              href={href({ q })}
+              aria-current={!category ? 'true' : undefined}
+              className={cn(
+                'rounded-sm border-2 px-3.5 py-1.5 text-sm font-semibold transition-colors',
+                !category
+                  ? 'border-cobalto bg-cobalto text-cal'
+                  : 'border-cobalto/20 text-tinta hover:border-cobalto/50'
+              )}
+            >
+              Todas
+            </Link>
+            {COURSE_CATEGORIES.map((cat) => {
+              const ativa = category === cat
+              return (
+                <Link
+                  key={cat}
+                  href={href({ category: ativa ? undefined : cat, q })}
+                  aria-current={ativa ? 'true' : undefined}
+                  className={cn(
+                    'rounded-sm border-2 px-3.5 py-1.5 text-sm font-semibold transition-colors',
+                    ativa
+                      ? 'border-cobalto bg-cobalto text-cal'
+                      : 'border-cobalto/20 text-tinta hover:border-cobalto/50'
+                  )}
+                >
+                  {cat}
+                </Link>
+              )
+            })}
+          </div>
+
+          {filtrando && (
+            <Link
+              href="/cursos"
+              className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-cobalto underline-offset-4 hover:underline"
+            >
+              <X className="h-4 w-4" aria-hidden="true" />
+              Limpar filtros
+            </Link>
+          )}
+        </div>
+      </section>
+
+      {/* ---------- Resultados ---------- */}
+      <section className="bg-cal">
+        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+          {total > 0 ? (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {courses.map((course) => (
+                <CourseCard key={course.id} course={course} />
+              ))}
+            </div>
+          ) : filtrando ? (
+            /* Vazio por causa do filtro — o caminho de saída é limpar o filtro */
+            <div className="flex flex-col items-start gap-6 rounded-md border-2 border-dashed border-cobalto/30 p-10 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="font-display text-2xl font-bold tracking-tight text-tinta">
+                  Nada encontrado com esses filtros.
+                </p>
+                <p className="mt-2 text-tinta-suave">
+                  Tente outra categoria ou busque por outro termo.
                 </p>
               </div>
-            </Link>
-          ))}
+              <ActionLink href="/cursos" variant="cobalto">
+                Ver todos os cursos
+              </ActionLink>
+            </div>
+          ) : (
+            /* Vazio de verdade — nada a limpar, então o convite é publicar */
+            <div className="flex flex-col items-start gap-6 rounded-md border-2 border-dashed border-cobalto/30 p-10 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="font-display text-2xl font-bold tracking-tight text-tinta">
+                  O catálogo está sendo montado.
+                </p>
+                <p className="mt-2 max-w-md text-tinta-suave">
+                  Os primeiros cursos entram em breve. Se você cozinha para
+                  viver, esse espaço pode ser seu.
+                </p>
+              </div>
+              <ActionLink href="/para-chefs" variant="cobalto">
+                Ensinar na Chefio
+              </ActionLink>
+            </div>
+          )}
         </div>
-      )}
-    </div>
+      </section>
+    </>
   )
 }

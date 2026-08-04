@@ -1,9 +1,8 @@
 import Link from 'next/link'
-import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import { ActionLink } from '@/components/ui/action-link'
 import { AzulejoWall } from '@/components/layout/AzulejoWall'
-import { formatCurrency } from '@/lib/utils'
+import { CourseCard } from '@/components/curso/CourseCard'
 
 const PASSOS = [
   {
@@ -168,41 +167,7 @@ export default async function LandingPage() {
           {featuredCourses.length > 0 ? (
             <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {featuredCourses.map((course) => (
-                <Link
-                  key={course.id}
-                  href={`/curso/${course.slug}`}
-                  className="group flex flex-col overflow-hidden rounded-md border border-cobalto/15 bg-cal transition-all duration-200 hover:-translate-y-1 hover:border-cobalto/50"
-                >
-                  <div className="relative aspect-4/3 overflow-hidden">
-                    {course.thumbnail_url ? (
-                      <Image
-                        src={course.thumbnail_url}
-                        alt={course.title}
-                        fill
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                        className="object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
-                    ) : (
-                      /* Sem thumbnail o próprio azulejo entra no lugar */
-                      <div
-                        aria-hidden="true"
-                        className="azulejo-escuro h-full w-full [--azulejo-tamanho:44px]"
-                      />
-                    )}
-                  </div>
-
-                  <div className="flex flex-1 flex-col p-5">
-                    <h3 className="font-display text-lg font-bold leading-snug tracking-tight text-tinta transition-colors group-hover:text-cobalto">
-                      {course.title}
-                    </h3>
-                    <p className="mt-1.5 text-sm text-tinta-suave">
-                      por {(course.teacher as any)?.name}
-                    </p>
-                    <p className="mt-5 font-display text-xl font-extrabold tabular-nums text-brasa-escura">
-                      {course.price === 0 ? 'Grátis' : formatCurrency(course.price)}
-                    </p>
-                  </div>
-                </Link>
+                <CourseCard key={course.id} course={course} />
               ))}
             </div>
           ) : (
@@ -216,8 +181,8 @@ export default async function LandingPage() {
                   viver, esse espaço pode ser seu.
                 </p>
               </div>
-              <ActionLink href="/cadastro?role=teacher" variant="cobalto">
-                Publicar um curso
+              <ActionLink href="/para-chefs" variant="cobalto">
+                Ensinar na Chefio
               </ActionLink>
             </div>
           )}
@@ -239,8 +204,8 @@ export default async function LandingPage() {
             <ActionLink href="/cadastro?role=teacher" size="lg">
               Começar a ensinar
             </ActionLink>
-            <ActionLink href="/cursos" variant="contornoClaro" size="lg">
-              Ver como é por dentro
+            <ActionLink href="/para-chefs" variant="contornoClaro" size="lg">
+              Como funciona para chefs
             </ActionLink>
           </div>
         </div>

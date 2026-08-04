@@ -3,7 +3,7 @@ import Link from 'next/link'
 const PLATAFORMA = [
   { href: '/cursos', label: 'Explorar cursos' },
   { href: '/cadastro', label: 'Criar conta' },
-  { href: '/cadastro?role=teacher', label: 'Ensinar na Chefio' },
+  { href: '/para-chefs', label: 'Ensinar na Chefio' },
 ]
 
 /* Sem página ainda — ficam como texto, não como link morto. */

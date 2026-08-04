@@ -5,7 +5,7 @@ import { MobileNav } from './MobileNav'
 
 const LINKS = [
   { href: '/cursos', label: 'Cursos' },
-  { href: '/cursos?filter=chef', label: 'Para chefs' },
+  { href: '/para-chefs', label: 'Para chefs' },
 ]
 
 /** Marca: um único ladrilho, com os mesmos arcos de canto da parede do hero. */
