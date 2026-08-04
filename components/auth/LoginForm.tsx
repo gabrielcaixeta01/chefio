@@ -5,18 +5,26 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { AuthField } from './AuthField'
+import { actionLinkVariants } from '@/components/ui/action-link'
+import { cn } from '@/lib/utils'
 
-export function LoginForm() {
+const DESTINOS: Record<string, string> = {
+  admin: '/admin',
+  teacher: '/professor',
+  student: '/aluno',
+}
+
+export function LoginForm({ next }: { next?: string }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [erro, setErro] = useState<string | null>(null)
   const [form, setForm] = useState({ email: '', password: '' })
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
+    setErro(null)
 
     const supabase = createClient()
     const { error } = await supabase.auth.signInWithPassword({
@@ -25,64 +33,94 @@ export function LoginForm() {
     })
 
     if (error) {
+      setErro('Email ou senha incorretos.')
       toast.error('Email ou senha incorretos.')
       setLoading(false)
       return
     }
 
-    // Busca o role para redirecionar corretamente
     const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single()
 
-      const destinations: Record<string, string> = {
-        admin: '/admin',
-        teacher: '/professor',
-        student: '/aluno',
-      }
-      router.push(destinations[profile?.role ?? 'student'])
-      router.refresh()
+    if (!user) {
+      // Sem isso o botão fica travado em "Entrando..." para sempre
+      setErro('Não foi possível abrir a sessão. Tente de novo.')
+      setLoading(false)
+      return
     }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    // `next` vem do middleware quando ele barra uma rota protegida — sem isso
+    // a pessoa cai sempre no dashboard, e não na página que tentou abrir.
+    router.push(next ?? DESTINOS[profile?.role ?? 'student'])
+    router.refresh()
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-1">
-        <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
+    <form onSubmit={handleSubmit} noValidate>
+      <p className="olho text-brasa-escura">Entrar</p>
+      <h1 className="mt-4 font-display text-4xl font-extrabold tracking-[-0.02em] text-tinta">
+        Bem-vindo de volta.
+      </h1>
+      <p className="mt-3 text-tinta-suave">
+        Entre para continuar de onde você parou.
+      </p>
+
+      <div className="mt-9 flex flex-col gap-5">
+        <AuthField
+          label="Email"
           type="email"
+          inputMode="email"
+          autoComplete="email"
           placeholder="seu@email.com"
           value={form.email}
           onChange={(e) => setForm({ ...form, email: e.target.value })}
           required
         />
-      </div>
 
-      <div className="space-y-1">
-        <Label htmlFor="password">Senha</Label>
-        <Input
-          id="password"
+        <AuthField
+          label="Senha"
           type="password"
-          placeholder="••••••••"
+          autoComplete="current-password"
+          placeholder="Sua senha"
+          revelavel
           value={form.password}
           onChange={(e) => setForm({ ...form, password: e.target.value })}
           required
         />
+
+        {erro && (
+          <p
+            role="alert"
+            className="rounded-sm border-2 border-red-600/30 bg-red-50 px-4 py-3 text-sm font-medium text-red-800"
+          >
+            {erro}
+          </p>
+        )}
+
+        <button
+          type="submit"
+          disabled={loading}
+          className={cn(
+            actionLinkVariants({ size: 'lg' }),
+            'w-full disabled:pointer-events-none disabled:opacity-60'
+          )}
+        >
+          {loading ? 'Entrando…' : 'Entrar'}
+        </button>
       </div>
 
-      <Button type="submit" className="w-full" disabled={loading}>
-        {loading ? 'Entrando...' : 'Entrar'}
-      </Button>
-
-      <p className="text-center text-sm text-gray-500">
+      <p className="mt-7 text-center text-sm text-tinta-suave">
         Não tem conta?{' '}
-        <Link href="/cadastro" className="text-orange-600 hover:underline font-medium">
-          Cadastre-se
+        <Link
+          href="/cadastro"
+          className="font-semibold text-cobalto underline-offset-4 hover:underline"
+        >
+          Criar conta grátis
         </Link>
       </p>
     </form>

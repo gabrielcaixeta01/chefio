@@ -1,25 +1,26 @@
 import type { Metadata } from 'next'
 import { LoginForm } from '@/components/auth/LoginForm'
-import { ChefHat } from 'lucide-react'
-import Link from 'next/link'
+import { AuthLayout } from '@/components/auth/AuthLayout'
 
 export const metadata: Metadata = { title: 'Login' }
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>
+}) {
+  const { next } = await searchParams
+
+  // Só caminho interno: `next` vem da URL e mandaria a pessoa para fora do site
+  const destino = next?.startsWith('/') && !next.startsWith('//') ? next : undefined
+
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-gray-50 py-12 px-4">
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-          <div className="text-center mb-8">
-            <Link href="/" className="inline-flex items-center gap-2 text-orange-600 font-bold text-2xl">
-              <ChefHat className="h-7 w-7" />
-              Chefio
-            </Link>
-            <p className="text-gray-500 mt-2 text-sm">Bem-vindo de volta!</p>
-          </div>
-          <LoginForm />
-        </div>
-      </div>
-    </div>
+    <AuthLayout
+      olho="Chefio"
+      titulo="A cozinha continua de onde você parou."
+      descricao="Suas aulas, anotações e pedidos ficam salvos na sua conta."
+    >
+      <LoginForm next={destino} />
+    </AuthLayout>
   )
 }
