@@ -1,6 +1,20 @@
 @import "tailwindcss";
 
 @theme {
+  /* --- Azulejo: cobalto sobre cal vidrada, brasa como calor --- */
+  --color-cobalto: #12386b;
+  --color-cobalto-escuro: #0a1f3c;
+  --color-cobalto-claro: #2b5d9e;
+  --color-cal: #f3f5f4;
+  --color-cal-fundo: #e7ecea;
+  --color-brasa: #e85d04;
+  --color-brasa-clara: #ff8c3b;
+  /* Brasa escurecida: laranja sobre fundo claro precisa disso p/ passar em contraste */
+  --color-brasa-escura: #b84503;
+  --color-tinta: #101820;
+  --color-tinta-suave: #55606c;
+
+  /* Tokens legados usados pelos dashboards */
   --color-primary: #e85d04;
   --color-primary-foreground: #ffffff;
   --color-secondary: #fef3c7;
@@ -15,16 +29,100 @@
   --color-destructive: #ef4444;
   --color-destructive-foreground: #ffffff;
 
-  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-bricolage), var(--font-archivo), ui-sans-serif, sans-serif;
   --radius: 0.5rem;
 }
 
-/* O preflight do Tailwind (@layer base) já aplica box-sizing/margin/padding reset.
-   Regras fora de layer venceriam as utilities, então estilos base vão em @layer base. */
+/* Aresta do azulejo: quatro arcos de canto que se fecham em círculos na junta
+   entre ladrilhos, mais um ponto no centro. Tudo em gradiente — sem imagem. */
+@utility azulejo-claro {
+  background-color: var(--color-cal);
+  background-image:
+    radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--color-cobalto) 55%, transparent) 0 2px, transparent 2px),
+    radial-gradient(circle at 0 0, transparent 0 46%, color-mix(in srgb, var(--color-cobalto) 30%, transparent) 46% 49%, transparent 49%),
+    radial-gradient(circle at 100% 0, transparent 0 46%, color-mix(in srgb, var(--color-cobalto) 30%, transparent) 46% 49%, transparent 49%),
+    radial-gradient(circle at 0 100%, transparent 0 46%, color-mix(in srgb, var(--color-cobalto) 30%, transparent) 46% 49%, transparent 49%),
+    radial-gradient(circle at 100% 100%, transparent 0 46%, color-mix(in srgb, var(--color-cobalto) 30%, transparent) 46% 49%, transparent 49%);
+  background-size: var(--azulejo-tamanho, 72px) var(--azulejo-tamanho, 72px);
+}
+
+@utility azulejo-escuro {
+  background-color: var(--color-cobalto);
+  background-image:
+    radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--color-cal) 45%, transparent) 0 2px, transparent 2px),
+    radial-gradient(circle at 0 0, transparent 0 46%, color-mix(in srgb, var(--color-cal) 22%, transparent) 46% 49%, transparent 49%),
+    radial-gradient(circle at 100% 0, transparent 0 46%, color-mix(in srgb, var(--color-cal) 22%, transparent) 46% 49%, transparent 49%),
+    radial-gradient(circle at 0 100%, transparent 0 46%, color-mix(in srgb, var(--color-cal) 22%, transparent) 46% 49%, transparent 49%),
+    radial-gradient(circle at 100% 100%, transparent 0 46%, color-mix(in srgb, var(--color-cal) 22%, transparent) 46% 49%, transparent 49%);
+  background-size: var(--azulejo-tamanho, 72px) var(--azulejo-tamanho, 72px);
+}
+
+/* Faixa fina de azulejo usada como divisor entre seções */
+@utility faixa-azulejo {
+  --azulejo-tamanho: 40px;
+  height: 40px;
+}
+
+@utility olho {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
 @layer base {
   body {
-    background: var(--color-background);
-    color: var(--color-foreground);
+    background: var(--color-cal);
+    color: var(--color-tinta);
     font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Foco visível em tudo que recebe teclado */
+  :focus-visible {
+    outline: 3px solid var(--color-brasa);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+}
+
+@layer components {
+  /* Vidrado: os ladrilhos que "acendem" na parede do hero */
+  .vidrado {
+    animation: acender 900ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
+  }
+
+  .surge {
+    animation: surge 700ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
+  }
+}
+
+@keyframes acender {
+  from {
+    opacity: 0;
+    transform: scale(0.82);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes surge {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vidrado,
+  .surge {
+    animation: none;
   }
 }

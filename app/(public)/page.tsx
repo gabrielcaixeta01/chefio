@@ -1,9 +1,30 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
-import { Button } from '@/components/ui/button'
+import { ActionLink } from '@/components/ui/action-link'
+import { AzulejoWall } from '@/components/layout/AzulejoWall'
 import { formatCurrency } from '@/lib/utils'
-import { ChefHat, BookOpen, ShoppingBag, Play } from 'lucide-react'
+
+const PASSOS = [
+  {
+    titulo: 'Escolha seu curso',
+    desc: 'Navegue pelo catálogo por técnica, ingrediente ou chef. Da culinária básica à confeitaria avançada.',
+  },
+  {
+    titulo: 'Assista às aulas',
+    desc: 'Vídeo em alta definição, no seu ritmo, com caderno digital para anotar ponto, tempo e temperatura.',
+  },
+  {
+    titulo: 'Compre os ingredientes',
+    desc: 'No fim de cada aula, os utensílios e ingredientes que o chef usou ficam a um clique na loja.',
+  },
+]
+
+const NUMEROS = [
+  { valor: '500+', rotulo: 'Aulas disponíveis' },
+  { valor: '50+', rotulo: 'Chefs instrutores' },
+  { valor: '10k+', rotulo: 'Alunos formados' },
+]
 
 export default async function LandingPage() {
   let featuredCourses: any[] = []
@@ -21,160 +42,209 @@ export default async function LandingPage() {
   }
 
   return (
-    <div className="min-h-screen">
-      {/* Hero */}
-      <section className="bg-gradient-to-br from-orange-50 to-amber-50 py-24 px-6">
-        <div className="max-w-4xl mx-auto flex flex-col items-center text-center">
-          <div className="inline-flex items-center gap-2 bg-orange-100 text-orange-700 rounded-full px-4 py-2 text-sm font-medium mb-8">
-            <ChefHat className="h-4 w-4 shrink-0" />
-            A plataforma de culinária do Brasil
-          </div>
-          <h1 className="text-5xl md:text-7xl font-bold text-gray-900 leading-tight mb-6">
-            Aprenda com os{' '}
-            <span className="text-orange-600">melhores chefs</span>{' '}
-            do Brasil
-          </h1>
-          <p className="text-xl text-gray-600 mb-10 max-w-2xl">
-            Cursos de culinária, confeitaria, panificação e muito mais. Do básico ao avançado,
-            no seu ritmo e com os ingredientes certos.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center w-full max-w-sm sm:max-w-none">
-            <Link href="/cursos">
-              <Button size="lg" className="w-full sm:w-auto px-8 py-3 text-base">
-                Explorar cursos
-              </Button>
-            </Link>
-            <Link href="/cadastro?role=teacher">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto px-8 py-3 text-base">
-                Quero ensinar
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Stats */}
-      <section className="bg-white border-y border-gray-100 py-14 px-6">
-        <div className="max-w-3xl mx-auto grid grid-cols-3 gap-8 text-center">
-          <div>
-            <p className="text-4xl font-bold text-orange-600">500+</p>
-            <p className="text-gray-500 text-sm mt-2">Aulas disponíveis</p>
-          </div>
-          <div>
-            <p className="text-4xl font-bold text-orange-600">50+</p>
-            <p className="text-gray-500 text-sm mt-2">Chefs instrutores</p>
-          </div>
-          <div>
-            <p className="text-4xl font-bold text-orange-600">10k+</p>
-            <p className="text-gray-500 text-sm mt-2">Alunos formados</p>
-          </div>
-        </div>
-      </section>
-
-      {/* Como funciona */}
-      <section className="py-24 px-6 bg-gray-50">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-14">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Como funciona</h2>
-            <p className="text-gray-500 text-lg max-w-xl mx-auto">
-              Três passos simples para começar sua jornada culinária
+    <>
+      {/* ---------- Hero ---------- */}
+      <section className="border-b border-cobalto/15 bg-cal">
+        {/* A parede sangra até a borda direita da viewport — é o elemento
+            principal da marca e perde força contida numa caixa central.
+            O padding-left replica o eixo do container da Navbar
+            (max-w-7xl = 80rem, lg:px-8 = 2rem) para o texto alinhar com o logo. */}
+        <div className="grid items-stretch lg:grid-cols-[1fr_44%]">
+          <div className="flex flex-col justify-center px-4 py-16 sm:px-6 lg:py-28 lg:pr-16 lg:pl-[max(2rem,calc((100vw-80rem)/2+2rem))]">
+            <p className="olho surge text-brasa-escura">
+              Cursos de culinária · Brasil
             </p>
+
+            <h1
+              className="surge mt-6 font-display text-[clamp(2.75rem,7vw,5.25rem)] font-extrabold leading-[0.94] tracking-[-0.03em] text-tinta"
+              style={{ animationDelay: '80ms' }}
+            >
+              Cozinha brasileira,
+              <br />
+              ensinada por quem{' '}
+              <span className="text-cobalto">vive dela</span>.
+            </h1>
+
+            <p
+              className="surge mt-7 max-w-xl text-lg leading-relaxed text-tinta-suave"
+              style={{ animationDelay: '160ms' }}
+            >
+              Aulas em vídeo com chefs, padeiros e confeiteiros. Do refogado ao
+              ponto de bala — no seu ritmo, com os ingredientes e utensílios de
+              cada aula à mão.
+            </p>
+
+            <div
+              className="surge mt-10 flex flex-col gap-3 sm:flex-row"
+              style={{ animationDelay: '240ms' }}
+            >
+              <ActionLink href="/cursos" size="lg">
+                Explorar cursos
+              </ActionLink>
+              <ActionLink href="/cadastro?role=teacher" variant="contorno" size="lg">
+                Quero ensinar
+              </ActionLink>
+            </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                icon: BookOpen,
-                title: 'Escolha seu curso',
-                desc: 'Navegue pelo catálogo e encontre o curso ideal para você, desde culinária básica até técnicas avançadas de confeitaria.',
-              },
-              {
-                icon: Play,
-                title: 'Assista às aulas',
-                desc: 'Acesse as aulas em vídeo no seu ritmo, com qualidade HD e anotações no caderno digital integrado.',
-              },
-              {
-                icon: ShoppingBag,
-                title: 'Compre os produtos',
-                desc: 'Ao final de cada aula, encontre os utensílios e ingredientes usados pelo chef diretamente na nossa loja.',
-              },
-            ].map((step, i) => {
-              const Icon = step.icon
-              return (
-                <div
-                  key={i}
-                  className="bg-white rounded-2xl border border-gray-200 p-8 flex flex-col items-center text-center shadow-sm"
-                >
-                  <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center mb-5">
-                    <Icon className="h-7 w-7 text-orange-600" />
-                  </div>
-                  <h3 className="font-semibold text-gray-900 text-lg mb-3">{step.title}</h3>
-                  <p className="text-gray-500 text-sm leading-relaxed">{step.desc}</p>
-                </div>
-              )
-            })}
-          </div>
+
+          <AzulejoWall className="h-72 lg:h-auto lg:min-h-144" />
         </div>
       </section>
 
-      {/* Cursos em destaque */}
-      {featuredCourses.length > 0 && (
-        <section className="py-24 px-6 bg-white">
-          <div className="max-w-6xl mx-auto">
-            <div className="flex items-center justify-between mb-10">
-              <h2 className="text-4xl font-bold text-gray-900">Cursos em destaque</h2>
-              <Link href="/cursos" className="text-orange-600 hover:underline text-sm font-medium">
-                Ver todos →
-              </Link>
+      {/* ---------- Números ---------- */}
+      <section className="bg-cobalto-escuro">
+        <div className="mx-auto max-w-5xl px-4 py-14 sm:px-6 lg:px-8">
+          <dl className="grid grid-cols-1 gap-10 sm:grid-cols-3">
+            {NUMEROS.map((n) => (
+              <div
+                key={n.rotulo}
+                className="flex flex-col items-center sm:items-start"
+              >
+                {/* order inverte a ordem visual sem quebrar a semântica dt→dd */}
+                <dt className="olho order-2 mt-3 text-cal/55">{n.rotulo}</dt>
+                <dd className="order-1 font-display text-5xl font-extrabold tracking-tight text-brasa">
+                  {n.valor}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </section>
+
+      <div className="azulejo-claro faixa-azulejo" />
+
+      {/* ---------- Como funciona ---------- */}
+      <section className="bg-cal-fundo">
+        <div className="mx-auto max-w-6xl px-4 py-24 sm:px-6 lg:px-8">
+          <div className="max-w-2xl">
+            <p className="olho text-brasa-escura">Como funciona</p>
+            <h2 className="mt-4 font-display text-[clamp(2rem,4vw,3.25rem)] font-extrabold leading-[1.02] tracking-[-0.02em] text-tinta">
+              Três passos, do catálogo à panela.
+            </h2>
+          </div>
+
+          <ol className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-3">
+            {PASSOS.map((passo, i) => (
+              <li
+                key={passo.titulo}
+                className="flex flex-col rounded-md border border-cobalto/15 bg-cal p-8 transition-colors hover:border-cobalto/40"
+              >
+                <span
+                  aria-hidden="true"
+                  className="azulejo-escuro flex h-12 w-12 items-center justify-center rounded-sm font-display text-lg font-extrabold text-cal [--azulejo-tamanho:48px]"
+                >
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+                <h3 className="mt-6 font-display text-2xl font-bold tracking-tight text-tinta">
+                  {passo.titulo}
+                </h3>
+                <p className="mt-3 leading-relaxed text-tinta-suave">
+                  {passo.desc}
+                </p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      {/* ---------- Cursos em destaque ---------- */}
+      <section className="bg-cal">
+        <div className="mx-auto max-w-6xl px-4 py-24 sm:px-6 lg:px-8">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="olho text-brasa-escura">Catálogo</p>
+              <h2 className="mt-4 font-display text-[clamp(2rem,4vw,3.25rem)] font-extrabold leading-[1.02] tracking-[-0.02em] text-tinta">
+                Cursos em destaque
+              </h2>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Link
+              href="/cursos"
+              className="text-sm font-semibold text-cobalto underline-offset-4 hover:underline"
+            >
+              Ver o catálogo completo →
+            </Link>
+          </div>
+
+          {featuredCourses.length > 0 ? (
+            <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {featuredCourses.map((course) => (
                 <Link
                   key={course.id}
                   href={`/curso/${course.slug}`}
-                  className="group rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow"
+                  className="group flex flex-col overflow-hidden rounded-md border border-cobalto/15 bg-cal transition-all duration-200 hover:-translate-y-1 hover:border-cobalto/50"
                 >
-                  <div className="relative aspect-video bg-gray-100">
+                  <div className="relative aspect-4/3 overflow-hidden">
                     {course.thumbnail_url ? (
-                      <Image src={course.thumbnail_url} alt={course.title} fill className="object-cover" />
+                      <Image
+                        src={course.thumbnail_url}
+                        alt={course.title}
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
                     ) : (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <ChefHat className="h-10 w-10 text-gray-300" />
-                      </div>
+                      /* Sem thumbnail o próprio azulejo entra no lugar */
+                      <div
+                        aria-hidden="true"
+                        className="azulejo-escuro h-full w-full [--azulejo-tamanho:44px]"
+                      />
                     )}
                   </div>
-                  <div className="p-4">
-                    <h3 className="font-semibold text-gray-900 text-sm line-clamp-2 group-hover:text-orange-600 transition-colors">
+
+                  <div className="flex flex-1 flex-col p-5">
+                    <h3 className="font-display text-lg font-bold leading-snug tracking-tight text-tinta transition-colors group-hover:text-cobalto">
                       {course.title}
                     </h3>
-                    <p className="text-xs text-gray-500 mt-1">por {(course.teacher as any)?.name}</p>
-                    <p className="text-orange-600 font-bold mt-3 text-sm">
+                    <p className="mt-1.5 text-sm text-tinta-suave">
+                      por {(course.teacher as any)?.name}
+                    </p>
+                    <p className="mt-5 font-display text-xl font-extrabold tabular-nums text-brasa-escura">
                       {course.price === 0 ? 'Grátis' : formatCurrency(course.price)}
                     </p>
                   </div>
                 </Link>
               ))}
             </div>
-          </div>
-        </section>
-      )}
-
-      {/* CTA Professor */}
-      <section className="py-24 px-6 bg-gray-900 text-white">
-        <div className="max-w-3xl mx-auto flex flex-col items-center text-center">
-          <div className="w-20 h-20 bg-orange-500/20 rounded-2xl flex items-center justify-center mb-8">
-            <ChefHat className="h-10 w-10 text-orange-400" />
-          </div>
-          <h2 className="text-4xl font-bold mb-5">Você é chef, padeiro ou confeiteiro?</h2>
-          <p className="text-gray-400 mb-10 text-lg max-w-xl">
-            Compartilhe seu conhecimento com milhares de alunos e monetize sua expertise culinária.
-          </p>
-          <Link href="/cadastro?role=teacher">
-            <Button size="lg" className="bg-orange-600 hover:bg-orange-700 px-10 py-3 text-base">
-              Começar a ensinar
-            </Button>
-          </Link>
+          ) : (
+            <div className="mt-12 flex flex-col items-start gap-6 rounded-md border border-dashed border-cobalto/30 p-10 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="font-display text-2xl font-bold tracking-tight text-tinta">
+                  O catálogo está sendo montado.
+                </p>
+                <p className="mt-2 max-w-md text-tinta-suave">
+                  Os primeiros cursos entram em breve. Se você cozinha para
+                  viver, esse espaço pode ser seu.
+                </p>
+              </div>
+              <ActionLink href="/cadastro?role=teacher" variant="cobalto">
+                Publicar um curso
+              </ActionLink>
+            </div>
+          )}
         </div>
       </section>
-    </div>
+
+      {/* ---------- Chamada para professores ---------- */}
+      <section className="azulejo-escuro relative">
+        <div className="relative mx-auto max-w-4xl px-4 py-28 text-center sm:px-6 lg:px-8">
+          <p className="olho text-brasa">Para quem ensina</p>
+          <h2 className="mt-5 font-display text-[clamp(2rem,4.5vw,3.5rem)] font-extrabold leading-[1.02] tracking-[-0.02em] text-cal">
+            Ensine o que você faz todo dia.
+          </h2>
+          <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-cal/70">
+            Publique seu curso, defina seu preço e receba por matrícula. A
+            Chefio cuida do vídeo, do pagamento e da loja de ingredientes.
+          </p>
+          <div className="mt-10 flex flex-col justify-center gap-3 sm:flex-row">
+            <ActionLink href="/cadastro?role=teacher" size="lg">
+              Começar a ensinar
+            </ActionLink>
+            <ActionLink href="/cursos" variant="contornoClaro" size="lg">
+              Ver como é por dentro
+            </ActionLink>
+          </div>
+        </div>
+      </section>
+    </>
   )
 }
