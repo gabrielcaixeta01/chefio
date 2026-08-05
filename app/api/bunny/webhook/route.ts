@@ -1,8 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createServerClient } from '@supabase/supabase-js'
+import { timingSafeEqual } from 'crypto'
 
-// Bunny.net sends a webhook when video encoding completes
+function isAuthorized(req: NextRequest): boolean {
+  const expected = process.env.BUNNY_WEBHOOK_SECRET
+  if (!expected) return false
+
+  const provided = req.headers.get('x-webhook-secret') ?? req.nextUrl.searchParams.get('secret') ?? ''
+  const expectedBuf = Buffer.from(expected)
+  const providedBuf = Buffer.from(provided)
+  if (expectedBuf.length !== providedBuf.length) return false
+  return timingSafeEqual(expectedBuf, providedBuf)
+}
+
+// Bunny.net sends a webhook when video encoding completes.
+// A URL configurada no painel do Bunny deve incluir ?secret=<BUNNY_WEBHOOK_SECRET>.
 export async function POST(req: NextRequest) {
+  if (!isAuthorized(req)) {
+    return NextResponse.json({ ok: false }, { status: 401 })
+  }
+
   const body = await req.json()
 
   // Bunny webhook payload includes VideoGuid and Status

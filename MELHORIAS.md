@@ -8,35 +8,7 @@ Backlog de dívida técnica levantado na revisão de 05/08/2026. Marque o checkb
 
 ## 🔴 Crítico — segurança e dinheiro
 
-- [ ] **Escalação de privilégio no cadastro**
-  `supabase/migrations/00001_initial_schema.sql:14` — `handle_new_user()` lê o role de `raw_user_meta_data->>'role'`, definido pelo cliente em `components/auth/RegisterForm.tsx:50`.
-  `signUp({ options: { data: { role: 'admin' } } })` no console → conta admin. `profiles_admin_all` dá `for all` em quase toda tabela.
-  **Fix:** forçar `'student'` no trigger; professor vira fluxo de solicitação (`teacher_profiles.status = 'pending'` → admin aprova).
-
-- [ ] **Preço do carrinho vem do cliente**
-  `app/api/stripe/checkout-products/route.ts:26-32` — `unit_amount` e `product_data.name` saem do JSON do request, e o carrinho mora em `localStorage` (`contexts/CartContext.tsx:30`).
-  → Qualquer produto por R$ 0,01.
-  **Fix:** aceitar só `[{ id, quantity }]` e buscar preço/nome/estoque em `products` no servidor.
-
-- [ ] **Matrícula grátis via RLS**
-  `supabase/migrations/00002_rls_policies.sql:166` — `enrollments_student_insert with check (student_id = auth.uid())` deixa qualquer aluno autenticado se matricular em curso pago sem passar pelo Stripe.
-  **Fix:** remover a policy de INSERT; matrícula só via service role no webhook. Migrar também o caso de curso grátis (`app/api/stripe/checkout/route.ts:37`).
-
-- [ ] **Professor aprova o próprio curso**
-  `supabase/migrations/00002_rls_policies.sql:68` — `courses_teacher_own_all for all` sem restrição de coluna. Basta `update({ status: 'approved' })`, o mesmo padrão que `components/courses/CourseSubmitButton.tsx:19` já usa.
-  **Fix:** trigger `before update on courses` bloqueando mudança de `status` quando `get_my_role() <> 'admin'`, liberando só `draft → pending_review`.
-
-- [ ] **Webhook do Bunny sem autenticação**
-  `app/api/bunny/webhook/route.ts` — sem verificação de assinatura e rodando com service role. POST com `VideoGuid` arbitrário sobrescreve `bunny_video_url` / `duration_seconds` de qualquer aula.
-  **Fix:** validar assinatura do Bunny, ou exigir secret em header/querystring.
-
-- [ ] **`stripe_account_id` exposto publicamente**
-  `supabase/migrations/00002_rls_policies.sql:59` — `teacher_profiles_public_read using (status = 'active')` devolve a linha inteira pra anônimos, incluindo `stripe_account_id` e `commission_rate`.
-  **Fix:** view com apenas `user_id, bio`; mover a policy pública pra ela.
-
-- [ ] **`createAdminClient()` mistura service role com cookies do usuário**
-  `lib/supabase/server.ts:30-51` — passa a service role key mas com o cookie store da sessão; o `@supabase/ssr` usa o access token do usuário no `Authorization`, então as queries rodam como o usuário, não como admin. Hoje está sem uso — usar como está gera bug silencioso.
-  **Fix:** deletar, ou reescrever com `createClient` do `supabase-js` sem cookies (padrão já usado nos webhooks).
+Todos os 7 itens abaixo foram corrigidos em 05/08/2026 — ver `## ✅ Resolvido`.
 
 ---
 
@@ -117,6 +89,27 @@ Backlog de dívida técnica levantado na revisão de 05/08/2026. Marque o checkb
 
 ## ✅ Resolvido
 
+- [x] **Escalação de privilégio no cadastro** — `supabase/migrations/00003_security_fixes.sql`
+  `handle_new_user()` agora sempre grava `role = 'student'`, ignorando o que o cliente manda em `raw_user_meta_data`. Pedido de professor no cadastro cria uma linha `teacher_profiles` com `status = 'pending'`. Novo trigger `teacher_profiles_sync_role` promove o profile pra `'teacher'` quando o admin aprova (`status → 'active'`) e rebaixa pra `'student'` se suspender — a tela `/admin/professores` já cobre esse fluxo sem mudança de UI.
+
+- [x] **Preço do carrinho vem do cliente** — `app/api/stripe/checkout-products/route.ts`
+  A rota agora recebe só `{ id, quantity }[]`; preço, nome e estoque são buscados em `products` no servidor, com checagem de estoque antes de criar a sessão do Stripe.
+
+- [x] **Matrícula grátis via RLS** — `supabase/migrations/00003_security_fixes.sql`, `app/api/stripe/checkout/route.ts`
+  Policy `enrollments_student_insert` removida — só service role insere. O fluxo de curso grátis em `checkout/route.ts` passou a usar `createAdminClient()` em vez do client da sessão do aluno.
+
+- [x] **Professor aprova o próprio curso** — `supabase/migrations/00003_security_fixes.sql`
+  Trigger `courses_guard_status_change` bloqueia qualquer mudança de `status` fora de `draft → pending_review` quando quem executa não é admin.
+
+- [x] **Webhook do Bunny sem autenticação** — `app/api/bunny/webhook/route.ts`
+  Exige `BUNNY_WEBHOOK_SECRET` via header `x-webhook-secret` ou querystring (`?secret=`), comparado com `timingSafeEqual`. Configurar a URL do webhook no painel do Bunny com o secret na querystring.
+
+- [x] **`stripe_account_id` exposto publicamente** — `supabase/migrations/00003_security_fixes.sql`
+  Policy `teacher_profiles_public_read` removida; leitura pública agora passa pela view `teacher_profiles_public` (`user_id, bio`).
+
+- [x] **`createAdminClient()` mistura service role com cookies do usuário** — `lib/supabase/server.ts`
+  Reescrito com `createClient` do `supabase-js`, sem cookie store — roda como service role de verdade. Passou a ser usado no fluxo de matrícula grátis.
+
 - [x] **Menu hambúrguer invisível no mobile** — `components/layout/MobileNav.tsx`
   O `backdrop-blur-md` do header (`Navbar.tsx:64`) transforma o header em containing block pra descendentes `position: fixed`. O painel com `fixed inset-x-0 top-16 bottom-0` resolvia contra os 64px da barra e colapsava pra altura zero — sobrava só a linha do `border-t` sobre a página.
   Resolvido com `createPortal` pro `document.body`, tirando o painel do containing block. Adicionado `overflow-y-auto` e `md:hidden` próprio (o painel não está mais dentro do wrapper que escondia no desktop).
@@ -126,8 +119,8 @@ Backlog de dívida técnica levantado na revisão de 05/08/2026. Marque o checkb
 
 ## Ordem sugerida
 
-1. Trigger de role — é o furo mais barato de explorar.
-2. Preço no servidor + matrícula via RLS — perda financeira direta.
-3. Auth do webhook Bunny + fluxo de pedidos.
-4. Aprovação de curso + vazamento do `stripe_account_id`.
-5. Performance: role no JWT, `Promise.all`, RLS com `(select ...)`.
+Os 4 primeiros itens críticos (role, preço, matrícula, aprovação de curso, webhook Bunny, `stripe_account_id`, `createAdminClient`) estão resolvidos. Próximos:
+
+1. **Pedidos de produto nunca são registrados** (🟠) — webhook do Stripe não trata `type = 'products'`; sem isso, "Meus Pedidos" fica sempre vazia mesmo com o checkout de produtos já corrigido.
+2. Assinatura da URL do Bunny + idempotência do webhook de curso.
+3. Performance: role no JWT, `Promise.all`, RLS com `(select ...)`.

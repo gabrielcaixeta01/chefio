@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
@@ -32,9 +32,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.redirect(new URL(`/aluno/cursos/${course.slug}`, req.url), 302)
   }
 
-  // Free course — enroll directly
+  // Free course — enroll directly. Só o service role pode inserir em
+  // enrollments (RLS não libera insert pro aluno), então usa o admin client.
   if (course.price === 0) {
-    await supabase.from('enrollments').insert({
+    const admin = createAdminClient()
+    await admin.from('enrollments').insert({
       student_id: user.id,
       course_id: courseId,
       amount_paid: 0,

@@ -133,7 +133,7 @@ export default async function LessonPlayerPage({
             className="flex items-center gap-1 text-sm text-gray-500 hover:text-orange-600 transition-colors"
           >
             <ChevronLeft className="h-4 w-4" />
-            <span className="truncate max-w-[200px]">{prevLesson.title}</span>
+            <span className="truncate max-w-50">{prevLesson.title}</span>
           </Link>
         ) : <div />}
         {nextLesson ? (
@@ -141,7 +141,7 @@ export default async function LessonPlayerPage({
             href={`/aluno/cursos/${slug}/aulas/${nextLesson.id}`}
             className="flex items-center gap-1 text-sm text-gray-500 hover:text-orange-600 transition-colors"
           >
-            <span className="truncate max-w-[200px]">{nextLesson.title}</span>
+            <span className="truncate max-w-50">{nextLesson.title}</span>
             <ChevronRight className="h-4 w-4" />
           </Link>
         ) : <div />}
