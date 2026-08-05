@@ -1,21 +1,9 @@
-import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { requireRole } from '@/lib/auth/session'
 import { AlunoSidebar } from '@/components/layout/AlunoSidebar'
 import { CartProvider } from '@/contexts/CartContext'
 
 export default async function AlunoLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) redirect('/login')
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if (profile?.role !== 'student') redirect('/')
+  await requireRole('student')
 
   return (
     <CartProvider>

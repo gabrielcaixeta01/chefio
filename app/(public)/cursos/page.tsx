@@ -1,13 +1,14 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Search, X } from 'lucide-react'
-import { createClient } from '@/lib/supabase/server'
+import { createPublicClient } from '@/lib/supabase/public'
 import { COURSE_CATEGORIES } from '@/lib/utils'
 import { CourseCard, type CourseCardData } from '@/components/curso/CourseCard'
 import { ActionLink } from '@/components/ui/action-link'
 import { cn } from '@/lib/utils'
 
 export const metadata: Metadata = { title: 'Explorar cursos' }
+export const revalidate = 300
 
 /** Monta a querystring preservando o que já está filtrado. */
 function href(params: { category?: string; q?: string }) {
@@ -27,7 +28,7 @@ export default async function CourseCatalogPage({
 
   let courses: CourseCardData[] = []
   try {
-    const supabase = await createClient()
+    const supabase = createPublicClient()
     let query = supabase
       .from('courses')
       .select('id, title, slug, thumbnail_url, price, category, teacher:profiles(name)')

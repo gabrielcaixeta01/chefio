@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { getAuthedUser, roleFromUser } from '@/lib/auth/session'
 import { ActionLink } from '@/components/ui/action-link'
 import { MobileNav } from './MobileNav'
 
@@ -20,31 +20,22 @@ function Ladrilho() {
 
 export async function Navbar() {
   let user = null
-  let profile = null
+  let role = null
 
   try {
-    const supabase = await createClient()
-    const { data: { user: u } } = await supabase.auth.getUser()
-    user = u
-    if (user) {
-      const { data } = await supabase
-        .from('profiles')
-        .select('role, name')
-        .eq('id', user.id)
-        .single()
-      profile = data
-    }
+    user = await getAuthedUser()
+    role = roleFromUser(user)
   } catch {
     // Supabase não configurado ainda — exibe navbar sem estado de auth
   }
 
-  const dashboardLink = profile?.role === 'admin'
+  const dashboardLink = role === 'admin'
     ? '/admin'
-    : profile?.role === 'teacher'
+    : role === 'teacher'
     ? '/professor'
     : '/aluno'
 
-  const autenticacao = user && profile ? (
+  const autenticacao = user && role ? (
     <ActionLink href={dashboardLink} variant="cobalto">
       Minha área
     </ActionLink>

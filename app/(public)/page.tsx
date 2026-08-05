@@ -1,8 +1,10 @@
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { createPublicClient } from '@/lib/supabase/public'
 import { ActionLink } from '@/components/ui/action-link'
 import { AzulejoWall } from '@/components/layout/AzulejoWall'
 import { CourseCard } from '@/components/curso/CourseCard'
+
+export const revalidate = 300
 
 const PASSOS = [
   {
@@ -28,7 +30,7 @@ const NUMEROS = [
 export default async function LandingPage() {
   let featuredCourses: any[] = []
   try {
-    const supabase = await createClient()
+    const supabase = createPublicClient()
     const { data } = await supabase
       .from('courses')
       .select('id, title, slug, thumbnail_url, price, teacher:profiles(name)')

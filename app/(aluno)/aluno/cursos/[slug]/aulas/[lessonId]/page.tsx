@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { getAuthedUser } from '@/lib/auth/session'
 import { VideoPlayer } from '@/components/player/VideoPlayer'
 import { LessonProgressButton } from '@/components/player/LessonProgressButton'
 import { Notebook } from '@/components/player/Notebook'
@@ -18,7 +19,7 @@ export default async function LessonPlayerPage({
 }) {
   const { slug, lessonId } = await params
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthedUser()
 
   const { data: course } = await supabase
     .from('courses')
@@ -28,55 +29,57 @@ export default async function LessonPlayerPage({
 
   if (!course) notFound()
 
-  const { data: enrollment } = await supabase
-    .from('enrollments')
-    .select('id')
-    .eq('student_id', user!.id)
-    .eq('course_id', course.id)
-    .single()
+  const [
+    { data: enrollment },
+    { data: lesson },
+    { data: allLessons },
+    { data: progress },
+    { data: notebook },
+    { data: lessonProductRows },
+  ] = await Promise.all([
+    supabase
+      .from('enrollments')
+      .select('id')
+      .eq('student_id', user!.id)
+      .eq('course_id', course.id)
+      .single(),
+    supabase
+      .from('lessons')
+      .select('id, title, description, order_index, bunny_video_id, is_free_preview')
+      .eq('id', lessonId)
+      .eq('course_id', course.id)
+      .single(),
+    supabase
+      .from('lessons')
+      .select('id, title, order_index')
+      .eq('course_id', course.id)
+      .order('order_index', { ascending: true }),
+    supabase
+      .from('lesson_progress')
+      .select('completed_at')
+      .eq('student_id', user!.id)
+      .eq('lesson_id', lessonId)
+      .single(),
+    supabase
+      .from('notebooks')
+      .select('content')
+      .eq('student_id', user!.id)
+      .eq('course_id', course.id)
+      .single(),
+    supabase
+      .from('lesson_products')
+      .select('product:products(id, name, price, image_url, description)')
+      .eq('lesson_id', lessonId),
+  ])
 
   if (!enrollment) redirect(`/curso/${slug}`)
-
-  const { data: lesson } = await supabase
-    .from('lessons')
-    .select('id, title, description, order_index, bunny_video_id, is_free_preview')
-    .eq('id', lessonId)
-    .eq('course_id', course.id)
-    .single()
-
   if (!lesson) notFound()
-
-  const { data: allLessons } = await supabase
-    .from('lessons')
-    .select('id, title, order_index')
-    .eq('course_id', course.id)
-    .order('order_index', { ascending: true })
 
   const lessonIndex = (allLessons ?? []).findIndex((l) => l.id === lessonId)
   const prevLesson = lessonIndex > 0 ? allLessons![lessonIndex - 1] : null
   const nextLesson = lessonIndex < (allLessons?.length ?? 0) - 1 ? allLessons![lessonIndex + 1] : null
 
-  const { data: progress } = await supabase
-    .from('lesson_progress')
-    .select('completed_at')
-    .eq('student_id', user!.id)
-    .eq('lesson_id', lessonId)
-    .single()
-
   const isCompleted = !!progress?.completed_at
-
-  const { data: notebook } = await supabase
-    .from('notebooks')
-    .select('content')
-    .eq('student_id', user!.id)
-    .eq('course_id', course.id)
-    .single()
-
-  // Fetch products recommended for this lesson
-  const { data: lessonProductRows } = await supabase
-    .from('lesson_products')
-    .select('product:products(id, name, price, image_url, description)')
-    .eq('lesson_id', lessonId)
 
   const lessonProducts = (lessonProductRows ?? [])
     .map((r) => r.product as any)

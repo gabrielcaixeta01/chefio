@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
+import { getAuthedUser } from '@/lib/auth/session'
 import { formatDuration } from '@/lib/utils'
 import { Notebook } from '@/components/player/Notebook'
 import { CheckCircle, Circle, Play, Lock, Clock, ChefHat } from 'lucide-react'
@@ -18,7 +19,7 @@ export default async function AlunoCourseOverviewPage({
 }) {
   const { slug } = await params
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthedUser()
 
   const { data: course } = await supabase
     .from('courses')
@@ -28,21 +29,27 @@ export default async function AlunoCourseOverviewPage({
 
   if (!course) notFound()
 
-  // Verify enrollment
-  const { data: enrollment } = await supabase
-    .from('enrollments')
-    .select('id')
-    .eq('student_id', user!.id)
-    .eq('course_id', course.id)
-    .single()
+  const [{ data: enrollment }, { data: lessons }, { data: notebook }] = await Promise.all([
+    supabase
+      .from('enrollments')
+      .select('id')
+      .eq('student_id', user!.id)
+      .eq('course_id', course.id)
+      .single(),
+    supabase
+      .from('lessons')
+      .select('id, title, duration_seconds, order_index, is_free_preview, bunny_video_id')
+      .eq('course_id', course.id)
+      .order('order_index', { ascending: true }),
+    supabase
+      .from('notebooks')
+      .select('content')
+      .eq('student_id', user!.id)
+      .eq('course_id', course.id)
+      .single(),
+  ])
 
   if (!enrollment) redirect(`/curso/${slug}`)
-
-  const { data: lessons } = await supabase
-    .from('lessons')
-    .select('id, title, duration_seconds, order_index, is_free_preview, bunny_video_id')
-    .eq('course_id', course.id)
-    .order('order_index', { ascending: true })
 
   const { data: progressRows } = await supabase
     .from('lesson_progress')
@@ -51,13 +58,6 @@ export default async function AlunoCourseOverviewPage({
     .in('lesson_id', (lessons ?? []).map((l) => l.id))
 
   const completedIds = new Set((progressRows ?? []).filter((p) => p.completed_at).map((p) => p.lesson_id))
-
-  const { data: notebook } = await supabase
-    .from('notebooks')
-    .select('content')
-    .eq('student_id', user!.id)
-    .eq('course_id', course.id)
-    .single()
 
   const totalLessons = lessons?.length ?? 0
   const completedCount = completedIds.size

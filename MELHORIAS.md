@@ -20,35 +20,12 @@ Todos os 5 itens abaixo foram corrigidos em 05/08/2026 — ver `## ✅ Resolvido
 
 ## 🟡 Performance
 
-- [ ] **Middleware consulta `profiles` em toda navegação**
-  `middleware.ts:41`, com matcher pegando quase tudo. Cada request paga `getUser()` (round-trip pro Auth) + SELECT.
-  **Fix:** role em `app_metadata` do JWT via trigger, lido do token. Alternativa mais barata: restringir o matcher a `/admin/:path*|/professor/:path*|/aluno/:path*|/login|/cadastro`.
-
-- [ ] **Checagem de role triplicada**
-  Middleware → layout (`app/(aluno)/layout.tsx:12` e equivalentes) → página: 3 `getUser()` de rede + 2 SELECT antes de renderizar qualquer dado.
-  **Fix:** helper `requireRole()` cacheado com `React.cache()` por request; remover a duplicação do layout (o middleware já barrou).
-
-- [ ] **Waterfall de queries sequenciais**
-  `app/(aluno)/aluno/cursos/[slug]/aulas/[lessonId]/page.tsx:23-79` são 7 `await` em série. Mesmo padrão em `app/(aluno)/aluno/cursos/[slug]/page.tsx` (5) e `app/(professor)/professor/faturamento/page.tsx` (4).
-  **Fix:** resolver `course.id` e agrupar o resto num `Promise.all` — 7 round-trips viram 2.
-
 - [ ] **Agregações em JS sobre a tabela inteira**
   `app/(admin)/admin/page.tsx:19` puxa `amount_paid` de *todas* as matrículas pra somar em memória; mesmo padrão em `admin/financeiro` e `professor/faturamento`. Ok com 50 linhas, derrete com 50 mil.
   **Fix:** RPC com `sum()` / `group by` no Postgres.
 
 - [ ] **Sem paginação em lugar nenhum**
   `/cursos`, `/aluno/loja`, `/admin/matriculas`, `/admin/produtos`, `/admin/cursos` — todos SELECT sem `limit` / `range`.
-
-- [ ] **Páginas públicas 100% dinâmicas**
-  `app/(public)/page.tsx` e `app/(public)/cursos/page.tsx` usam `createClient()`, que chama `cookies()` e força render dinâmico por request. É a origem dos ~7s de latência quando o Supabase está lento.
-  **Fix:** cliente anônimo sem cookies pros dados públicos + `export const revalidate = 300`.
-
-- [ ] **`get_my_role()` e `auth.uid()` reavaliados por linha**
-  Em toda a `00002_rls_policies.sql`. O Postgres não consegue provar estabilidade nesse contexto e chama por linha varrida.
-  **Fix:** envolver em subquery — `(select public.get_my_role()) = 'admin'`, `student_id = (select auth.uid())`. É a recomendação oficial do Supabase.
-
-- [ ] **Índices faltando**
-  `00001_initial_schema.sql:200-208` cobre courses/lessons/enrollments, mas falta `orders(student_id)`, `order_items(order_id)`, `teacher_payouts(teacher_id)`, `documents(teacher_id)` — todas filtradas por essas colunas em policies e queries.
 
 ---
 
@@ -106,6 +83,18 @@ Todos os 5 itens abaixo foram corrigidos em 05/08/2026 — ver `## ✅ Resolvido
 - [x] **`CartContext` grava `[]` por cima do carrinho salvo** — `contexts/CartContext.tsx`
   Novo estado `hydrated`, setado depois de ler o `localStorage`; o effect de persistência não escreve nada até isso acontecer.
 
+- [x] **Middleware consulta `profiles` em toda navegação** / **Checagem de role triplicada** — `supabase/migrations/00005_role_jwt_sync.sql`, `middleware.ts`, `lib/auth/session.ts`, `app/(aluno|professor|admin)/layout.tsx`, `components/layout/Navbar.tsx`
+  Trigger `sync_role_to_jwt` grava o role em `auth.users.raw_app_meta_data`, que o Supabase Auth embute no access token — `user.app_metadata.role` fica disponível sem SELECT. Middleware, os três layouts protegidos e a Navbar pararam de consultar `profiles`. Novo helper `getAuthedUser()` (`lib/auth/session.ts`) usa `React.cache()` pra dedupar `getUser()` dentro do mesmo request quando layout e página pedem o usuário. **Sessões já ativas só recebem o claim novo no próximo refresh de token** — o backfill cobre usuários existentes, mas o access token já emitido segue com o payload antigo até expirar/renovar.
+
+- [x] **Waterfall de queries sequenciais** — `app/(aluno)/aluno/cursos/[slug]/aulas/[lessonId]/page.tsx`, `app/(aluno)/aluno/cursos/[slug]/page.tsx`, `app/(professor)/professor/faturamento/page.tsx`
+  Queries que não dependem uma da outra agora rodam em `Promise.all`. Aula: 7 round-trips → 2 (`course` primeiro, resto em paralelo). Curso do aluno: 5 → 3 (`progressRows` continua depois porque precisa dos ids de `lessons`). Faturamento: 4 → 2 (`enrollments` continua depois porque precisa dos ids de `courses`).
+
+- [x] **Páginas públicas 100% dinâmicas** — `lib/supabase/public.ts` (novo), `app/(public)/page.tsx`, `app/(public)/cursos/page.tsx`
+  As duas páginas trocaram `createClient()` (cookies) por `createPublicClient()` (client anônimo, sem `cookies()`) e ganharam `export const revalidate = 300`. **Ressalva:** a `Navbar` (`components/layout/Navbar.tsx`), que fica no layout público, ainda chama `getAuthedUser()` → `cookies()` pra saber se tem sessão — isso continua forçando toda a rota pública a renderizar dinâmica no Next 14 (sem Partial Prerendering), então o ganho de latência real só aparece se a Navbar também parar de depender de cookies no servidor (ex.: checar sessão no client, ou habilitar PPR). Build confirma `/` e `/cursos` como `ƒ Dynamic` ainda.
+
+- [x] **`get_my_role()` e `auth.uid()` reavaliados por linha** / **Índices faltando** — `supabase/migrations/00006_rls_performance.sql`
+  Todas as policies com `auth.uid()` ou `get_my_role()` no `USING`/`WITH CHECK` foram alteradas via `ALTER POLICY` pra envolver as chamadas em subquery (`(select auth.uid())`), forçando o Postgres a resolver uma vez por statement. Adicionados os índices que faltavam: `orders(student_id)`, `order_items(order_id)`, `teacher_payouts(teacher_id)`, `documents(teacher_id)`.
+
 - [x] **Menu hambúrguer invisível no mobile** — `components/layout/MobileNav.tsx`
   O `backdrop-blur-md` do header (`Navbar.tsx:64`) transforma o header em containing block pra descendentes `position: fixed`. O painel com `fixed inset-x-0 top-16 bottom-0` resolvia contra os 64px da barra e colapsava pra altura zero — sobrava só a linha do `border-t` sobre a página.
   Resolvido com `createPortal` pro `document.body`, tirando o painel do containing block. Adicionado `overflow-y-auto` e `md:hidden` próprio (o painel não está mais dentro do wrapper que escondia no desktop).
@@ -115,11 +104,9 @@ Todos os 5 itens abaixo foram corrigidos em 05/08/2026 — ver `## ✅ Resolvido
 
 ## Ordem sugerida
 
-Todo o 🔴 Crítico e o 🟠 Funcionalidade quebrada estão resolvidos. Restam 🟡 Performance e 🔵 Qualidade e manutenção. Sugestão de ordem:
+🔴 Crítico e 🟠 Funcionalidade quebrada resolvidos. Da 🟡 Performance, restam só paginação e RPC de agregação — deixados de lado de propósito porque só valem a pena com volume de dados maior. Restante:
 
-1. Role no `app_metadata` do JWT (mata o SELECT do middleware + a checagem triplicada de uma vez).
-2. `Promise.all` nos waterfalls de query (lesson player, curso, faturamento).
-3. RLS com `(select ...)` na `00002_rls_policies.sql` — recomendação oficial do Supabase, barato de aplicar.
-4. Índices faltando (`orders`, `order_items`, `teacher_payouts`, `documents`).
-5. Paginação e RPC de agregação — só valem a pena quando o volume de dados justificar.
-6. 🔵 Qualidade: `as any`, lint/testes, `error.tsx` por rota — sem pressa, não bloqueiam nada.
+1. **Agregações em JS sobre a tabela inteira** — RPC `sum()`/`group by` em `admin/page.tsx`, `admin/financeiro`, `professor/faturamento`. Maior esforço do que o resto (precisa de função SQL nova por tela).
+2. **Paginação** — `/cursos`, `/aluno/loja`, `/admin/matriculas`, `/admin/produtos`, `/admin/cursos`.
+3. Se quiser fechar de vez a latência das páginas públicas: tirar a `Navbar` da dependência de `cookies()` no servidor (ver ressalva acima) — só assim `/` e `/cursos` viram estáticas de verdade.
+4. 🔵 Qualidade: `as any`, lint/testes, `error.tsx` por rota — sem pressa, não bloqueiam nada.

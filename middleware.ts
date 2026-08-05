@@ -21,12 +21,15 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  const { supabaseResponse, user, supabase } = await updateSession(request)
+  const { supabaseResponse, user } = await updateSession(request)
 
   // Protege rotas privadas
   const protectedPrefix = Object.keys(ROLE_ROUTES).find((prefix) =>
     pathname.startsWith(prefix)
   )
+
+  // Role vem do JWT (app_metadata), sincronizado via trigger — sem SELECT em profiles.
+  const role = user?.app_metadata?.role as string | undefined
 
   if (protectedPrefix) {
     // Não autenticado → redireciona para login
@@ -37,20 +40,11 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl)
     }
 
-    // Busca o role do perfil
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
     const requiredRole = ROLE_ROUTES[protectedPrefix]
 
-    if (!profile || profile.role !== requiredRole) {
+    if (role !== requiredRole) {
       // Role errado → redireciona para o dashboard correto
-      const correctDashboard = profile?.role
-        ? DASHBOARD_BY_ROLE[profile.role]
-        : '/login'
+      const correctDashboard = role ? DASHBOARD_BY_ROLE[role] : '/login'
       const redirectUrl = request.nextUrl.clone()
       redirectUrl.pathname = correctDashboard
       return NextResponse.redirect(redirectUrl)
@@ -58,18 +52,10 @@ export async function middleware(request: NextRequest) {
   }
 
   // Usuário autenticado tentando acessar /login ou /cadastro → redireciona
-  if (user && (pathname === '/login' || pathname === '/cadastro')) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (profile?.role) {
-      const redirectUrl = request.nextUrl.clone()
-      redirectUrl.pathname = DASHBOARD_BY_ROLE[profile.role]
-      return NextResponse.redirect(redirectUrl)
-    }
+  if (user && role && (pathname === '/login' || pathname === '/cadastro')) {
+    const redirectUrl = request.nextUrl.clone()
+    redirectUrl.pathname = DASHBOARD_BY_ROLE[role]
+    return NextResponse.redirect(redirectUrl)
   }
 
   return supabaseResponse

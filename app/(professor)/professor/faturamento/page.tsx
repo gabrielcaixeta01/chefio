@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
+import { getAuthedUser } from '@/lib/auth/session'
 import { formatCurrency } from '@/lib/utils'
 import { DollarSign, TrendingUp, Users, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
@@ -9,22 +10,28 @@ export const metadata: Metadata = { title: 'Faturamento' }
 
 export default async function BillingPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthedUser()
 
-  const { data: teacherProfile } = await supabase
-    .from('teacher_profiles')
-    .select('stripe_account_id, commission_rate, status')
-    .eq('user_id', user!.id)
-    .single()
+  const [{ data: teacherProfile }, { data: courses }, { data: payouts }] = await Promise.all([
+    supabase
+      .from('teacher_profiles')
+      .select('stripe_account_id, commission_rate, status')
+      .eq('user_id', user!.id)
+      .single(),
+    supabase
+      .from('courses')
+      .select('id, title, price')
+      .eq('teacher_id', user!.id),
+    supabase
+      .from('teacher_payouts')
+      .select('*')
+      .eq('teacher_id', user!.id)
+      .order('created_at', { ascending: false })
+      .limit(10),
+  ])
 
   const commissionRate = teacherProfile?.commission_rate ?? 20
   const platformRate = commissionRate / 100
-
-  // Get all courses
-  const { data: courses } = await supabase
-    .from('courses')
-    .select('id, title, price')
-    .eq('teacher_id', user!.id)
 
   const courseIds = (courses ?? []).map((c) => c.id)
 
@@ -53,14 +60,6 @@ export default async function BillingPage() {
     courseRevenue[e.course_id].count++
     courseRevenue[e.course_id].gross += e.amount_paid ?? 0
   }
-
-  // Get payouts
-  const { data: payouts } = await supabase
-    .from('teacher_payouts')
-    .select('*')
-    .eq('teacher_id', user!.id)
-    .order('created_at', { ascending: false })
-    .limit(10)
 
   return (
     <div>
