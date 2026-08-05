@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { createHmac } from 'crypto'
+import { createHash } from 'crypto'
 
 export async function GET(req: NextRequest) {
   const supabase = await createClient()
@@ -48,22 +48,22 @@ export async function GET(req: NextRequest) {
 
   const libraryId = process.env.BUNNY_STREAM_LIBRARY_ID
   const tokenAuthKey = process.env.BUNNY_STREAM_TOKEN_AUTH_KEY
-  const cdnHostname = process.env.BUNNY_STREAM_CDN_HOSTNAME
 
-  if (!libraryId || !tokenAuthKey || !cdnHostname) {
+  if (!libraryId || !tokenAuthKey) {
     return NextResponse.json({ error: 'Bunny.net não configurado' }, { status: 503 })
   }
 
-  // Generate signed URL (4h expiry)
+  // Token authentication do Bunny Stream: sha256(securityKey + videoId + expires),
+  // hash simples (não HMAC). Precisa de "Token Authentication" habilitado na
+  // library do Bunny Stream, com essa mesma chave em BUNNY_STREAM_TOKEN_AUTH_KEY.
   const videoId = lesson.bunny_video_id
   const expiresAt = Math.floor(Date.now() / 1000) + 4 * 3600
-  const path = `/${libraryId}/${videoId}/play`
-  const tokenRaw = `${tokenAuthKey}${path}${expiresAt}`
-  const token = createHmac('sha256', tokenAuthKey)
-    .update(`${tokenAuthKey}${path}${expiresAt}`)
+  const token = createHash('sha256')
+    .update(`${tokenAuthKey}${videoId}${expiresAt}`)
     .digest('hex')
 
-  const signedUrl = `https://${cdnHostname}${path}?token=${token}&expires=${expiresAt}`
+  // URL de embed do player (iframe), não a de CDN direta.
+  const signedUrl = `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?token=${token}&expires=${expiresAt}`
 
   return NextResponse.json({ signedUrl })
 }

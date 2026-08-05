@@ -14,26 +14,7 @@ Todos os 7 itens abaixo foram corrigidos em 05/08/2026 — ver `## ✅ Resolvido
 
 ## 🟠 Funcionalidade quebrada
 
-- [ ] **Pedidos de produto nunca são registrados**
-  `app/api/stripe/webhook/route.ts:26-30` — o handler só entende `checkout.session.completed` com `courseId`; sessões de produto mandam `metadata.type = 'products'` e caem no `400 'Missing metadata'`.
-  Consequências: nada nunca insere em `orders` / `order_items`, "Meus Pedidos" fica sempre vazia, estoque nunca baixa, e o Stripe retenta o webhook por dias por causa do 400.
-  **Fix:** ramificar por `metadata.type`, criar `orders` + `order_items`, decrementar `products.stock`, e retornar 200 em eventos não tratados.
-
-- [ ] **Assinatura da URL do Bunny provavelmente inválida**
-  `app/api/bunny/signed-url/route.ts:60-66` — usa HMAC com a chave *e* repete a chave dentro da mensagem, onde o Bunny Stream espera `sha256(tokenKey + videoId + expires)`. A URL montada (`https://{cdn}/{lib}/{video}/play`) não é a de embed, mas é usada como `src` de iframe em `VideoPlayer.tsx:47`. `tokenRaw` (linha 61) é calculado e descartado.
-  ⚠️ Se o vídeo toca hoje, é porque token auth está desligado na library — ou seja, **os vídeos estão acessíveis sem matrícula** pra quem tiver a URL. Testar contra um vídeo real antes de mexer.
-
-- [ ] **Webhook de curso sem idempotência**
-  `app/api/stripe/webhook/route.ts:64` — o payout é inserido fora da checagem de duplicata da matrícula; um retry do Stripe duplica o pagamento ao professor. `stripe_transfer_id` recebe `session.id` e não tem constraint UNIQUE.
-  **Fix:** `unique` em `teacher_payouts.stripe_transfer_id` e só inserir payout quando a matrícula foi de fato criada.
-
-- [ ] **`VideoPlayer` acumula listeners**
-  `components/player/VideoPlayer.tsx:51-58` — `onLoad` registra `window.addEventListener('message')` e retorna uma cleanup que o React ignora (`onLoad` não é `useEffect`). Cada load deixa mais um listener.
-  **Fix:** mover pra `useEffect` com cleanup.
-
-- [ ] **`CartContext` grava `[]` por cima do carrinho salvo**
-  `contexts/CartContext.tsx:35-37` — o effect de persistência roda no primeiro commit com `items = []`, antes da hidratação do `localStorage`. O valor volta no render seguinte, mas fechar a aba na janela perde o carrinho.
-  **Fix:** flag `hydrated` guardando o write.
+Todos os 5 itens abaixo foram corrigidos em 05/08/2026 — ver `## ✅ Resolvido`.
 
 ---
 
@@ -110,6 +91,21 @@ Todos os 7 itens abaixo foram corrigidos em 05/08/2026 — ver `## ✅ Resolvido
 - [x] **`createAdminClient()` mistura service role com cookies do usuário** — `lib/supabase/server.ts`
   Reescrito com `createClient` do `supabase-js`, sem cookie store — roda como service role de verdade. Passou a ser usado no fluxo de matrícula grátis.
 
+- [x] **Pedidos de produto nunca são registrados** — `app/api/stripe/webhook/route.ts`
+  Webhook agora ramifica por `session.metadata.type`: pedidos de produto criam `orders` + `order_items` com preço vindo do banco (não do Stripe), decrementam `products.stock`, e o handler de curso continua funcionando como antes. Qualquer evento fora de `checkout.session.completed`, ou faltando metadata essencial, responde 200 em vez de 400 pra não gerar retry storm do Stripe.
+
+- [x] **Webhook de curso sem idempotência** — `supabase/migrations/00004_stripe_idempotency.sql`, `app/api/stripe/webhook/route.ts`
+  Índices únicos parciais em `orders.stripe_payment_intent_id` e `teacher_payouts.stripe_transfer_id`. O payout do professor só é criado quando o insert da matrícula não colide (código `23505`) — ou seja, só na primeira vez que o evento chega.
+
+- [x] **Assinatura da URL do Bunny provavelmente inválida** — `app/api/bunny/signed-url/route.ts`
+  Trocado HMAC por hash simples `sha256(tokenAuthKey + videoId + expires)`, que é o esquema de token authentication do Bunny Stream. URL passou a apontar pro embed real (`iframe.mediadelivery.net/embed/{library}/{video}`) em vez da CDN direta. **Ainda precisa validar contra uma library real** com "Token Authentication" habilitado — se hoje o vídeo toca sem token, o auth está desligado na conta Bunny e isso é uma configuração a mudar lá, não só código.
+
+- [x] **`VideoPlayer` acumula listeners** — `components/player/VideoPlayer.tsx`
+  Listener de `message` migrou pra um `useEffect` próprio com cleanup, saindo do `onLoad` do iframe.
+
+- [x] **`CartContext` grava `[]` por cima do carrinho salvo** — `contexts/CartContext.tsx`
+  Novo estado `hydrated`, setado depois de ler o `localStorage`; o effect de persistência não escreve nada até isso acontecer.
+
 - [x] **Menu hambúrguer invisível no mobile** — `components/layout/MobileNav.tsx`
   O `backdrop-blur-md` do header (`Navbar.tsx:64`) transforma o header em containing block pra descendentes `position: fixed`. O painel com `fixed inset-x-0 top-16 bottom-0` resolvia contra os 64px da barra e colapsava pra altura zero — sobrava só a linha do `border-t` sobre a página.
   Resolvido com `createPortal` pro `document.body`, tirando o painel do containing block. Adicionado `overflow-y-auto` e `md:hidden` próprio (o painel não está mais dentro do wrapper que escondia no desktop).
@@ -119,8 +115,11 @@ Todos os 7 itens abaixo foram corrigidos em 05/08/2026 — ver `## ✅ Resolvido
 
 ## Ordem sugerida
 
-Os 4 primeiros itens críticos (role, preço, matrícula, aprovação de curso, webhook Bunny, `stripe_account_id`, `createAdminClient`) estão resolvidos. Próximos:
+Todo o 🔴 Crítico e o 🟠 Funcionalidade quebrada estão resolvidos. Restam 🟡 Performance e 🔵 Qualidade e manutenção. Sugestão de ordem:
 
-1. **Pedidos de produto nunca são registrados** (🟠) — webhook do Stripe não trata `type = 'products'`; sem isso, "Meus Pedidos" fica sempre vazia mesmo com o checkout de produtos já corrigido.
-2. Assinatura da URL do Bunny + idempotência do webhook de curso.
-3. Performance: role no JWT, `Promise.all`, RLS com `(select ...)`.
+1. Role no `app_metadata` do JWT (mata o SELECT do middleware + a checagem triplicada de uma vez).
+2. `Promise.all` nos waterfalls de query (lesson player, curso, faturamento).
+3. RLS com `(select ...)` na `00002_rls_policies.sql` — recomendação oficial do Supabase, barato de aplicar.
+4. Índices faltando (`orders`, `order_items`, `teacher_payouts`, `documents`).
+5. Paginação e RPC de agregação — só valem a pena quando o volume de dados justificar.
+6. 🔵 Qualidade: `as any`, lint/testes, `error.tsx` por rota — sem pressa, não bloqueiam nada.

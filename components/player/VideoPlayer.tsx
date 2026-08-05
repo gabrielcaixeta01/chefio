@@ -22,6 +22,15 @@ export function VideoPlayer({ lessonId, onEnded }: VideoPlayerProps) {
       .catch(() => setError('Erro ao carregar vídeo'))
   }, [lessonId])
 
+  useEffect(() => {
+    // Bunny player posts messages — listen for video end
+    const handler = (e: MessageEvent) => {
+      if (e.data?.event === 'ended') onEnded?.()
+    }
+    window.addEventListener('message', handler)
+    return () => window.removeEventListener('message', handler)
+  }, [onEnded])
+
   if (error) {
     return (
       <div className="aspect-video bg-gray-900 rounded-xl flex items-center justify-center">
@@ -48,14 +57,6 @@ export function VideoPlayer({ lessonId, onEnded }: VideoPlayerProps) {
         className="w-full h-full"
         allowFullScreen
         allow="autoplay; encrypted-media"
-        onLoad={() => {
-          // Bunny player posts messages — listen for video end
-          const handler = (e: MessageEvent) => {
-            if (e.data?.event === 'ended') onEnded?.()
-          }
-          window.addEventListener('message', handler)
-          return () => window.removeEventListener('message', handler)
-        }}
       />
     </div>
   )

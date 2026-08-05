@@ -24,17 +24,20 @@ const CartContext = createContext<CartContextValue | null>(null)
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
+  const [hydrated, setHydrated] = useState(false)
 
   useEffect(() => {
     try {
       const saved = localStorage.getItem('chefio_cart')
       if (saved) setItems(JSON.parse(saved))
     } catch {}
+    setHydrated(true)
   }, [])
 
   useEffect(() => {
+    if (!hydrated) return
     localStorage.setItem('chefio_cart', JSON.stringify(items))
-  }, [items])
+  }, [items, hydrated])
 
   function add(item: Omit<CartItem, 'quantity'>) {
     setItems((prev) => {
