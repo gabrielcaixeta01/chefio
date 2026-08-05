@@ -47,14 +47,16 @@ Todos os 5 itens abaixo foram corrigidos em 05/08/2026 — ver `## ✅ Resolvido
 
 ## ✅ Resolvido
 
-- [x] **Escalação de privilégio no cadastro** — `supabase/migrations/00003_security_fixes.sql`
-  `handle_new_user()` agora sempre grava `role = 'student'`, ignorando o que o cliente manda em `raw_user_meta_data`. Pedido de professor no cadastro cria uma linha `teacher_profiles` com `status = 'pending'`. Novo trigger `teacher_profiles_sync_role` promove o profile pra `'teacher'` quando o admin aprova (`status → 'active'`) e rebaixa pra `'student'` se suspender — a tela `/admin/professores` já cobre esse fluxo sem mudança de UI.
+- [x] **Escalação de privilégio no cadastro** — `supabase/migrations/00003_security_fixes.sql`, `supabase/migrations/00007_close_self_update_holes.sql`
+  `handle_new_user()` agora sempre grava `role = 'student'`, ignorando o que o cliente manda em `raw_user_meta_data`. Pedido de professor no cadastro cria uma linha `teacher_profiles` com `status = 'pending'`. Trigger `teacher_profiles_sync_role` promove o profile pra `'teacher'` quando o admin aprova (`status → 'active'`) e rebaixa pra `'student'` se suspender.
+  **A 00003 fechou só o vetor do cadastro — revisão da 00006 achou que o mesmo furo continuava aberto por outra porta:** `profiles_self_update` e `teacher_profiles_self_update` (00002) não restringem coluna, então `update({ role: 'admin' })` ou `update({ status: 'active' })` direto do console do navegador continuavam funcionando, e a segunda ficava pior justamente por causa do trigger novo (auto-aprovação sem admin). Fechado na 00007 com triggers que bloqueiam mudança de `role` (profiles) e de `status`/`commission_rate` (teacher_profiles) pra quem não é admin. Confirmado por grep que nenhum código do app depende de editar essas colunas pelo client.
 
 - [x] **Preço do carrinho vem do cliente** — `app/api/stripe/checkout-products/route.ts`
   A rota agora recebe só `{ id, quantity }[]`; preço, nome e estoque são buscados em `products` no servidor, com checagem de estoque antes de criar a sessão do Stripe.
 
 - [x] **Matrícula grátis via RLS** — `supabase/migrations/00003_security_fixes.sql`, `app/api/stripe/checkout/route.ts`
   Policy `enrollments_student_insert` removida — só service role insere. O fluxo de curso grátis em `checkout/route.ts` passou a usar `createAdminClient()` em vez do client da sessão do aluno.
+  **Mesma falha achada em `orders` na revisão da 00006:** `orders_student_insert` deixava qualquer aluno inserir um pedido com `status: 'paid'` direto do console, sem nunca passar pelo Stripe. `order_items` já não tinha policy de insert pra aluno (então não dava pra fabricar itens/baixar estoque), mas o pedido fantasma em si passava. Removida na `00007_close_self_update_holes.sql` — grep confirma que nenhum código do app insere em `orders` pelo client, só o webhook com service role.
 
 - [x] **Professor aprova o próprio curso** — `supabase/migrations/00003_security_fixes.sql`
   Trigger `courses_guard_status_change` bloqueia qualquer mudança de `status` fora de `draft → pending_review` quando quem executa não é admin.
