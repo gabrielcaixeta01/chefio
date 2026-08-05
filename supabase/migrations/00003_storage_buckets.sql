@@ -14,21 +14,25 @@
 -- ============================================================
 -- thumbnails (público)
 -- ============================================================
+drop policy if exists "thumbnails_public_read" on storage.objects;
 create policy "thumbnails_public_read" on storage.objects
   for select using (bucket_id = 'thumbnails');
 
+drop policy if exists "thumbnails_teacher_upload" on storage.objects;
 create policy "thumbnails_teacher_upload" on storage.objects
   for insert with check (
     bucket_id = 'thumbnails'
     and public.get_my_role() in ('teacher', 'admin')
   );
 
+drop policy if exists "thumbnails_teacher_update" on storage.objects;
 create policy "thumbnails_teacher_update" on storage.objects
   for update using (
     bucket_id = 'thumbnails'
     and public.get_my_role() in ('teacher', 'admin')
   );
 
+drop policy if exists "thumbnails_teacher_delete" on storage.objects;
 create policy "thumbnails_teacher_delete" on storage.objects
   for delete using (
     bucket_id = 'thumbnails'
@@ -38,15 +42,18 @@ create policy "thumbnails_teacher_delete" on storage.objects
 -- ============================================================
 -- avatars (público)
 -- ============================================================
+drop policy if exists "avatars_public_read" on storage.objects;
 create policy "avatars_public_read" on storage.objects
   for select using (bucket_id = 'avatars');
 
+drop policy if exists "avatars_self_upload" on storage.objects;
 create policy "avatars_self_upload" on storage.objects
   for insert with check (
     bucket_id = 'avatars'
     and (storage.foldername(name))[1] = auth.uid()::text
   );
 
+drop policy if exists "avatars_self_update" on storage.objects;
 create policy "avatars_self_update" on storage.objects
   for update using (
     bucket_id = 'avatars'
@@ -56,12 +63,14 @@ create policy "avatars_self_update" on storage.objects
 -- ============================================================
 -- documents (privado — apenas o professor dono)
 -- ============================================================
+drop policy if exists "documents_teacher_own_select" on storage.objects;
 create policy "documents_teacher_own_select" on storage.objects
   for select using (
     bucket_id = 'documents'
     and (storage.foldername(name))[1] = auth.uid()::text
   );
 
+drop policy if exists "documents_teacher_own_insert" on storage.objects;
 create policy "documents_teacher_own_insert" on storage.objects
   for insert with check (
     bucket_id = 'documents'
@@ -69,12 +78,14 @@ create policy "documents_teacher_own_insert" on storage.objects
     and public.get_my_role() = 'teacher'
   );
 
+drop policy if exists "documents_teacher_own_delete" on storage.objects;
 create policy "documents_teacher_own_delete" on storage.objects
   for delete using (
     bucket_id = 'documents'
     and (storage.foldername(name))[1] = auth.uid()::text
   );
 
+drop policy if exists "documents_admin_all" on storage.objects;
 create policy "documents_admin_all" on storage.objects
   for all using (
     bucket_id = 'documents'
@@ -84,12 +95,14 @@ create policy "documents_admin_all" on storage.objects
 -- ============================================================
 -- attachments (privado — apenas aluno matriculado ou professor)
 -- ============================================================
+drop policy if exists "attachments_upload" on storage.objects;
 create policy "attachments_upload" on storage.objects
   for insert with check (
     bucket_id = 'attachments'
     and public.get_my_role() in ('teacher', 'admin')
   );
 
+drop policy if exists "attachments_admin_all" on storage.objects;
 create policy "attachments_admin_all" on storage.objects
   for all using (
     bucket_id = 'attachments'

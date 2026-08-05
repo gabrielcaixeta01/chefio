@@ -218,6 +218,7 @@ create trigger on_auth_user_created
 -- ============================================================
 -- TRIGGER: atualizar updated_at em courses
 -- ============================================================
+drop trigger if exists courses_updated_at on public.courses;
 create or replace function update_updated_at()
 returns trigger as $$
 begin
