@@ -1,6 +1,5 @@
 import Link from 'next/link'
-import { getAuthedUser, roleFromUser } from '@/lib/auth/session'
-import { ActionLink } from '@/components/ui/action-link'
+import { NavbarAuth } from './NavbarAuth'
 import { MobileNav } from './MobileNav'
 
 const LINKS = [
@@ -18,39 +17,7 @@ function Ladrilho() {
   )
 }
 
-export async function Navbar() {
-  let user = null
-  let role = null
-
-  try {
-    user = await getAuthedUser()
-    role = roleFromUser(user)
-  } catch {
-    // Supabase não configurado ainda — exibe navbar sem estado de auth
-  }
-
-  const dashboardLink = role === 'admin'
-    ? '/admin'
-    : role === 'teacher'
-    ? '/professor'
-    : '/aluno'
-
-  const autenticacao = user && role ? (
-    <ActionLink href={dashboardLink} variant="cobalto">
-      Minha área
-    </ActionLink>
-  ) : (
-    <>
-      <Link
-        href="/login"
-        className="inline-flex h-11 items-center px-4 text-sm font-semibold text-tinta transition-colors hover:text-brasa-escura"
-      >
-        Entrar
-      </Link>
-      <ActionLink href="/cadastro">Começar grátis</ActionLink>
-    </>
-  )
-
+export function Navbar() {
   return (
     <header className="sticky top-0 z-50 border-b border-cobalto/15 bg-cal/90 backdrop-blur-md">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -78,9 +45,13 @@ export async function Navbar() {
             ))}
           </nav>
 
-          <div className="hidden items-center gap-2 md:flex">{autenticacao}</div>
+          <div className="hidden items-center gap-2 md:flex">
+            <NavbarAuth />
+          </div>
 
-          <MobileNav links={LINKS}>{autenticacao}</MobileNav>
+          <MobileNav links={LINKS}>
+            <NavbarAuth />
+          </MobileNav>
         </div>
       </div>
     </header>

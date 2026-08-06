@@ -63,14 +63,7 @@ No painel do Supabase:
 2. Abra o SQL Editor.
 3. Execute as migrations na ordem correta.
 
-A ordem recomendada é:
-1. 00001_initial_schema.sql
-2. 00002_rls_policies.sql
-3. 00003_security_fixes.sql
-4. 00003_storage_buckets.sql
-5. 00004_stripe_idempotency.sql
-
-Se houver arquivos adicionais na pasta, execute todos em ordem crescente.
+A ordem é a numérica dos arquivos em [supabase/migrations](supabase/migrations) — execute todos, em ordem crescente, do `00001` até o último.
 
 ## 7. Verificar se o banco foi criado corretamente
 

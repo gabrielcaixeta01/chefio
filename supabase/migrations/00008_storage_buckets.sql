@@ -1,6 +1,8 @@
 -- ============================================================
--- Migration 00003: Storage Buckets e Políticas
--- Execute APÓS 00002_rls_policies.sql
+-- Migration 00008: Storage Buckets e Políticas
+-- Execute APÓS 00007_close_self_update_holes.sql
+-- Renomeada de 00003 (06/08/2026) — colidia com 00003_security_fixes.sql,
+-- as duas foram criadas com o mesmo prefixo. Conteúdo não muda.
 -- OBS: Buckets devem ser criados manualmente no dashboard do Supabase
 --      em Storage > New bucket, depois execute este SQL para as policies
 -- ============================================================

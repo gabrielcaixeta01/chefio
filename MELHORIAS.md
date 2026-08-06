@@ -10,46 +10,13 @@ Backlog de dívida técnica. Revisão inicial em 05/08/2026, reavaliação compl
 
 ## 🔴 Quebrado — impede o fluxo de ponta a ponta
 
-- [ ] **Upload de vídeo não funciona — a feature central do produto**
-  `components/courses/VideoUploader.tsx:63-66` faz `PUT` direto pra `https://video.bunnycdn.com/library/{id}/videos/{guid}` **sem o header `AccessKey`**. Esse endpoint do Bunny exige a chave, então todo upload retorna 401. Mandar a API key pro browser não é opção (vazamento).
-  **Fix:** upload via TUS com assinatura pré-computada no servidor — `sha256(libraryId + apiKey + expiration + videoId)`. O `tus-js-client` já está no `package.json` e nunca foi importado: o plano original era esse e ficou pela metade.
-
-- [ ] **Onboarding do professor é inalcançável**
-  Professor recém-cadastrado tem `role = 'student'` (correto, pela 00003), e `middleware.ts:45` barra `/professor/*` pra quem não é `teacher`. Ou seja: **ninguém com `status = 'pending'` consegue abrir `/professor/onboarding`**. O único caminho real de ativação é o admin em `/admin/professores`, o que inverte a intenção da tela (ela existe pra ser o portão *antes* de vender).
-  **Fix:** decidir o fluxo — ou libera `/professor/onboarding` no middleware pra quem tem `teacher_profiles` pendente, ou move a tela pra dentro de `/aluno` enquanto não for aprovado.
-
-- [ ] **`connect/return` escreve numa coluna que o trigger da 00007 bloqueia**
-  `app/api/stripe/connect/return/route.ts:26-29` faz `update({ status: 'active' })` com o client da **sessão do usuário**. O trigger `guard_teacher_profile_admin_columns` (00007) levanta exceção nesse caso. O erro não é checado, então a rota redireciona pra `?success=true` com o status inalterado — falha silenciosa.
-  Hoje não explode só porque o admin já ativou antes e o update vira no-op. O comentário da 00007 afirma que o grep confirmou que nenhum client escreve em `status`; esse arquivo passou despercebido.
-  **Fix:** usar `createAdminClient()` na rota — ela é server-side e já valida `charges_enabled` contra o Stripe, então é uma escrita legítima de sistema, não de usuário.
-
-- [ ] **`refresh_url` do Stripe aponta pra rota que só aceita POST**
-  `app/api/stripe/connect/onboarding/route.ts:52` manda o Stripe redirecionar o browser (GET) pra `/api/stripe/connect/onboarding`, que só exporta `POST` → 405. Quem abandona o formulário do Stripe cai numa tela de erro.
-  **Fix:** apontar `refresh_url` pra `/professor/onboarding` (a página), não pra rota de API.
-
-- [ ] **Erro de checkout de curso vira JSON cru na tela**
-  `app/(public)/curso/[slug]/page.tsx:152` usa `<form action="/api/stripe/checkout" method="POST">` — navegação de verdade. Qualquer `NextResponse.json({ error }, { status })` da rota é renderizado como texto puro no navegador.
-  **Fix:** trocar os `json()` de erro por `NextResponse.redirect` com query de erro, como a rota já faz nos caminhos de sucesso.
-
-- [ ] **Carrinho nunca é limpo depois de pagar**
-  `clear()` só é chamado pelo botão "Limpar carrinho" em `components/store/CartDrawer.tsx`. Depois do checkout o usuário volta pra `/aluno/pedidos?success=true` com o carrinho cheio e pode comprar de novo sem perceber.
-  **Fix:** limpar ao detectar `?success=true`, ou (melhor) antes de redirecionar pro Stripe, já que o carrinho é só localStorage.
+Todos os 6 itens abaixo foram corrigidos em 06/08/2026 — ver `## ✅ Resolvido (06/08/2026)`.
 
 ---
 
 ## 🟠 Correção de dados
 
-- [ ] **Baixa de estoque não é atômica**
-  `app/api/stripe/webhook/route.ts:159-166` lê `stock`, calcula em JS e escreve. Dois webhooks concorrentes perdem uma baixa. E se o insert de `order_items` falhar, o pedido já foi criado e o estoque já foi debitado — sem rollback.
-  **Fix:** RPC transacional que cria `orders` + `order_items` e faz `update products set stock = stock - $1` numa transação só.
-
-- [ ] **Duas migrations com o mesmo número**
-  `00003_security_fixes.sql` e `00003_storage_buckets.sql`. Não há `supabase/config.toml` — as migrations são coladas à mão no SQL Editor, então hoje "funciona", mas inviabiliza `supabase db push` e o `SUPABASE_MIGRATION_GUIDE.md:70` já precisa desambiguar a ordem em prosa.
-  **Fix:** renomear `00003_storage_buckets.sql` → `00008_storage_buckets.sql` e atualizar o guia.
-
-- [ ] **`orders.status` tem estados inalcançáveis**
-  `shipped` e `delivered` são renderizados em `app/(aluno)/aluno/pedidos/page.tsx:40-41` e existem no CHECK constraint, mas nenhuma tela admin muda o status. O admin tem Produtos, mas não tem Pedidos.
-  **Fix:** ou uma tela `/admin/pedidos` com transição de status, ou tirar os dois estados do constraint e da UI.
+Todos os 3 itens desta seção foram corrigidos em 06/08/2026 — ver `## ✅ Resolvido (06/08/2026)`.
 
 ---
 
@@ -116,13 +83,25 @@ Backlog de dívida técnica. Revisão inicial em 05/08/2026, reavaliação compl
 
 ## Ordem sugerida
 
-1. **Upload de vídeo** — sem isso não existe produto.
-2. **Fluxo de professor** — onboarding inalcançável, `connect/return` bloqueado, `refresh_url` 405. Os três são o mesmo caminho de usuário, resolve junto.
-3. **Checkout** — erro em JSON na tela e carrinho não limpo. Baratos, ambos visíveis pro usuário final.
-4. **Estoque atômico** e **renomear a migration duplicada**.
-5. **Páginas públicas dinâmicas** — tirar a Navbar da dependência de `cookies()`.
-6. **Limpeza** — deps órfãs, `card.tsx`, view `teacher_profiles_public`, tipos do React.
-7. **Performance com volume** — RPC de agregação e paginação. Só valem a pena com mais dados; deixados por último de propósito.
+🔴 Quebrado e 🟠 Correção de dados resolvidos por completo. Restante:
+
+1. **Páginas públicas dinâmicas** — tirar a Navbar da dependência de `cookies()`.
+2. **Limpeza** — deps órfãs, `card.tsx`, view `teacher_profiles_public`, tipos do React.
+3. **Performance com volume** — RPC de agregação e paginação. Só valem a pena com mais dados; deixados por último de propósito.
+
+---
+
+## ✅ Resolvido (06/08/2026)
+
+- [x] **Upload de vídeo não funcionava** — `app/api/bunny/upload-url/route.ts`, `components/courses/VideoUploader.tsx`. Rota passou a devolver credenciais TUS assinadas (`sha256(libraryId + apiKey + expiration + videoId)`, a `apiKey` nunca sai do servidor); o componente usa `tus-js-client` (`Upload`) pro envio resumível em vez do `PUT` cru que faltava `AccessKey`.
+- [x] **Onboarding do professor era inalcançável** — `app/(aluno)/aluno/page.tsx`. Quem pediu pra ser professor e está com `teacher_profiles.status = 'pending'` (role ainda `student`) vê um aviso no dashboard do aluno em vez de esbarrar num redirect silencioso pro `/professor/onboarding` que o middleware nunca deixaria abrir.
+- [x] **`connect/return` escrevia numa coluna que o trigger da 00007 bloqueia** — `app/api/stripe/connect/return/route.ts`. `update({ status: 'active' })` passou a usar `createAdminClient()`; é uma escrita de sistema (após validar `charges_enabled` no Stripe), não do usuário.
+- [x] **`refresh_url` do Stripe apontava pra rota POST-only** — `app/api/stripe/connect/onboarding/route.ts`. Agora aponta pra `/professor/onboarding` (a página). Aproveitado pra trocar a checagem de role por `roleFromUser(user)` (JWT) em vez de `select` em `profiles`.
+- [x] **Erro de checkout de curso vazava JSON cru na tela** — `app/api/stripe/checkout/route.ts`, `app/(public)/curso/[slug]/page.tsx`, `app/(public)/cursos/page.tsx`. Os três `NextResponse.json({error})` viraram `redirect` com `?erro=`; as duas páginas leem a query e mostram um banner.
+- [x] **Carrinho nunca era limpo depois de pagar** — `components/store/ClearCartOnSuccess.tsx` (novo), montado em `/aluno/pedidos` quando a URL chega com `?success=true`. Limpa e tira a query da URL (`router.replace`), pra um refresh ou link salvo não apagar um carrinho novo.
+- [x] **Baixa de estoque não era atômica** — `supabase/migrations/00009_atomic_product_order.sql`, `app/api/stripe/webhook/route.ts`. RPC `create_product_order` cria `orders` + `order_items` e debita `products.stock` numa transação só, com `select ... for update` travando a linha do produto (preço e estoque lidos consistentes, sem lost update entre webhooks concorrentes). Idempotência por `stripe_payment_intent_id` migrou pra dentro da função (incluindo o caso de corrida entre dois webhooks quase simultâneos, via `exception when unique_violation`).
+- [x] **Duas migrations `00003`** — `00003_storage_buckets.sql` renomeada pra `00008_storage_buckets.sql` (conteúdo idêntico). `SUPABASE_MIGRATION_GUIDE.md` parou de listar a ordem em prosa e passou a apontar pra pasta, que agora tem numeração única.
+- [x] **`orders.status` tinha estados inalcançáveis** — `app/(admin)/admin/pedidos/page.tsx` (novo), `components/admin/OrderStatusActions.tsx` (novo), `components/layout/AdminSidebar.tsx`. Tela de pedidos no admin, com ação pra avançar `paid → shipped → delivered` (RLS já cobria via `orders_admin_all`, não precisou de migration nova).
 
 ---
 

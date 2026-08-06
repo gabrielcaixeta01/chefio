@@ -246,6 +246,14 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      create_product_order: {
+        Args: {
+          p_student_id: string
+          p_stripe_payment_intent_id: string | null
+          p_items: { product_id: string; quantity: number }[]
+        }
+        Returns: string
+      }
     }
     Enums: Record<string, never>
     CompositeTypes: Record<string, never>

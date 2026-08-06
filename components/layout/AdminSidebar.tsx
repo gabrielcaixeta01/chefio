@@ -1,5 +1,5 @@
 import { Sidebar } from './Sidebar'
-import { LayoutDashboard, Users, BookOpen, DollarSign, Package, ClipboardList } from 'lucide-react'
+import { LayoutDashboard, Users, BookOpen, DollarSign, Package, ShoppingBag, ClipboardList } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 
 export async function AdminSidebar() {
@@ -15,6 +15,7 @@ export async function AdminSidebar() {
     { label: 'Cursos', href: '/admin/cursos', icon: BookOpen },
     { label: 'Financeiro', href: '/admin/financeiro', icon: DollarSign },
     { label: 'Produtos', href: '/admin/produtos', icon: Package },
+    { label: 'Pedidos', href: '/admin/pedidos', icon: ShoppingBag },
     { label: 'Matrículas', href: '/admin/matriculas', icon: ClipboardList },
   ]
 

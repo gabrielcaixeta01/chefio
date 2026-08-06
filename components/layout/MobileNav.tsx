@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils'
 
 interface MobileNavProps {
   links: Array<{ href: string; label: string }>
-  /** Bloco de autenticação renderizado no servidor pela Navbar */
+  /** Bloco de autenticação (<NavbarAuth />, client-side) passado pela Navbar */
   children: React.ReactNode
 }
 

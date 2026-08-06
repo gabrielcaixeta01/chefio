@@ -117,57 +117,21 @@ async function handleProductOrder(
     return NextResponse.json({ ok: true })
   }
 
-  const total = (session.amount_total ?? 0) / 100
   const paymentIntentId = typeof session.payment_intent === 'string' ? session.payment_intent : null
 
-  const { data: order, error: orderError } = await supabase
-    .from('orders')
-    .insert({
-      student_id: studentId,
-      status: 'paid',
-      total,
-      stripe_payment_intent_id: paymentIntentId,
-    })
-    .select('id')
-    .single()
+  // Insert de orders/order_items + baixa de estoque rodam numa transação só
+  // dentro da função (00009_atomic_product_order.sql) — preço e estoque são
+  // lidos com a linha travada, então dois webhooks concorrentes pro mesmo
+  // produto não perdem baixa um do outro.
+  const { error: orderError } = await supabase.rpc('create_product_order', {
+    p_student_id: studentId,
+    p_stripe_payment_intent_id: paymentIntentId,
+    p_items: items.map((i) => ({ product_id: i.productId, quantity: i.quantity })),
+  })
 
   if (orderError) {
-    if (orderError.code === '23505') {
-      // Pedido já registrado — evento repetido.
-      return NextResponse.json({ ok: true })
-    }
     console.error('Order error:', orderError)
     return NextResponse.json({ error: 'Order failed' }, { status: 500 })
-  }
-
-  const { data: products } = await supabase
-    .from('products')
-    .select('id, price, stock')
-    .in('id', items.map((i) => i.productId))
-
-  const productById = new Map((products ?? []).map((p) => [p.id, p]))
-
-  const orderItems = items
-    .filter((item) => productById.has(item.productId))
-    .map((item) => ({
-      order_id: order.id,
-      product_id: item.productId,
-      quantity: item.quantity,
-      unit_price: productById.get(item.productId)!.price,
-    }))
-
-  if (orderItems.length > 0) {
-    const { error: itemsError } = await supabase.from('order_items').insert(orderItems)
-    if (itemsError) console.error('Order items error:', itemsError)
-  }
-
-  for (const item of items) {
-    const product = productById.get(item.productId)
-    if (!product) continue
-    await supabase
-      .from('products')
-      .update({ stock: Math.max(0, product.stock - item.quantity) })
-      .eq('id', item.productId)
   }
 
   return NextResponse.json({ ok: true })
