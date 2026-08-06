@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@/lib/supabase/server'
+import { getAuthedUser, roleFromUser } from '@/lib/auth/session'
 
 export async function POST(req: NextRequest) {
   if (!process.env.STRIPE_SECRET_KEY) {
@@ -9,19 +10,14 @@ export async function POST(req: NextRequest) {
 
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthedUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if (profile?.role !== 'teacher') {
+  if (roleFromUser(user) !== 'teacher') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
+
+  const supabase = await createClient()
 
   const { data: teacherProfile } = await supabase
     .from('teacher_profiles')
@@ -48,7 +44,10 @@ export async function POST(req: NextRequest) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
   const accountLink = await stripe.accountLinks.create({
     account: accountId,
-    refresh_url: `${appUrl}/api/stripe/connect/onboarding`,
+    // Precisa ser uma página (GET), não a rota de API acima (só aceita POST) —
+    // o Stripe redireciona o browser pra cá quando o link expira ou o professor
+    // abandona o formulário antes de terminar.
+    refresh_url: `${appUrl}/professor/onboarding`,
     return_url: `${appUrl}/api/stripe/connect/return`,
     type: 'account_onboarding',
   })

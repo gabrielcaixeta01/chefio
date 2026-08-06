@@ -7,9 +7,11 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.redirect(new URL('/login', req.url), 302)
 
+  // Vem de um <form> real (não fetch) — um NextResponse.json aqui renderiza
+  // JSON cru na tela em vez de mostrar erro na página do curso.
   const formData = await req.formData()
   const courseId = formData.get('courseId') as string
-  if (!courseId) return NextResponse.json({ error: 'Missing courseId' }, { status: 400 })
+  if (!courseId) return NextResponse.redirect(new URL('/cursos?erro=curso_invalido', req.url), 302)
 
   const { data: course } = await supabase
     .from('courses')
@@ -18,7 +20,7 @@ export async function POST(req: NextRequest) {
     .eq('status', 'approved')
     .single()
 
-  if (!course) return NextResponse.json({ error: 'Course not found' }, { status: 404 })
+  if (!course) return NextResponse.redirect(new URL('/cursos?erro=curso_indisponivel', req.url), 302)
 
   // Check not already enrolled
   const { data: existing } = await supabase
@@ -45,7 +47,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (!process.env.STRIPE_SECRET_KEY) {
-    return NextResponse.json({ error: 'Stripe não configurado' }, { status: 503 })
+    return NextResponse.redirect(new URL(`/curso/${course.slug}?erro=stripe_nao_configurado`, req.url), 302)
   }
 
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)

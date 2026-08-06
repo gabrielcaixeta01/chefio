@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 
 export async function GET(req: NextRequest) {
   if (!process.env.STRIPE_SECRET_KEY) {
@@ -22,7 +22,11 @@ export async function GET(req: NextRequest) {
   if (teacherProfile?.stripe_account_id) {
     const account = await stripe.accounts.retrieve(teacherProfile.stripe_account_id)
     if (account.charges_enabled) {
-      await supabase
+      // Ativação de conta é decisão do sistema (Stripe confirmou charges_enabled),
+      // não do próprio professor — a trigger guard_teacher_profile_admin_columns
+      // (00007) bloqueia update de `status` pelo client da sessão do usuário.
+      const admin = createAdminClient()
+      await admin
         .from('teacher_profiles')
         .update({ status: 'active' })
         .eq('user_id', user.id)

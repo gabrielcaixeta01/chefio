@@ -2,17 +2,28 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
-import { BookOpen, PlayCircle } from 'lucide-react'
+import { BookOpen, PlayCircle, ChefHat } from 'lucide-react'
 
 export default async function AlunoDashboard() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const { data: enrollments } = await supabase
-    .from('enrollments')
-    .select('*, course:courses(id, title, slug, thumbnail_url, teacher_id, teacher:profiles(name))')
-    .eq('student_id', user!.id)
-    .order('created_at', { ascending: false })
+  const [{ data: enrollments }, { data: pendingTeacherProfile }] = await Promise.all([
+    supabase
+      .from('enrollments')
+      .select('*, course:courses(id, title, slug, thumbnail_url, teacher_id, teacher:profiles(name))')
+      .eq('student_id', user!.id)
+      .order('created_at', { ascending: false }),
+    // Quem pediu pra ser professor no cadastro continua com role='student'
+    // até o admin aprovar (ver 00003_security_fixes.sql) — não tem acesso a
+    // /professor/* nesse meio tempo, então o aviso mora aqui.
+    supabase
+      .from('teacher_profiles')
+      .select('status')
+      .eq('user_id', user!.id)
+      .eq('status', 'pending')
+      .maybeSingle(),
+  ])
 
   return (
     <div>
@@ -25,6 +36,18 @@ export default async function AlunoDashboard() {
           <Button variant="outline">Explorar mais cursos</Button>
         </Link>
       </div>
+
+      {pendingTeacherProfile && (
+        <div className="flex items-start gap-3 mb-8 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+          <ChefHat className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-amber-800 text-sm font-medium">Seu cadastro como professor está em análise</p>
+            <p className="text-amber-700 text-xs mt-1">
+              Assim que for aprovado, você ganha acesso à área do professor pra publicar cursos e configurar recebimentos. Enquanto isso, pode usar a plataforma normalmente como aluno.
+            </p>
+          </div>
+        </div>
+      )}
 
       {!enrollments || enrollments.length === 0 ? (
         <div className="text-center py-20 bg-white rounded-xl border border-gray-200">

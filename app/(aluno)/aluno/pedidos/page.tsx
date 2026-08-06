@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency } from '@/lib/utils'
+import { ClearCartOnSuccess } from '@/components/store/ClearCartOnSuccess'
 import { Package, CheckCircle } from 'lucide-react'
 
 export const metadata: Metadata = { title: 'Meus Pedidos' }
@@ -43,6 +44,8 @@ export default async function OrdersPage({
 
   return (
     <div>
+      {params.success && <ClearCartOnSuccess />}
+
       <h1 className="text-2xl font-bold text-gray-900 mb-2">Meus Pedidos</h1>
       <p className="text-gray-500 mb-6">{orders?.length ?? 0} pedido(s)</p>
 

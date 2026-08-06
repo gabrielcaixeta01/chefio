@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { Search, X } from 'lucide-react'
+import { AlertCircle, Search, X } from 'lucide-react'
 import { createPublicClient } from '@/lib/supabase/public'
 import { COURSE_CATEGORIES } from '@/lib/utils'
 import { CourseCard, type CourseCardData } from '@/components/curso/CourseCard'
@@ -9,6 +9,11 @@ import { cn } from '@/lib/utils'
 
 export const metadata: Metadata = { title: 'Explorar cursos' }
 export const revalidate = 300
+
+const ERROS_CHECKOUT: Record<string, string> = {
+  curso_invalido: 'Não foi possível identificar o curso selecionado. Tente de novo.',
+  curso_indisponivel: 'Esse curso não está mais disponível.',
+}
 
 /** Monta a querystring preservando o que já está filtrado. */
 function href(params: { category?: string; q?: string }) {
@@ -22,9 +27,9 @@ function href(params: { category?: string; q?: string }) {
 export default async function CourseCatalogPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string; q?: string }>
+  searchParams: Promise<{ category?: string; q?: string; erro?: string }>
 }) {
-  const { category, q } = await searchParams
+  const { category, q, erro } = await searchParams
 
   let courses: CourseCardData[] = []
   try {
@@ -71,6 +76,12 @@ export default async function CourseCatalogPage({
       {/* ---------- Filtros ---------- */}
       <section className="border-b border-cobalto/15 bg-cal-fundo">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+          {erro && ERROS_CHECKOUT[erro] && (
+            <div className="mb-6 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+              <p>{ERROS_CHECKOUT[erro]}</p>
+            </div>
+          )}
           {/* GET nativo: busca sem client component nem JS */}
           <form action="/cursos" method="get" className="flex max-w-lg gap-2">
             {category && <input type="hidden" name="category" value={category} />}

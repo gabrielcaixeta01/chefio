@@ -6,7 +6,11 @@ import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { formatCurrency, formatDuration } from '@/lib/utils'
-import { Lock, Play, Clock, Users, ChefHat, BookOpen } from 'lucide-react'
+import { AlertCircle, Lock, Play, Clock, Users, ChefHat, BookOpen } from 'lucide-react'
+
+const ERROS_CHECKOUT: Record<string, string> = {
+  stripe_nao_configurado: 'Pagamentos estão temporariamente indisponíveis. Tente novamente em instantes.',
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
@@ -19,8 +23,15 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return { title: course?.title ?? 'Curso', description: course?.description ?? '' }
 }
 
-export default async function CourseDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function CourseDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>
+  searchParams: Promise<{ erro?: string }>
+}) {
   const { slug } = await params
+  const { erro } = await searchParams
   const supabase = await createClient()
 
   const { data: course } = await supabase
@@ -136,6 +147,13 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
             <p className="text-3xl font-bold text-gray-900 mb-1">
               {course.price === 0 ? 'Grátis' : formatCurrency(course.price)}
             </p>
+
+            {erro && ERROS_CHECKOUT[erro] && (
+              <div className="mt-4 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                <p>{ERROS_CHECKOUT[erro]}</p>
+              </div>
+            )}
 
             {isEnrolled ? (
               <div className="mt-4 space-y-3">
