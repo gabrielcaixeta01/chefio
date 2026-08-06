@@ -1,6 +1,7 @@
 import { Sidebar } from './Sidebar'
 import { createClient } from '@/lib/supabase/server'
 import { getAuthedUser } from '@/lib/auth/session'
+import type { NavItem } from './Sidebar'
 
 export async function AdminSidebar() {
   // getAuthedUser() é cache()-deduped — o layout já chamou requireRole().
@@ -18,7 +19,7 @@ export async function AdminSidebar() {
     { label: 'Produtos', href: '/admin/produtos', icon: 'Package' },
     { label: 'Pedidos', href: '/admin/pedidos', icon: 'ShoppingBag' },
     { label: 'Matrículas', href: '/admin/matriculas', icon: 'ClipboardList' },
-  ]
+  ] satisfies NavItem[]
 
   return (
     <Sidebar

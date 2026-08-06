@@ -1,6 +1,7 @@
 import { Sidebar } from './Sidebar'
 import { createClient } from '@/lib/supabase/server'
 import { getAuthedUser } from '@/lib/auth/session'
+import type { NavItem } from './Sidebar'
 
 export async function ProfessorSidebar() {
   // getAuthedUser() é cache()-deduped — o layout já chamou requireRole().
@@ -16,7 +17,7 @@ export async function ProfessorSidebar() {
     { label: 'Faturamento', href: '/professor/faturamento', icon: 'DollarSign' },
     { label: 'Documentos', href: '/professor/documentos', icon: 'FileText' },
     { label: 'Conta Stripe', href: '/professor/onboarding', icon: 'CreditCard' },
-  ]
+  ] satisfies NavItem[]
 
   return (
     <Sidebar
