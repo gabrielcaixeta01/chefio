@@ -1,5 +1,4 @@
 import { Sidebar } from './Sidebar'
-import { LayoutDashboard, Users, BookOpen, DollarSign, Package, ShoppingBag, ClipboardList } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getAuthedUser } from '@/lib/auth/session'
 
@@ -12,13 +11,13 @@ export async function AdminSidebar() {
     : { data: null }
 
   const items = [
-    { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-    { label: 'Professores', href: '/admin/professores', icon: Users },
-    { label: 'Cursos', href: '/admin/cursos', icon: BookOpen },
-    { label: 'Financeiro', href: '/admin/financeiro', icon: DollarSign },
-    { label: 'Produtos', href: '/admin/produtos', icon: Package },
-    { label: 'Pedidos', href: '/admin/pedidos', icon: ShoppingBag },
-    { label: 'Matrículas', href: '/admin/matriculas', icon: ClipboardList },
+    { label: 'Dashboard', href: '/admin', icon: 'LayoutDashboard' },
+    { label: 'Professores', href: '/admin/professores', icon: 'Users' },
+    { label: 'Cursos', href: '/admin/cursos', icon: 'BookOpen' },
+    { label: 'Financeiro', href: '/admin/financeiro', icon: 'DollarSign' },
+    { label: 'Produtos', href: '/admin/produtos', icon: 'Package' },
+    { label: 'Pedidos', href: '/admin/pedidos', icon: 'ShoppingBag' },
+    { label: 'Matrículas', href: '/admin/matriculas', icon: 'ClipboardList' },
   ]
 
   return (

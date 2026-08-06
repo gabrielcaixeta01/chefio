@@ -1,5 +1,4 @@
 import { Sidebar } from './Sidebar'
-import { LayoutDashboard, BookOpen, DollarSign, FileText, CreditCard } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getAuthedUser } from '@/lib/auth/session'
 
@@ -12,11 +11,11 @@ export async function ProfessorSidebar() {
     : { data: null }
 
   const items = [
-    { label: 'Dashboard', href: '/professor', icon: LayoutDashboard },
-    { label: 'Meus Cursos', href: '/professor/cursos', icon: BookOpen },
-    { label: 'Faturamento', href: '/professor/faturamento', icon: DollarSign },
-    { label: 'Documentos', href: '/professor/documentos', icon: FileText },
-    { label: 'Conta Stripe', href: '/professor/onboarding', icon: CreditCard },
+    { label: 'Dashboard', href: '/professor', icon: 'LayoutDashboard' },
+    { label: 'Meus Cursos', href: '/professor/cursos', icon: 'BookOpen' },
+    { label: 'Faturamento', href: '/professor/faturamento', icon: 'DollarSign' },
+    { label: 'Documentos', href: '/professor/documentos', icon: 'FileText' },
+    { label: 'Conta Stripe', href: '/professor/onboarding', icon: 'CreditCard' },
   ]
 
   return (

@@ -1,5 +1,4 @@
 import { Sidebar } from './Sidebar'
-import { LayoutDashboard, BookOpen, ShoppingBag, Package } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getAuthedUser } from '@/lib/auth/session'
 
@@ -14,10 +13,10 @@ export async function AlunoSidebar() {
     : { data: null }
 
   const items = [
-    { label: 'Minha área', href: '/aluno', icon: LayoutDashboard },
-    { label: 'Meus cursos', href: '/aluno/cursos', icon: BookOpen },
-    { label: 'Loja', href: '/aluno/loja', icon: ShoppingBag },
-    { label: 'Pedidos', href: '/aluno/pedidos', icon: Package },
+    { label: 'Minha área', href: '/aluno', icon: 'LayoutDashboard' },
+    { label: 'Meus cursos', href: '/aluno/cursos', icon: 'BookOpen' },
+    { label: 'Loja', href: '/aluno/loja', icon: 'ShoppingBag' },
+    { label: 'Pedidos', href: '/aluno/pedidos', icon: 'Package' },
   ]
 
   return (

@@ -5,14 +5,36 @@ import { usePathname, useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { LogOut } from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
+import {
+  BookOpen,
+  ClipboardList,
+  CreditCard,
+  DollarSign,
+  FileText,
+  LayoutDashboard,
+  LogOut,
+  Package,
+  ShoppingBag,
+  Users,
+} from 'lucide-react'
 
 export interface NavItem {
   label: string
   href: string
-  icon: LucideIcon
+  icon: 'LayoutDashboard' | 'Users' | 'BookOpen' | 'DollarSign' | 'Package' | 'ShoppingBag' | 'ClipboardList' | 'FileText' | 'CreditCard'
 }
+
+const iconMap = {
+  LayoutDashboard,
+  Users,
+  BookOpen,
+  DollarSign,
+  Package,
+  ShoppingBag,
+  ClipboardList,
+  FileText,
+  CreditCard,
+} satisfies Record<NavItem['icon'], typeof LayoutDashboard>
 
 interface SidebarProps {
   title: string
@@ -46,7 +68,7 @@ export function Sidebar({ title, subtitle, items, userName }: SidebarProps) {
       {/* Nav */}
       <nav className="flex-1 p-4 space-y-1">
         {items.map((item) => {
-          const Icon = item.icon
+          const Icon = iconMap[item.icon]
           const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
           return (
             <Link
