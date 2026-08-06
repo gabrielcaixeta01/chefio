@@ -5,21 +5,16 @@ import { BookOpen, Users, DollarSign, Clock } from 'lucide-react'
 export default async function AdminDashboard() {
   const supabase = await createClient()
 
-  const [
-    { count: totalCourses },
-    { count: pendingCourses },
-    { count: totalTeachers },
-    { count: totalStudents },
-    { data: enrollments },
-  ] = await Promise.all([
-    supabase.from('courses').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
-    supabase.from('courses').select('*', { count: 'exact', head: true }).eq('status', 'pending_review'),
-    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'teacher'),
-    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'student'),
-    supabase.from('enrollments').select('amount_paid'),
-  ])
+  // Uma RPC no lugar de 5 round trips — a soma de amount_paid roda no
+  // Postgres, não puxa a tabela de enrollments inteira pro Node.
+  const { data: statsRows } = await supabase.rpc('get_admin_dashboard_stats')
+  const s = statsRows?.[0]
 
-  const totalRevenue = (enrollments ?? []).reduce((sum, e: { amount_paid?: number | null }) => sum + (e.amount_paid ?? 0), 0)
+  const totalCourses = s?.total_courses ?? 0
+  const pendingCourses = s?.pending_courses ?? 0
+  const totalTeachers = s?.total_teachers ?? 0
+  const totalStudents = s?.total_students ?? 0
+  const totalRevenue = s?.total_revenue ?? 0
 
   const stats = [
     { label: 'Receita Total', value: formatCurrency(totalRevenue), icon: DollarSign, color: 'text-green-600 bg-green-50' },

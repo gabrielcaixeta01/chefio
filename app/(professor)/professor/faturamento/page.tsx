@@ -12,54 +12,36 @@ export default async function BillingPage() {
   const supabase = await createClient()
   const user = await getAuthedUser()
 
-  const [{ data: teacherProfile }, { data: courses }, { data: payouts }] = await Promise.all([
+  // Receita por curso agrupada no Postgres (RPC filtra por auth.uid()
+  // internamente, não recebe o id como parâmetro) — antes isso puxava toda
+  // enrollment do professor pra somar/agrupar em JS.
+  const [{ data: teacherProfile }, { data: payouts }, { data: revenueByCourse }] = await Promise.all([
     supabase
       .from('teacher_profiles')
       .select('stripe_account_id, commission_rate, status')
       .eq('user_id', user!.id)
       .single(),
     supabase
-      .from('courses')
-      .select('id, title, price')
-      .eq('teacher_id', user!.id),
-    supabase
       .from('teacher_payouts')
       .select('*')
       .eq('teacher_id', user!.id)
       .order('created_at', { ascending: false })
       .limit(10),
+    supabase.rpc('get_my_teacher_revenue_by_course'),
   ])
 
   const commissionRate = teacherProfile?.commission_rate ?? 20
   const platformRate = commissionRate / 100
 
-  const courseIds = (courses ?? []).map((c) => c.id)
-
-  // Get enrollments
-  const { data: enrollments } = await supabase
-    .from('enrollments')
-    .select('id, amount_paid, course_id, created_at')
-    .in('course_id', courseIds.length > 0 ? courseIds : ['none'])
-    .order('created_at', { ascending: false })
-
-  const totalGross = (enrollments ?? []).reduce((sum, e) => sum + (e.amount_paid ?? 0), 0)
+  const soldCourses = (revenueByCourse ?? []).filter((c) => c.sale_count > 0)
+  const totalGross = soldCourses.reduce((sum, c) => sum + c.gross, 0)
+  const totalSales = soldCourses.reduce((sum, c) => sum + c.sale_count, 0)
   const totalNet = totalGross * (1 - platformRate)
-  const platformFee = totalGross * platformRate
 
-  // Group by course
-  const courseMap = Object.fromEntries((courses ?? []).map((c) => [c.id, c]))
-  const courseRevenue: Record<string, { title: string; count: number; gross: number }> = {}
-  for (const e of enrollments ?? []) {
-    if (!courseRevenue[e.course_id]) {
-      courseRevenue[e.course_id] = {
-        title: courseMap[e.course_id]?.title ?? 'Curso removido',
-        count: 0,
-        gross: 0,
-      }
-    }
-    courseRevenue[e.course_id].count++
-    courseRevenue[e.course_id].gross += e.amount_paid ?? 0
-  }
+  const courseRevenue: Record<string, { title: string; count: number; gross: number }> =
+    Object.fromEntries(
+      soldCourses.map((c) => [c.course_id, { title: c.title, count: c.sale_count, gross: c.gross }])
+    )
 
   return (
     <div>
@@ -112,7 +94,7 @@ export default async function BillingPage() {
             <p className="text-sm text-gray-500">Total de vendas</p>
             <Users className="h-4 w-4 text-gray-400" />
           </div>
-          <p className="text-2xl font-bold text-gray-900">{enrollments?.length ?? 0}</p>
+          <p className="text-2xl font-bold text-gray-900">{totalSales}</p>
         </div>
       </div>
 

@@ -1,23 +1,37 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency } from '@/lib/utils'
+import { Pagination } from '@/components/ui/pagination'
 import { ClipboardList } from 'lucide-react'
 
 export const metadata: Metadata = { title: 'Admin — Matrículas' }
 
-export default async function AdminEnrollmentsPage() {
+const PAGE_SIZE = 20
+
+export default async function AdminEnrollmentsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>
+}) {
+  const { page: pageParam } = await searchParams
+  const page = Math.max(1, Number(pageParam) || 1)
+  const from = (page - 1) * PAGE_SIZE
+  const to = from + PAGE_SIZE - 1
+
   const supabase = await createClient()
 
-  const { data: enrollments } = await supabase
+  const { data: enrollments, count } = await supabase
     .from('enrollments')
-    .select('*, course:courses(title), student:profiles(name)')
+    .select('*, course:courses(title), student:profiles(name)', { count: 'exact' })
     .order('created_at', { ascending: false })
-    .limit(100)
+    .range(from, to)
+
+  const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE))
 
   return (
     <div>
       <h1 className="text-2xl font-bold text-gray-900 mb-2">Matrículas</h1>
-      <p className="text-gray-500 mb-6">{enrollments?.length ?? 0} matrícula(s)</p>
+      <p className="text-gray-500 mb-6">{count ?? 0} matrícula(s)</p>
 
       {!enrollments || enrollments.length === 0 ? (
         <div className="bg-white rounded-xl border border-gray-200 p-16 text-center">
@@ -44,6 +58,8 @@ export default async function AdminEnrollmentsPage() {
           ))}
         </div>
       )}
+
+      <Pagination page={page} totalPages={totalPages} buildHref={(p) => `/admin/matriculas?page=${p}`} />
     </div>
   )
 }

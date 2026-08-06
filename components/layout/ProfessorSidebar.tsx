@@ -1,10 +1,12 @@
 import { Sidebar } from './Sidebar'
 import { LayoutDashboard, BookOpen, DollarSign, FileText, CreditCard } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
+import { getAuthedUser } from '@/lib/auth/session'
 
 export async function ProfessorSidebar() {
+  // getAuthedUser() é cache()-deduped — o layout já chamou requireRole().
+  const user = await getAuthedUser()
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
   const { data: profile } = user
     ? await supabase.from('profiles').select('name').eq('id', user.id).single()
     : { data: null }

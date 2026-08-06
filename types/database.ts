@@ -259,6 +259,28 @@ export type Database = {
         }
         Returns: string
       }
+      get_admin_dashboard_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          total_courses: number
+          pending_courses: number
+          total_teachers: number
+          total_students: number
+          total_revenue: number
+        }[]
+      }
+      get_admin_financial_totals: {
+        Args: Record<PropertyKey, never>
+        Returns: { total_gross: number; total_payouts: number; total_sales: number }[]
+      }
+      get_admin_monthly_revenue: {
+        Args: { months_back?: number }
+        Returns: { month: string; total: number }[]
+      }
+      get_my_teacher_revenue_by_course: {
+        Args: Record<PropertyKey, never>
+        Returns: { course_id: string; title: string; sale_count: number; gross: number }[]
+      }
     }
     Enums: Record<string, never>
     CompositeTypes: Record<string, never>

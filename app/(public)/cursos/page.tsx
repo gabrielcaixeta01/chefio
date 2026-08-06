@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { AlertCircle, Search, X } from 'lucide-react'
+import { AlertCircle, ChevronLeft, ChevronRight, Search, X } from 'lucide-react'
 import { createPublicClient } from '@/lib/supabase/public'
 import { COURSE_CATEGORIES } from '@/lib/utils'
 import { CourseCard, type CourseCardData } from '@/components/curso/CourseCard'
@@ -10,16 +10,19 @@ import { cn } from '@/lib/utils'
 export const metadata: Metadata = { title: 'Explorar cursos' }
 export const revalidate = 300
 
+const PAGE_SIZE = 12
+
 const ERROS_CHECKOUT: Record<string, string> = {
   curso_invalido: 'Não foi possível identificar o curso selecionado. Tente de novo.',
   curso_indisponivel: 'Esse curso não está mais disponível.',
 }
 
 /** Monta a querystring preservando o que já está filtrado. */
-function href(params: { category?: string; q?: string }) {
+function href(params: { category?: string; q?: string; page?: number }) {
   const sp = new URLSearchParams()
   if (params.category) sp.set('category', params.category)
   if (params.q) sp.set('q', params.q)
+  if (params.page && params.page > 1) sp.set('page', String(params.page))
   const s = sp.toString()
   return s ? `/cursos?${s}` : '/cursos'
 }
@@ -27,28 +30,34 @@ function href(params: { category?: string; q?: string }) {
 export default async function CourseCatalogPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string; q?: string; erro?: string }>
+  searchParams: Promise<{ category?: string; q?: string; erro?: string; page?: string }>
 }) {
-  const { category, q, erro } = await searchParams
+  const { category, q, erro, page: pageParam } = await searchParams
+  const page = Math.max(1, Number(pageParam) || 1)
+  const from = (page - 1) * PAGE_SIZE
+  const to = from + PAGE_SIZE - 1
 
   let courses: CourseCardData[] = []
+  let total = 0
   try {
     const supabase = createPublicClient()
     let query = supabase
       .from('courses')
-      .select('id, title, slug, thumbnail_url, price, category, teacher:profiles(name)')
+      .select('id, title, slug, thumbnail_url, price, category, teacher:profiles(name)', { count: 'exact' })
       .eq('status', 'approved')
       .order('created_at', { ascending: false })
+      .range(from, to)
     if (category) query = query.eq('category', category)
     if (q) query = query.ilike('title', `%${q}%`)
-    const { data } = await query
+    const { data, count } = await query
     courses = (data as CourseCardData[] | null) ?? []
+    total = count ?? 0
   } catch {
     // Supabase não configurado
   }
 
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
   const filtrando = Boolean(category || q)
-  const total = courses.length
 
   // Montado por partes para não sair "Nenhum curso encontrado. em Panificação"
   const contexto = [category && `em ${category}`, q && `para “${q}”`]
@@ -156,11 +165,49 @@ export default async function CourseCatalogPage({
       <section className="bg-cal">
         <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
           {total > 0 ? (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {courses.map((course) => (
-                <CourseCard key={course.id} course={course} />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                {courses.map((course) => (
+                  <CourseCard key={course.id} course={course} />
+                ))}
+              </div>
+
+              {totalPages > 1 && (
+                <nav className="mt-10 flex items-center justify-center gap-3" aria-label="Paginação">
+                  <Link
+                    href={href({ category, q, page: page - 1 })}
+                    aria-disabled={page <= 1}
+                    tabIndex={page <= 1 ? -1 : undefined}
+                    className={cn(
+                      'flex items-center gap-1 rounded-sm border-2 px-3.5 py-1.5 text-sm font-semibold transition-colors',
+                      page <= 1
+                        ? 'pointer-events-none border-cobalto/10 text-tinta-suave/40'
+                        : 'border-cobalto/20 text-tinta hover:border-cobalto/50'
+                    )}
+                  >
+                    <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+                    Anterior
+                  </Link>
+                  <span className="text-sm text-tinta-suave">
+                    Página {page} de {totalPages}
+                  </span>
+                  <Link
+                    href={href({ category, q, page: page + 1 })}
+                    aria-disabled={page >= totalPages}
+                    tabIndex={page >= totalPages ? -1 : undefined}
+                    className={cn(
+                      'flex items-center gap-1 rounded-sm border-2 px-3.5 py-1.5 text-sm font-semibold transition-colors',
+                      page >= totalPages
+                        ? 'pointer-events-none border-cobalto/10 text-tinta-suave/40'
+                        : 'border-cobalto/20 text-tinta hover:border-cobalto/50'
+                    )}
+                  >
+                    Próxima
+                    <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                  </Link>
+                </nav>
+              )}
+            </>
           ) : filtrando ? (
             /* Vazio por causa do filtro — o caminho de saída é limpar o filtro */
             <div className="flex flex-col items-start gap-6 rounded-md border-2 border-dashed border-cobalto/30 p-10 sm:flex-row sm:items-center sm:justify-between">

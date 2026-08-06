@@ -1,40 +1,38 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency } from '@/lib/utils'
-import { DollarSign, TrendingUp, Users, BookOpen } from 'lucide-react'
+import { DollarSign, TrendingUp, Users } from 'lucide-react'
 
 export const metadata: Metadata = { title: 'Admin — Financeiro' }
 
 export default async function AdminFinancialPage() {
   const supabase = await createClient()
 
-  const { data: enrollments } = await supabase
-    .from('enrollments')
-    .select('amount_paid, created_at, course:courses(title, teacher_id, teacher:profiles(name))')
-    .order('created_at', { ascending: false })
+  // Totais e agrupamento mensal rodam no Postgres — antes isso puxava toda
+  // a tabela enrollments (e "total de payouts" nem era o total de verdade,
+  // só a soma dos últimos 20 que a lista abaixo carrega).
+  const [{ data: totalsRows }, { data: monthlyRows }, { data: recentSales }, { data: payouts }] = await Promise.all([
+    supabase.rpc('get_admin_financial_totals'),
+    supabase.rpc('get_admin_monthly_revenue', { months_back: 6 }),
+    supabase
+      .from('enrollments')
+      .select('amount_paid, created_at, course:courses(title, teacher_id, teacher:profiles(name))')
+      .order('created_at', { ascending: false })
+      .limit(15),
+    supabase
+      .from('teacher_payouts')
+      .select('amount, status, created_at, teacher:profiles(name)')
+      .order('created_at', { ascending: false })
+      .limit(20),
+  ])
 
-  const { data: payouts } = await supabase
-    .from('teacher_payouts')
-    .select('amount, status, created_at, teacher:profiles(name)')
-    .order('created_at', { ascending: false })
-    .limit(20)
-
-  const totalGross = (enrollments ?? []).reduce((s, e) => s + (e.amount_paid ?? 0), 0)
-
-  // Calculate platform commission (average 20%)
-  const totalPayouts = (payouts ?? []).reduce((s, p) => s + (p.amount ?? 0), 0)
+  const totals = totalsRows?.[0]
+  const totalGross = totals?.total_gross ?? 0
+  const totalPayouts = totals?.total_payouts ?? 0
+  const totalSales = totals?.total_sales ?? 0
   const platformRevenue = totalGross - totalPayouts
 
-  // Group by month (last 6 months)
-  const monthlyData: Record<string, number> = {}
-  for (const e of enrollments ?? []) {
-    const month = e.created_at.slice(0, 7) // YYYY-MM
-    monthlyData[month] = (monthlyData[month] ?? 0) + (e.amount_paid ?? 0)
-  }
-  const sortedMonths = Object.entries(monthlyData)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .slice(-6)
-
+  const sortedMonths: [string, number][] = (monthlyRows ?? []).map((r) => [r.month, r.total])
   const maxMonthly = Math.max(...sortedMonths.map(([, v]) => v), 1)
 
   const MONTH_NAMES: Record<string, string> = {
@@ -55,7 +53,7 @@ export default async function AdminFinancialPage() {
             <TrendingUp className="h-4 w-4 text-gray-400" />
           </div>
           <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalGross)}</p>
-          <p className="text-xs text-gray-400 mt-1">{enrollments?.length ?? 0} vendas</p>
+          <p className="text-xs text-gray-400 mt-1">{totalSales} vendas</p>
         </div>
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-3">
@@ -101,11 +99,11 @@ export default async function AdminFinancialPage() {
       {/* Últimas vendas */}
       <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
         <h2 className="font-semibold text-gray-900 mb-4">Últimas vendas</h2>
-        {!enrollments || enrollments.length === 0 ? (
+        {!recentSales || recentSales.length === 0 ? (
           <p className="text-sm text-gray-400 text-center py-6">Nenhuma venda ainda.</p>
         ) : (
           <div className="space-y-2">
-            {enrollments.slice(0, 15).map((e, i) => {
+            {recentSales.map((e, i) => {
               const course = e.course as any
               return (
                 <div key={i} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">

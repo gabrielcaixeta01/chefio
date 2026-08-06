@@ -1,20 +1,18 @@
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
-import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
-import { Button } from '@/components/ui/button'
+import { createPublicClient } from '@/lib/supabase/public'
 import { Badge } from '@/components/ui/badge'
+import { PurchaseBox } from '@/components/curso/PurchaseBox'
 import { formatCurrency, formatDuration } from '@/lib/utils'
-import { AlertCircle, Lock, Play, Clock, Users, ChefHat, BookOpen } from 'lucide-react'
+import { Lock, Play, Clock, ChefHat, BookOpen } from 'lucide-react'
 
-const ERROS_CHECKOUT: Record<string, string> = {
-  stripe_nao_configurado: 'Pagamentos estão temporariamente indisponíveis. Tente novamente em instantes.',
-}
+export const revalidate = 300
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const { data: course } = await supabase
     .from('courses')
     .select('title, description')
@@ -25,14 +23,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function CourseDetailPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ slug: string }>
-  searchParams: Promise<{ erro?: string }>
 }) {
   const { slug } = await params
-  const { erro } = await searchParams
-  const supabase = await createClient()
+  const supabase = createPublicClient()
 
   const { data: course } = await supabase
     .from('courses')
@@ -47,27 +42,13 @@ export default async function CourseDetailPage({
 
   if (!course) notFound()
 
-  const [{ data: { user } }, { data: teacherPublic }] = await Promise.all([
-    supabase.auth.getUser(),
-    // View pública (só user_id + bio) — o resto de teacher_profiles, como
-    // stripe_account_id, não deve vazar pro catálogo (00003_security_fixes.sql).
-    supabase
-      .from('teacher_profiles_public')
-      .select('bio')
-      .eq('user_id', course.teacher_id)
-      .maybeSingle(),
-  ])
-
-  let isEnrolled = false
-  if (user) {
-    const { data: enrollment } = await supabase
-      .from('enrollments')
-      .select('id')
-      .eq('student_id', user.id)
-      .eq('course_id', course.id)
-      .single()
-    isEnrolled = !!enrollment
-  }
+  // View pública (só user_id + bio) — o resto de teacher_profiles, como
+  // stripe_account_id, não deve vazar pro catálogo (00003_security_fixes.sql).
+  const { data: teacherPublic } = await supabase
+    .from('teacher_profiles_public')
+    .select('bio')
+    .eq('user_id', course.teacher_id)
+    .maybeSingle()
 
   const lessons = (course.lessons as any[]).sort((a, b) => a.order_index - b.order_index)
   const totalDuration = lessons.reduce((sum: number, l: any) => sum + (l.duration_seconds ?? 0), 0)
@@ -160,40 +141,11 @@ export default async function CourseDetailPage({
               {course.price === 0 ? 'Grátis' : formatCurrency(course.price)}
             </p>
 
-            {erro && ERROS_CHECKOUT[erro] && (
-              <div className="mt-4 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-                <p>{ERROS_CHECKOUT[erro]}</p>
-              </div>
-            )}
-
-            {isEnrolled ? (
-              <div className="mt-4 space-y-3">
-                <Badge variant="success" className="w-full justify-center py-2">
-                  ✓ Você já tem este curso
-                </Badge>
-                <Link href={`/aluno/cursos/${course.slug}`} className="block">
-                  <Button className="w-full">Continuar assistindo</Button>
-                </Link>
-              </div>
-            ) : (
-              <div className="mt-4">
-                {user ? (
-                  <form action="/api/stripe/checkout" method="POST">
-                    <input type="hidden" name="courseId" value={course.id} />
-                    <Button type="submit" className="w-full" size="lg">
-                      {course.price === 0 ? 'Inscrever-se grátis' : 'Comprar curso'}
-                    </Button>
-                  </form>
-                ) : (
-                  <Link href={`/login?next=/curso/${course.slug}`}>
-                    <Button className="w-full" size="lg">
-                      {course.price === 0 ? 'Inscrever-se grátis' : 'Comprar curso'}
-                    </Button>
-                  </Link>
-                )}
-              </div>
-            )}
+            <Suspense
+              fallback={<div className="mt-4 h-12 w-full rounded-md bg-gray-100 animate-pulse" aria-hidden="true" />}
+            >
+              <PurchaseBox courseId={course.id} courseSlug={course.slug} price={course.price} />
+            </Suspense>
 
             <ul className="mt-6 space-y-2 text-sm text-gray-500">
               <li className="flex items-center gap-2">

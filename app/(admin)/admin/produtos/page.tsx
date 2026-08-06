@@ -2,24 +2,39 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency } from '@/lib/utils'
 import { ProductForm } from '@/components/admin/ProductForm'
+import { Pagination } from '@/components/ui/pagination'
 import { Package, Plus } from 'lucide-react'
 
 export const metadata: Metadata = { title: 'Admin — Produtos' }
 
-export default async function AdminProductsPage() {
+const PAGE_SIZE = 20
+
+export default async function AdminProductsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>
+}) {
+  const { page: pageParam } = await searchParams
+  const page = Math.max(1, Number(pageParam) || 1)
+  const from = (page - 1) * PAGE_SIZE
+  const to = from + PAGE_SIZE - 1
+
   const supabase = await createClient()
 
-  const { data: products } = await supabase
+  const { data: products, count } = await supabase
     .from('products')
-    .select('*')
+    .select('*', { count: 'exact' })
     .order('created_at', { ascending: false })
+    .range(from, to)
+
+  const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE))
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Produtos</h1>
-          <p className="text-gray-500 mt-1">{products?.length ?? 0} produto(s) cadastrado(s)</p>
+          <p className="text-gray-500 mt-1">{count ?? 0} produto(s) cadastrado(s)</p>
         </div>
       </div>
 
@@ -61,6 +76,8 @@ export default async function AdminProductsPage() {
               ))}
             </div>
           )}
+
+          <Pagination page={page} totalPages={totalPages} buildHref={(p) => `/admin/produtos?page=${p}`} />
         </div>
 
         {/* Formulário */}

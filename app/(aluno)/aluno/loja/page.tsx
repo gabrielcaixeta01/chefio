@@ -3,18 +3,33 @@ import { createClient } from '@/lib/supabase/server'
 import { formatCurrency } from '@/lib/utils'
 import { AddToCartButton } from '@/components/store/AddToCartButton'
 import { CartButton } from '@/components/store/CartDrawer'
+import { Pagination } from '@/components/ui/pagination'
 import { Package } from 'lucide-react'
 
 export const metadata: Metadata = { title: 'Loja Chefio' }
 
-export default async function StorePagePage() {
+const PAGE_SIZE = 12
+
+export default async function StorePagePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>
+}) {
+  const { page: pageParam } = await searchParams
+  const page = Math.max(1, Number(pageParam) || 1)
+  const from = (page - 1) * PAGE_SIZE
+  const to = from + PAGE_SIZE - 1
+
   const supabase = await createClient()
 
-  const { data: products } = await supabase
+  const { data: products, count } = await supabase
     .from('products')
-    .select('id, name, description, price, image_url')
+    .select('id, name, description, price, image_url', { count: 'exact' })
     .eq('is_active', true)
     .order('created_at', { ascending: false })
+    .range(from, to)
+
+  const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE))
 
   return (
     <div>
@@ -59,6 +74,8 @@ export default async function StorePagePage() {
           ))}
         </div>
       )}
+
+      <Pagination page={page} totalPages={totalPages} buildHref={(p) => `/aluno/loja?page=${p}`} />
     </div>
   )
 }

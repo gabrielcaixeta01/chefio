@@ -2,9 +2,12 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency } from '@/lib/utils'
 import { CourseReviewActions } from '@/components/admin/CourseReviewActions'
+import { Pagination } from '@/components/ui/pagination'
 import { BookOpen, ChefHat } from 'lucide-react'
 
 export const metadata: Metadata = { title: 'Admin — Cursos' }
+
+const PAGE_SIZE = 20
 
 const STATUS_LABELS: Record<string, { label: string; className: string }> = {
   draft: { label: 'Rascunho', className: 'bg-gray-100 text-gray-600' },
@@ -16,19 +19,26 @@ const STATUS_LABELS: Record<string, { label: string; className: string }> = {
 export default async function AdminCoursesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>
+  searchParams: Promise<{ status?: string; page?: string }>
 }) {
-  const { status } = await searchParams
+  const { status, page: pageParam } = await searchParams
+  const page = Math.max(1, Number(pageParam) || 1)
+  const from = (page - 1) * PAGE_SIZE
+  const to = from + PAGE_SIZE - 1
+
   const supabase = await createClient()
 
   let query = supabase
     .from('courses')
-    .select('id, title, slug, status, price, category, created_at, teacher:profiles(name)')
+    .select('id, title, slug, status, price, category, created_at, teacher:profiles(name)', { count: 'exact' })
     .order('created_at', { ascending: false })
+    .range(from, to)
 
   if (status) query = query.eq('status', status)
 
-  const { data: courses } = await query
+  const { data: courses, count } = await query
+
+  const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE))
 
   const tabs = [
     { label: 'Todos', value: '' },
@@ -41,7 +51,7 @@ export default async function AdminCoursesPage({
   return (
     <div>
       <h1 className="text-2xl font-bold text-gray-900 mb-2">Cursos</h1>
-      <p className="text-gray-500 mb-6">{courses?.length ?? 0} curso(s) encontrado(s)</p>
+      <p className="text-gray-500 mb-6">{count ?? 0} curso(s) encontrado(s)</p>
 
       {/* Filtros */}
       <div className="flex flex-wrap gap-2 mb-6">
@@ -94,6 +104,12 @@ export default async function AdminCoursesPage({
           })}
         </div>
       )}
+
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        buildHref={(p) => `/admin/cursos?${status ? `status=${status}&` : ''}page=${p}`}
+      />
     </div>
   )
 }

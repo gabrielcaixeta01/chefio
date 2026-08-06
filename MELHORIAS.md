@@ -4,7 +4,7 @@ Backlog de dívida técnica. Revisão inicial em 05/08/2026, reavaliação compl
 
 **Contexto que amarra a maior parte da lista:** o app não usa Server Actions — toda mutação vai do browser direto pro Supabase. Isso faz do RLS a única camada de autorização, então cada furo de policy é explorável do console do navegador.
 
-**Estado geral (06/08/2026):** `npm run build` e `npx tsc --noEmit` passam. A arquitetura está coerente — route groups por papel, RLS como fonte de verdade, dinheiro só via webhook com service role. Todo o backlog levantado na revisão de 06/08 (🔴 quebrado, 🟠 correção de dados, 🔵 código morto) foi resolvido no mesmo dia. O que resta é melhoria incremental — nada bloqueia o fluxo de ponta a ponta.
+**Estado geral (06/08/2026):** `npm run build` e `npx tsc --noEmit` passam. A arquitetura está coerente — route groups por papel, RLS como fonte de verdade, dinheiro só via webhook com service role. Todo o backlog levantado na revisão de 06/08 (🔴 quebrado, 🟠 correção de dados, 🔵 código morto, 🟡 performance) foi resolvido no mesmo dia. O que resta é ⚪ qualidade — lint, testes, tipos — nada bloqueia o fluxo de ponta a ponta nem tem impacto de performance mensurável hoje.
 
 ---
 
@@ -22,19 +22,7 @@ Todos os 3 itens desta seção foram corrigidos em 06/08/2026 — ver `## ✅ Re
 
 ## 🟡 Performance
 
-- [ ] **`/curso/[slug]` não usa o client público**
-  `app/(public)/curso/[slug]/page.tsx` usa `createClient()` (com cookies) mesmo sendo página de catálogo. Coerência com a estratégia acima: o conteúdo do curso é público, só o "você já tem este curso" precisa de sessão.
-
-- [ ] **Agregações em JS sobre a tabela inteira**
-  `app/(admin)/admin/page.tsx:19` puxa `amount_paid` de *todas* as matrículas pra somar em memória; mesmo padrão em `admin/financeiro` e `professor/faturamento`. Ok com 50 linhas, derrete com 50 mil.
-  **Fix:** RPC com `sum()` / `group by` no Postgres.
-
-- [ ] **Sem paginação em lugar nenhum**
-  `/cursos`, `/aluno/loja`, `/admin/matriculas`, `/admin/produtos`, `/admin/cursos` — todos SELECT sem `limit` / `range`.
-
-- [ ] **Role lido do banco onde o JWT já responde**
-  `app/api/stripe/connect/onboarding/route.ts:17` e `components/auth/LoginForm.tsx:52` consultam `profiles` pra descobrir o role que já está em `user.app_metadata`. Os três sidebars (`AdminSidebar`, `AlunoSidebar`, `ProfessorSidebar`) fazem um `select name` cada um, depois de o `requireRole` já ter buscado o usuário.
-  **Exceção legítima:** `app/api/auth/callback/route.ts:23` — o token emitido no signup pode preceder o trigger de sync. Falta um comentário explicando isso, senão alguém "otimiza" e quebra.
+Todos os 4 itens desta seção foram resolvidos em 06/08/2026 — ver `## ✅ Resolvido (06/08/2026)`.
 
 ---
 
@@ -66,11 +54,9 @@ Todos os itens desta seção foram resolvidos em 06/08/2026 — ver `## ✅ Reso
 
 ## Ordem sugerida
 
-🔴 Quebrado, 🟠 Correção de dados e 🔵 Código morto resolvidos por completo. Restante — nenhum item bloqueia nada, todos são melhoria incremental:
+🔴 Quebrado, 🟠 Correção de dados, 🔵 Código morto e 🟡 Performance resolvidos por completo. Só resta ⚪ Qualidade — nenhum item bloqueia nada nem tem efeito de performance mensurável:
 
-1. **`/curso/[slug]` no client público** — separar o conteúdo (público, cacheável) do "você já tem este curso" (precisa de sessão).
-2. **Performance com volume** — RPC de agregação e paginação. Só valem a pena com mais dados.
-3. **Qualidade** — lint, testes, `as any`, `error.tsx` por rota, consolidar a comissão hardcoded.
+1. Lint, testes, `as any`, `error.tsx` por rota, consolidar a comissão hardcoded.
 
 ---
 
@@ -94,7 +80,12 @@ Todos os itens desta seção foram resolvidos em 06/08/2026 — ver `## ✅ Reso
 - [x] **`globals.d.ts` — o item original estava errado.** Não é redundante: `next-env.d.ts` só referencia os tipos do Next, que declaram `*.module.css` (CSS Modules), não `*.css` puro. `app/layout.tsx` importa `./globals.css` como side-effect puro — sem o `declare module '*.css'` desse arquivo, `tsc --noEmit` quebra (`TS2882: Cannot find module or type declarations for side-effect import`), confirmado removendo o arquivo e rodando o typecheck antes de reverter. Mantido como está.
 - [x] **`courseId` em `app/api/bunny/upload-url/route.ts`** — removido do body, do componente `VideoUploader` e da chamada em `LessonForm`. A validação de dono sempre foi por `lesson → course.teacher_id`; o parâmetro só forçava o caller a mandar um valor que nunca era conferido contra o real.
 - [x] **Env vars não lidas** — `PLATFORM_COMMISSION_RATE` e `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` removidas do `.env.example`.
+- [x] **Role/perfil lido do banco onde já tinha dado mais barato** — `components/auth/LoginForm.tsx`, `components/layout/AdminSidebar.tsx`, `components/layout/AlunoSidebar.tsx`, `components/layout/ProfessorSidebar.tsx`. `LoginForm` parou de fazer `getUser()` + `select role` depois do login — o próprio `signInWithPassword()` já devolve `data.user.app_metadata.role` (token novo, recém-emitido, reflete o role atual). Os três sidebars trocaram `createClient().auth.getUser()` por `getAuthedUser()` (o helper com `React.cache()` de `lib/auth/session.ts`), que dedupa com a chamada que o `requireRole()` do layout já fez no mesmo request — zero round trip extra de auth. O `select name` continua (nome não vive no JWT), só não duplica mais a validação da sessão. `app/api/stripe/connect/onboarding/route.ts:17` já tinha sido corrigido durante o item de onboarding do professor, mais cedo no mesmo dia.
 - [x] **`@types/react` 19.2.14 com `react` 18.3.1** — alinhados em `@types/react@^18.3.31` e `@types/react-dom@^18.3.7`.
+- [x] **`/curso/[slug]` não usava o client público** — `app/(public)/curso/[slug]/page.tsx`, `components/curso/PurchaseBox.tsx` (novo). `createClient()` (cookies) saiu por completo do server component e de `generateMetadata`, trocado por `createPublicClient()`. A única parte que precisa de sessão — "você já tem este curso" / CTA de compra / banner de erro do checkout — virou um client component isolado (`PurchaseBox`), que checa `getSession()` (storage local) e a matrícula via query direta do browser, envolvido em `<Suspense>` (exigência do `useSearchParams()` lá dentro). `export const revalidate = 300` adicionado.
+  **Verificado, não assumido:** `tsc --noEmit` e `npm run build` limpos; confirmei por grep que não sobra nenhum `cookies()`/`headers()`/`searchParams`-como-prop na árvore server. **Uma ressalva honesta:** a rota continua aparecendo `ƒ Dynamic` no relatório do build — testei isolando a variável (removi temporariamente o `useSearchParams()` do `PurchaseBox` e rebuildei) e o badge não mudou, confirmando que é só por ser um segmento `[slug]` sem `generateStaticParams` — o build nunca marca esse tipo de rota como `○` mesmo sendo elegível a ISR em runtime. Não consegui confirmar o cache real (`x-nextjs-cache: HIT`) porque este ambiente não tem um Supabase de verdade com curso cadastrado pra rodar `next start` contra dado real.
+- [x] **Sem paginação em lugar nenhum** — `components/ui/pagination.tsx` (novo, estilo dashboard: `/admin/matriculas`, `/admin/produtos`, `/admin/cursos`, `/aluno/loja`); paginação própria em `/cursos` no estilo público (cobalto/cal), separada de propósito — mesmo motivo do `action-link.tsx` já não reusar `<Button>` nas páginas públicas. Todos os 5 SELECTs agora usam `.range()` com `{ count: 'exact' }`, `?page=N` na querystring (GET nativo, sem client component). `/admin/cursos` combina `page` com o filtro `status` já existente. O card "X vendas/produtos/matrículas" de cada página passou a mostrar o `count` real (toda a tabela), não mais o tamanho do array carregado.
+- [x] **Agregações em JS sobre a tabela inteira** — `supabase/migrations/00010_aggregation_rpcs.sql` (4 funções novas), `app/(admin)/admin/page.tsx`, `app/(admin)/admin/financeiro/page.tsx`, `app/(professor)/professor/faturamento/page.tsx`. `get_admin_dashboard_stats()` junta 5 round trips (4 counts + 1 sum de enrollments inteiro) num só. `get_admin_financial_totals()` e `get_admin_monthly_revenue()` tiram o reduce/group-by em JS do financeiro — e corrigem de quebra um bug: "total de repasses" somava só os últimos 20 (o `.limit(20)` da lista), não o total de verdade. `get_my_teacher_revenue_by_course()` agrupa por curso no banco pro faturamento do professor; roda como `security invoker` com `where c.teacher_id = (select auth.uid())` **dentro da query**, não como parâmetro vindo do client — se fosse parâmetro, a policy `courses_public_approved_read` deixaria ler o título de cursos de outros professores (com receita zerada, mas vazando o catálogo inteiro em vez de só os próprios). As 3 funções admin são `security definer` com guarda explícita (`get_my_role() <> 'admin' → raise exception`), porque bypassar RLS sem isso exporia receita da plataforma pra qualquer usuário autenticado.
 
 ---
 
