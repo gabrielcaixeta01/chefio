@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createHash } from 'crypto'
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
@@ -57,7 +58,19 @@ export async function POST(req: NextRequest) {
     .update({ bunny_video_id: videoId })
     .eq('id', lessonId)
 
-  const uploadUrl = `https://video.bunnycdn.com/library/${libraryId}/videos/${videoId}`
+  // Credenciais de upload TUS: a apiKey nunca sai do servidor, só a
+  // assinatura. Formato exigido pelo Bunny Stream: sha256(libraryId + apiKey
+  // + expirationTime + videoId), hex, expiração em segundos (unix), até 24h.
+  const expiration = Math.floor(Date.now() / 1000) + 3600
+  const signature = createHash('sha256')
+    .update(`${libraryId}${apiKey}${expiration}${videoId}`)
+    .digest('hex')
 
-  return NextResponse.json({ uploadUrl, videoId })
+  return NextResponse.json({
+    tusEndpoint: 'https://video.bunnycdn.com/tusupload',
+    libraryId,
+    videoId,
+    signature,
+    expiration,
+  })
 }

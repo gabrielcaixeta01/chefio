@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { toast } from 'sonner'
+import { Upload as tus } from 'tus-js-client'
 import { Upload, CheckCircle, Loader2 } from 'lucide-react'
 
 interface VideoUploaderProps {
@@ -29,7 +30,8 @@ export function VideoUploader({ lessonId, courseId, onUploaded }: VideoUploaderP
     setDone(false)
 
     try {
-      // 1. Solicitar URL de upload ao nosso servidor
+      // 1. Solicitar credenciais de upload assinadas ao nosso servidor
+      // (a AccessKey do Bunny nunca sai do servidor — só a assinatura TUS)
       const res = await fetch('/api/bunny/upload-url', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -41,22 +43,30 @@ export function VideoUploader({ lessonId, courseId, onUploaded }: VideoUploaderP
         throw new Error(err.error ?? 'Erro ao obter URL de upload')
       }
 
-      const { uploadUrl, videoId } = await res.json()
+      const { tusEndpoint, libraryId, videoId, signature, expiration } = await res.json()
 
-      // 2. Upload direto para o Bunny via XMLHttpRequest (para rastrear progresso)
+      // 2. Upload resumível direto para o Bunny via protocolo TUS
       await new Promise<void>((resolve, reject) => {
-        const xhr = new XMLHttpRequest()
-        xhr.upload.onprogress = (e) => {
-          if (e.lengthComputable) setProgress(Math.round((e.loaded / e.total) * 100))
-        }
-        xhr.onload = () => {
-          if (xhr.status >= 200 && xhr.status < 300) resolve()
-          else reject(new Error(`Upload falhou: ${xhr.statusText}`))
-        }
-        xhr.onerror = () => reject(new Error('Erro de rede no upload'))
-        xhr.open('PUT', uploadUrl)
-        xhr.setRequestHeader('Content-Type', file.type)
-        xhr.send(file)
+        const upload = new tus(file, {
+          endpoint: tusEndpoint,
+          retryDelays: [0, 3000, 5000, 10000, 20000],
+          headers: {
+            AuthorizationSignature: signature,
+            AuthorizationExpire: String(expiration),
+            VideoId: videoId,
+            LibraryId: String(libraryId),
+          },
+          metadata: {
+            filetype: file.type,
+            title: file.name,
+          },
+          onError: (error) => reject(error),
+          onProgress: (bytesUploaded, bytesTotal) => {
+            setProgress(Math.round((bytesUploaded / bytesTotal) * 100))
+          },
+          onSuccess: () => resolve(),
+        })
+        upload.start()
       })
 
       setDone(true)
