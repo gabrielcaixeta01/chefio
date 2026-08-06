@@ -7,11 +7,10 @@ import { Upload, CheckCircle, Loader2 } from 'lucide-react'
 
 interface VideoUploaderProps {
   lessonId: string
-  courseId: string
   onUploaded?: () => void
 }
 
-export function VideoUploader({ lessonId, courseId, onUploaded }: VideoUploaderProps) {
+export function VideoUploader({ lessonId, onUploaded }: VideoUploaderProps) {
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
   const [done, setDone] = useState(false)
@@ -35,7 +34,7 @@ export function VideoUploader({ lessonId, courseId, onUploaded }: VideoUploaderP
       const res = await fetch('/api/bunny/upload-url', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lessonId, courseId, fileName: file.name }),
+        body: JSON.stringify({ lessonId, fileName: file.name }),
       })
 
       if (!res.ok) {

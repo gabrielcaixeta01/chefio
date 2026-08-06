@@ -240,7 +240,12 @@ export type Database = {
         Relationships: []
       }
     }
-    Views: Record<string, never>
+    Views: {
+      teacher_profiles_public: {
+        Row: { user_id: string; bio: string | null }
+        Relationships: []
+      }
+    }
     Functions: {
       get_my_role: {
         Args: Record<PropertyKey, never>

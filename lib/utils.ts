@@ -32,14 +32,6 @@ export function formatDuration(seconds: number): string {
   return `${s}s`
 }
 
-export function formatDate(date: string): string {
-  return new Intl.DateTimeFormat('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  }).format(new Date(date))
-}
-
 export const COURSE_CATEGORIES = [
   'Culinária Geral',
   'Panificação',
@@ -52,5 +44,3 @@ export const COURSE_CATEGORIES = [
   'Bebidas e Coquetéis',
   'Nutrição e Alimentação Saudável',
 ] as const
-
-export type CourseCategory = typeof COURSE_CATEGORIES[number]

@@ -130,7 +130,7 @@ export function LessonForm({ courseId, lesson, orderIndex, onSaved, onCancel }: 
       {savedLessonId && (
         <div className="mt-4 pt-4 border-t border-orange-200">
           <Label className="mb-2 block">Vídeo da aula</Label>
-          <VideoUploader lessonId={savedLessonId} courseId={courseId} />
+          <VideoUploader lessonId={savedLessonId} />
         </div>
       )}
     </div>

@@ -7,8 +7,8 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { lessonId, courseId, fileName } = await req.json()
-  if (!lessonId || !courseId) return NextResponse.json({ error: 'Missing params' }, { status: 400 })
+  const { lessonId, fileName } = await req.json()
+  if (!lessonId) return NextResponse.json({ error: 'Missing params' }, { status: 400 })
 
   // Verify teacher owns this lesson/course
   const { data: lesson } = await supabase

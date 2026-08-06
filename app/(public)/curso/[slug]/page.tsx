@@ -47,7 +47,16 @@ export default async function CourseDetailPage({
 
   if (!course) notFound()
 
-  const { data: { user } } = await supabase.auth.getUser()
+  const [{ data: { user } }, { data: teacherPublic }] = await Promise.all([
+    supabase.auth.getUser(),
+    // View pública (só user_id + bio) — o resto de teacher_profiles, como
+    // stripe_account_id, não deve vazar pro catálogo (00003_security_fixes.sql).
+    supabase
+      .from('teacher_profiles_public')
+      .select('bio')
+      .eq('user_id', course.teacher_id)
+      .maybeSingle(),
+  ])
 
   let isEnrolled = false
   if (user) {
@@ -100,13 +109,16 @@ export default async function CourseDetailPage({
           )}
 
           {/* Professor */}
-          <div className="flex items-center gap-3 mb-8 p-4 bg-gray-50 rounded-xl">
+          <div className="flex items-start gap-3 mb-8 p-4 bg-gray-50 rounded-xl">
             <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
               <ChefHat className="h-6 w-6 text-orange-600" />
             </div>
             <div>
               <p className="text-xs text-gray-500">Instrutor</p>
               <p className="font-semibold text-gray-900">{(course.teacher as any)?.name}</p>
+              {teacherPublic?.bio && (
+                <p className="text-sm text-gray-600 mt-1 leading-relaxed">{teacherPublic.bio}</p>
+              )}
             </div>
           </div>
 

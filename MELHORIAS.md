@@ -4,7 +4,7 @@ Backlog de dívida técnica. Revisão inicial em 05/08/2026, reavaliação compl
 
 **Contexto que amarra a maior parte da lista:** o app não usa Server Actions — toda mutação vai do browser direto pro Supabase. Isso faz do RLS a única camada de autorização, então cada furo de policy é explorável do console do navegador.
 
-**Estado geral (06/08/2026):** `npm run build` e `npx tsc --noEmit` passam. A arquitetura está coerente — route groups por papel, RLS como fonte de verdade, dinheiro só via webhook com service role. O que sobra não é problema de estrutura: é um conjunto de features que estão quebradas na prática.
+**Estado geral (06/08/2026):** `npm run build` e `npx tsc --noEmit` passam. A arquitetura está coerente — route groups por papel, RLS como fonte de verdade, dinheiro só via webhook com service role. Todo o backlog levantado na revisão de 06/08 (🔴 quebrado, 🟠 correção de dados, 🔵 código morto) foi resolvido no mesmo dia. O que resta é melhoria incremental — nada bloqueia o fluxo de ponta a ponta.
 
 ---
 
@@ -21,11 +21,6 @@ Todos os 3 itens desta seção foram corrigidos em 06/08/2026 — ver `## ✅ Re
 ---
 
 ## 🟡 Performance
-
-- [ ] **Páginas públicas continuam 100% dinâmicas**
-  O build marca **todas** as rotas como `ƒ (Dynamic)`, incluindo `/`, `/cursos` e `/para-chefs`. `app/(public)/layout.tsx` renderiza `<Navbar>`, que é async e chama `getAuthedUser()` → `cookies()`, o que opta o segmento inteiro por dinâmico e anula o `createPublicClient()` criado justamente pra evitar isso. Os `export const revalidate = 300` em `page.tsx` e `cursos/page.tsx` não têm efeito nenhum hoje.
-  (Limitação já registrada quando o `createPublicClient` foi introduzido — promovida a item próprio porque é o que trava o ganho.)
-  **Fix:** tirar o estado de auth da Navbar server-side — checar sessão num client component, ou envolver a parte autenticada em `<Suspense>`, ou habilitar PPR.
 
 - [ ] **`/curso/[slug]` não usa o client público**
   `app/(public)/curso/[slug]/page.tsx` usa `createClient()` (com cookies) mesmo sendo página de catálogo. Coerência com a estratégia acima: o conteúdo do curso é público, só o "você já tem este curso" precisa de sessão.
@@ -45,25 +40,13 @@ Todos os 3 itens desta seção foram corrigidos em 06/08/2026 — ver `## ✅ Re
 
 ## 🔵 Código morto e não utilizado
 
-- [ ] **Dependências instaladas sem nenhum import** — `tus-js-client` (era pra ser o upload do Bunny), `@stripe/stripe-js`, `date-fns`, `autoprefixer` (o PostCSS usa só `@tailwindcss/postcss`).
-
-- [ ] **View `teacher_profiles_public` órfã** — criada na 00003 pra substituir a policy `teacher_profiles_public_read` que foi dropada. Nunca foi consultada, não tem tipo em `types/database.ts`, e a consequência é que **a bio do professor sumiu da página de curso** — `curso/[slug]` só mostra o nome, vindo de `profiles`. Ou usa a view, ou remove.
-
-- [ ] **`components/ui/card.tsx`** — nunca importado.
-
-- [ ] **`formatDate` e o tipo `CourseCategory`** em `lib/utils.ts` — sem uso.
-
-- [ ] **`globals.d.ts`** — `declare module '*.css'` já é coberto pelo `next-env.d.ts` do Next.
-
-- [ ] **`courseId` em `app/api/bunny/upload-url/route.ts`** — recebido no body e nunca usado; a validação de dono vai por `lesson → course.teacher_id`.
-
-- [ ] **Env vars declaradas e não lidas** — `PLATFORM_COMMISSION_RATE` e `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` no `.env.example`.
+Todos os itens desta seção foram resolvidos em 06/08/2026 — ver `## ✅ Resolvido (06/08/2026)`. Uma ressalva: o item sobre `globals.d.ts` estava **errado** — não era código morto, ver nota na entrada correspondente.
 
 ---
 
 ## ⚪ Qualidade e manutenção
 
-- [ ] **`@types/react` 19.2.14 com `react` 18.3.1** — mismatch de major. Passa hoje por causa do `skipLibCheck`, mas os tipos descrevem uma API que não é a instalada. Alinhar em `^18`.
+`@types/react`/`@types/react-dom` alinhados em `^18` (resolvido em 06/08/2026, ver `## ✅ Resolvido`). Restante:
 
 - [ ] **Sem lint** — `package.json` tem só `dev`/`build`/`start`, sem `eslint-config-next` instalado. O commit `f326195 "melhorias finais de lint"` não deixou configuração nenhuma no repo.
 
@@ -73,7 +56,7 @@ Todos os 3 itens desta seção foram corrigidos em 06/08/2026 — ver `## ✅ Re
 
 - [ ] **`try/catch` engolindo erro** — `app/(public)/page.tsx:39` e `app/(public)/cursos/page.tsx:40` escondem falha real de rede: a home mostra "nenhum curso" e ninguém fica sabendo.
 
-- [ ] **Comissão definida em três lugares** — `PLATFORM_COMMISSION_RATE` no `.env.example` (não lido), a coluna `commission_rate`, e `?? 20` hardcoded em 4 arquivos. Fonte única: a coluna.
+- [ ] **Comissão ainda hardcoded em `?? 20` em 4 arquivos** — a coluna `commission_rate` é a fonte única de verdade, mas o fallback se repete em vez de vir de um só lugar. (A variável `PLATFORM_COMMISSION_RATE`, que não era lida em canto nenhum, saiu do `.env.example` na limpeza de 06/08/2026 — essa parte já não é mais duplicação.)
 
 - [ ] **`Notebook.saveContent` sem tratamento de erro** — `components/player/Notebook.tsx:41`: o upsert não checa `error` e a UI mostra "Salvo às HH:MM" mesmo quando falhou.
 
@@ -83,11 +66,11 @@ Todos os 3 itens desta seção foram corrigidos em 06/08/2026 — ver `## ✅ Re
 
 ## Ordem sugerida
 
-🔴 Quebrado e 🟠 Correção de dados resolvidos por completo. Restante:
+🔴 Quebrado, 🟠 Correção de dados e 🔵 Código morto resolvidos por completo. Restante — nenhum item bloqueia nada, todos são melhoria incremental:
 
-1. **Páginas públicas dinâmicas** — tirar a Navbar da dependência de `cookies()`.
-2. **Limpeza** — deps órfãs, `card.tsx`, view `teacher_profiles_public`, tipos do React.
-3. **Performance com volume** — RPC de agregação e paginação. Só valem a pena com mais dados; deixados por último de propósito.
+1. **`/curso/[slug]` no client público** — separar o conteúdo (público, cacheável) do "você já tem este curso" (precisa de sessão).
+2. **Performance com volume** — RPC de agregação e paginação. Só valem a pena com mais dados.
+3. **Qualidade** — lint, testes, `as any`, `error.tsx` por rota, consolidar a comissão hardcoded.
 
 ---
 
@@ -102,6 +85,16 @@ Todos os 3 itens desta seção foram corrigidos em 06/08/2026 — ver `## ✅ Re
 - [x] **Baixa de estoque não era atômica** — `supabase/migrations/00009_atomic_product_order.sql`, `app/api/stripe/webhook/route.ts`. RPC `create_product_order` cria `orders` + `order_items` e debita `products.stock` numa transação só, com `select ... for update` travando a linha do produto (preço e estoque lidos consistentes, sem lost update entre webhooks concorrentes). Idempotência por `stripe_payment_intent_id` migrou pra dentro da função (incluindo o caso de corrida entre dois webhooks quase simultâneos, via `exception when unique_violation`).
 - [x] **Duas migrations `00003`** — `00003_storage_buckets.sql` renomeada pra `00008_storage_buckets.sql` (conteúdo idêntico). `SUPABASE_MIGRATION_GUIDE.md` parou de listar a ordem em prosa e passou a apontar pra pasta, que agora tem numeração única.
 - [x] **`orders.status` tinha estados inalcançáveis** — `app/(admin)/admin/pedidos/page.tsx` (novo), `components/admin/OrderStatusActions.tsx` (novo), `components/layout/AdminSidebar.tsx`. Tela de pedidos no admin, com ação pra avançar `paid → shipped → delivered` (RLS já cobria via `orders_admin_all`, não precisou de migration nova).
+- [x] **Navbar forçava `/`, `/cursos` e `/para-chefs` a renderizar dinâmicas** — `components/layout/NavbarAuth.tsx` (novo), `components/layout/Navbar.tsx`, `components/layout/MobileNav.tsx`. O estado de sessão saiu do server component (`getAuthedUser()` → `cookies()`) pra um client component que lê `getSession()` (só storage local, sem round-trip) e assina `onAuthStateChange`. Primeira renderização assume visitante — quem já está logado vê o link trocar pra "Minha área" assim que o efeito roda; sem isso, a única alternativa era um placeholder de tamanho adivinhado ou manter a rota inteira dinâmica.
+  **Resultado real, não o que o item antigo previa:** `/` e `/para-chefs` confirmados `○ Static` no build. **`/cursos` continua `ƒ Dynamic`** — não mais pela Navbar, mas por usar `searchParams` (os filtros de categoria/busca), que é uma Dynamic API própria do Next 14 independente de cookies. Virar estática exigiria trocar a busca de GET nativo (comentário no próprio arquivo: "busca sem client component nem JS", decisão deliberada) por filtro client-side — troca de arquitetura que não estava pedida aqui, deixada de fora de propósito.
+- [x] **Dependências instaladas sem import** — `@stripe/stripe-js`, `date-fns` e `autoprefixer` removidas do `package.json` (Tailwind v4 já prefixa via `@tailwindcss/postcss`, não precisa do PostCSS plugin separado). `tus-js-client` deixou de estar nessa lista — passou a ser usado no fix do upload de vídeo.
+- [x] **View `teacher_profiles_public` órfã** — em vez de remover, passou a ser usada de verdade: tipo adicionado em `types/database.ts` (`Views`, precisa do campo `Relationships: []` pra bater com o tipo `GenericView` do postgrest-js, senão o schema inteiro degrada pra `never`), e `app/(public)/curso/[slug]/page.tsx` volta a mostrar a bio do professor, que tinha sumido quando a policy pública foi trocada pela view na 00003.
+- [x] **`components/ui/card.tsx`** — removido (`git rm`), zero consumidores confirmados antes de apagar.
+- [x] **`formatDate` e o tipo `CourseCategory`** — removidos de `lib/utils.ts`.
+- [x] **`globals.d.ts` — o item original estava errado.** Não é redundante: `next-env.d.ts` só referencia os tipos do Next, que declaram `*.module.css` (CSS Modules), não `*.css` puro. `app/layout.tsx` importa `./globals.css` como side-effect puro — sem o `declare module '*.css'` desse arquivo, `tsc --noEmit` quebra (`TS2882: Cannot find module or type declarations for side-effect import`), confirmado removendo o arquivo e rodando o typecheck antes de reverter. Mantido como está.
+- [x] **`courseId` em `app/api/bunny/upload-url/route.ts`** — removido do body, do componente `VideoUploader` e da chamada em `LessonForm`. A validação de dono sempre foi por `lesson → course.teacher_id`; o parâmetro só forçava o caller a mandar um valor que nunca era conferido contra o real.
+- [x] **Env vars não lidas** — `PLATFORM_COMMISSION_RATE` e `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` removidas do `.env.example`.
+- [x] **`@types/react` 19.2.14 com `react` 18.3.1** — alinhados em `@types/react@^18.3.31` e `@types/react-dom@^18.3.7`.
 
 ---
 
