@@ -1,24 +1,67 @@
 # Melhorias — Chefio
 
-Backlog de dívida técnica levantado na revisão de 05/08/2026. Marque o checkbox ao resolver.
+Backlog de dívida técnica. Revisão inicial em 05/08/2026, reavaliação completa do projeto em 06/08/2026. Marque o checkbox ao resolver.
 
 **Contexto que amarra a maior parte da lista:** o app não usa Server Actions — toda mutação vai do browser direto pro Supabase. Isso faz do RLS a única camada de autorização, então cada furo de policy é explorável do console do navegador.
 
----
-
-## 🔴 Crítico — segurança e dinheiro
-
-Todos os 7 itens abaixo foram corrigidos em 05/08/2026 — ver `## ✅ Resolvido`.
+**Estado geral (06/08/2026):** `npm run build` e `npx tsc --noEmit` passam. A arquitetura está coerente — route groups por papel, RLS como fonte de verdade, dinheiro só via webhook com service role. O que sobra não é problema de estrutura: é um conjunto de features que estão quebradas na prática.
 
 ---
 
-## 🟠 Funcionalidade quebrada
+## 🔴 Quebrado — impede o fluxo de ponta a ponta
 
-Todos os 5 itens abaixo foram corrigidos em 05/08/2026 — ver `## ✅ Resolvido`.
+- [ ] **Upload de vídeo não funciona — a feature central do produto**
+  `components/courses/VideoUploader.tsx:63-66` faz `PUT` direto pra `https://video.bunnycdn.com/library/{id}/videos/{guid}` **sem o header `AccessKey`**. Esse endpoint do Bunny exige a chave, então todo upload retorna 401. Mandar a API key pro browser não é opção (vazamento).
+  **Fix:** upload via TUS com assinatura pré-computada no servidor — `sha256(libraryId + apiKey + expiration + videoId)`. O `tus-js-client` já está no `package.json` e nunca foi importado: o plano original era esse e ficou pela metade.
+
+- [ ] **Onboarding do professor é inalcançável**
+  Professor recém-cadastrado tem `role = 'student'` (correto, pela 00003), e `middleware.ts:45` barra `/professor/*` pra quem não é `teacher`. Ou seja: **ninguém com `status = 'pending'` consegue abrir `/professor/onboarding`**. O único caminho real de ativação é o admin em `/admin/professores`, o que inverte a intenção da tela (ela existe pra ser o portão *antes* de vender).
+  **Fix:** decidir o fluxo — ou libera `/professor/onboarding` no middleware pra quem tem `teacher_profiles` pendente, ou move a tela pra dentro de `/aluno` enquanto não for aprovado.
+
+- [ ] **`connect/return` escreve numa coluna que o trigger da 00007 bloqueia**
+  `app/api/stripe/connect/return/route.ts:26-29` faz `update({ status: 'active' })` com o client da **sessão do usuário**. O trigger `guard_teacher_profile_admin_columns` (00007) levanta exceção nesse caso. O erro não é checado, então a rota redireciona pra `?success=true` com o status inalterado — falha silenciosa.
+  Hoje não explode só porque o admin já ativou antes e o update vira no-op. O comentário da 00007 afirma que o grep confirmou que nenhum client escreve em `status`; esse arquivo passou despercebido.
+  **Fix:** usar `createAdminClient()` na rota — ela é server-side e já valida `charges_enabled` contra o Stripe, então é uma escrita legítima de sistema, não de usuário.
+
+- [ ] **`refresh_url` do Stripe aponta pra rota que só aceita POST**
+  `app/api/stripe/connect/onboarding/route.ts:52` manda o Stripe redirecionar o browser (GET) pra `/api/stripe/connect/onboarding`, que só exporta `POST` → 405. Quem abandona o formulário do Stripe cai numa tela de erro.
+  **Fix:** apontar `refresh_url` pra `/professor/onboarding` (a página), não pra rota de API.
+
+- [ ] **Erro de checkout de curso vira JSON cru na tela**
+  `app/(public)/curso/[slug]/page.tsx:152` usa `<form action="/api/stripe/checkout" method="POST">` — navegação de verdade. Qualquer `NextResponse.json({ error }, { status })` da rota é renderizado como texto puro no navegador.
+  **Fix:** trocar os `json()` de erro por `NextResponse.redirect` com query de erro, como a rota já faz nos caminhos de sucesso.
+
+- [ ] **Carrinho nunca é limpo depois de pagar**
+  `clear()` só é chamado pelo botão "Limpar carrinho" em `components/store/CartDrawer.tsx`. Depois do checkout o usuário volta pra `/aluno/pedidos?success=true` com o carrinho cheio e pode comprar de novo sem perceber.
+  **Fix:** limpar ao detectar `?success=true`, ou (melhor) antes de redirecionar pro Stripe, já que o carrinho é só localStorage.
+
+---
+
+## 🟠 Correção de dados
+
+- [ ] **Baixa de estoque não é atômica**
+  `app/api/stripe/webhook/route.ts:159-166` lê `stock`, calcula em JS e escreve. Dois webhooks concorrentes perdem uma baixa. E se o insert de `order_items` falhar, o pedido já foi criado e o estoque já foi debitado — sem rollback.
+  **Fix:** RPC transacional que cria `orders` + `order_items` e faz `update products set stock = stock - $1` numa transação só.
+
+- [ ] **Duas migrations com o mesmo número**
+  `00003_security_fixes.sql` e `00003_storage_buckets.sql`. Não há `supabase/config.toml` — as migrations são coladas à mão no SQL Editor, então hoje "funciona", mas inviabiliza `supabase db push` e o `SUPABASE_MIGRATION_GUIDE.md:70` já precisa desambiguar a ordem em prosa.
+  **Fix:** renomear `00003_storage_buckets.sql` → `00008_storage_buckets.sql` e atualizar o guia.
+
+- [ ] **`orders.status` tem estados inalcançáveis**
+  `shipped` e `delivered` são renderizados em `app/(aluno)/aluno/pedidos/page.tsx:40-41` e existem no CHECK constraint, mas nenhuma tela admin muda o status. O admin tem Produtos, mas não tem Pedidos.
+  **Fix:** ou uma tela `/admin/pedidos` com transição de status, ou tirar os dois estados do constraint e da UI.
 
 ---
 
 ## 🟡 Performance
+
+- [ ] **Páginas públicas continuam 100% dinâmicas**
+  O build marca **todas** as rotas como `ƒ (Dynamic)`, incluindo `/`, `/cursos` e `/para-chefs`. `app/(public)/layout.tsx` renderiza `<Navbar>`, que é async e chama `getAuthedUser()` → `cookies()`, o que opta o segmento inteiro por dinâmico e anula o `createPublicClient()` criado justamente pra evitar isso. Os `export const revalidate = 300` em `page.tsx` e `cursos/page.tsx` não têm efeito nenhum hoje.
+  (Limitação já registrada quando o `createPublicClient` foi introduzido — promovida a item próprio porque é o que trava o ganho.)
+  **Fix:** tirar o estado de auth da Navbar server-side — checar sessão num client component, ou envolver a parte autenticada em `<Suspense>`, ou habilitar PPR.
+
+- [ ] **`/curso/[slug]` não usa o client público**
+  `app/(public)/curso/[slug]/page.tsx` usa `createClient()` (com cookies) mesmo sendo página de catálogo. Coerência com a estratégia acima: o conteúdo do curso é público, só o "você já tem este curso" precisa de sessão.
 
 - [ ] **Agregações em JS sobre a tabela inteira**
   `app/(admin)/admin/page.tsx:19` puxa `amount_paid` de *todas* as matrículas pra somar em memória; mesmo padrão em `admin/financeiro` e `professor/faturamento`. Ok com 50 linhas, derrete com 50 mil.
@@ -27,17 +70,43 @@ Todos os 5 itens abaixo foram corrigidos em 05/08/2026 — ver `## ✅ Resolvido
 - [ ] **Sem paginação em lugar nenhum**
   `/cursos`, `/aluno/loja`, `/admin/matriculas`, `/admin/produtos`, `/admin/cursos` — todos SELECT sem `limit` / `range`.
 
+- [ ] **Role lido do banco onde o JWT já responde**
+  `app/api/stripe/connect/onboarding/route.ts:17` e `components/auth/LoginForm.tsx:52` consultam `profiles` pra descobrir o role que já está em `user.app_metadata`. Os três sidebars (`AdminSidebar`, `AlunoSidebar`, `ProfessorSidebar`) fazem um `select name` cada um, depois de o `requireRole` já ter buscado o usuário.
+  **Exceção legítima:** `app/api/auth/callback/route.ts:23` — o token emitido no signup pode preceder o trigger de sync. Falta um comentário explicando isso, senão alguém "otimiza" e quebra.
+
 ---
 
-## 🔵 Qualidade e manutenção
+## 🔵 Código morto e não utilizado
 
-- [ ] **`as any` mascarando joins** — `app/api/stripe/checkout/route.ts:50`, `app/api/bunny/signed-url/route.ts:24`, `app/api/bunny/upload-url/route.ts:21`, `app/(aluno)/aluno/cursos/[slug]/aulas/[lessonId]/page.tsx:82`, `app/(public)/page.tsx:29`. `types/database.ts` (253 linhas) está sendo desperdiçado.
+- [ ] **Dependências instaladas sem nenhum import** — `tus-js-client` (era pra ser o upload do Bunny), `@stripe/stripe-js`, `date-fns`, `autoprefixer` (o PostCSS usa só `@tailwindcss/postcss`).
 
-- [ ] **Sem lint, sem teste** — `package.json` só tem `dev`/`build`/`start`. Num app que move dinheiro, o webhook do Stripe e o cálculo de comissão são os candidatos óbvios a teste unitário.
+- [ ] **View `teacher_profiles_public` órfã** — criada na 00003 pra substituir a policy `teacher_profiles_public_read` que foi dropada. Nunca foi consultada, não tem tipo em `types/database.ts`, e a consequência é que **a bio do professor sumiu da página de curso** — `curso/[slug]` só mostra o nome, vindo de `profiles`. Ou usa a view, ou remove.
+
+- [ ] **`components/ui/card.tsx`** — nunca importado.
+
+- [ ] **`formatDate` e o tipo `CourseCategory`** em `lib/utils.ts` — sem uso.
+
+- [ ] **`globals.d.ts`** — `declare module '*.css'` já é coberto pelo `next-env.d.ts` do Next.
+
+- [ ] **`courseId` em `app/api/bunny/upload-url/route.ts`** — recebido no body e nunca usado; a validação de dono vai por `lesson → course.teacher_id`.
+
+- [ ] **Env vars declaradas e não lidas** — `PLATFORM_COMMISSION_RATE` e `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` no `.env.example`.
+
+---
+
+## ⚪ Qualidade e manutenção
+
+- [ ] **`@types/react` 19.2.14 com `react` 18.3.1** — mismatch de major. Passa hoje por causa do `skipLibCheck`, mas os tipos descrevem uma API que não é a instalada. Alinhar em `^18`.
+
+- [ ] **Sem lint** — `package.json` tem só `dev`/`build`/`start`, sem `eslint-config-next` instalado. O commit `f326195 "melhorias finais de lint"` não deixou configuração nenhuma no repo.
+
+- [ ] **Sem teste** — num app que move dinheiro, o cálculo de comissão (`webhook/route.ts:78`) e a idempotência dos webhooks são os candidatos óbvios a teste unitário.
+
+- [ ] **`as any` mascarando joins** — `app/api/stripe/checkout/route.ts:50`, `app/api/bunny/signed-url/route.ts:24`, `app/api/bunny/upload-url/route.ts:21`, `app/(aluno)/aluno/cursos/[slug]/aulas/[lessonId]/page.tsx:82`, `app/(public)/page.tsx:29`. 19 ocorrências no total; `types/database.ts` (253 linhas) está sendo desperdiçado.
 
 - [ ] **`try/catch` engolindo erro** — `app/(public)/page.tsx:39` e `app/(public)/cursos/page.tsx:40` escondem falha real de rede: a home mostra "nenhum curso" e ninguém fica sabendo.
 
-- [ ] **Comissão definida em três lugares** — `PLATFORM_COMMISSION_RATE` no `.env.example` (não lido em canto nenhum), a coluna `commission_rate`, e `?? 20` hardcoded em 4 arquivos. Fonte única: a coluna.
+- [ ] **Comissão definida em três lugares** — `PLATFORM_COMMISSION_RATE` no `.env.example` (não lido), a coluna `commission_rate`, e `?? 20` hardcoded em 4 arquivos. Fonte única: a coluna.
 
 - [ ] **`Notebook.saveContent` sem tratamento de erro** — `components/player/Notebook.tsx:41`: o upsert não checa `error` e a UI mostra "Salvo às HH:MM" mesmo quando falhou.
 
@@ -45,70 +114,35 @@ Todos os 5 itens abaixo foram corrigidos em 05/08/2026 — ver `## ✅ Resolvido
 
 ---
 
-## ✅ Resolvido
+## Ordem sugerida
 
-- [x] **Escalação de privilégio no cadastro** — `supabase/migrations/00003_security_fixes.sql`, `supabase/migrations/00007_close_self_update_holes.sql`
-  `handle_new_user()` agora sempre grava `role = 'student'`, ignorando o que o cliente manda em `raw_user_meta_data`. Pedido de professor no cadastro cria uma linha `teacher_profiles` com `status = 'pending'`. Trigger `teacher_profiles_sync_role` promove o profile pra `'teacher'` quando o admin aprova (`status → 'active'`) e rebaixa pra `'student'` se suspender.
-  **A 00003 fechou só o vetor do cadastro — revisão da 00006 achou que o mesmo furo continuava aberto por outra porta:** `profiles_self_update` e `teacher_profiles_self_update` (00002) não restringem coluna, então `update({ role: 'admin' })` ou `update({ status: 'active' })` direto do console do navegador continuavam funcionando, e a segunda ficava pior justamente por causa do trigger novo (auto-aprovação sem admin). Fechado na 00007 com triggers que bloqueiam mudança de `role` (profiles) e de `status`/`commission_rate` (teacher_profiles) pra quem não é admin. Confirmado por grep que nenhum código do app depende de editar essas colunas pelo client.
-
-- [x] **Preço do carrinho vem do cliente** — `app/api/stripe/checkout-products/route.ts`
-  A rota agora recebe só `{ id, quantity }[]`; preço, nome e estoque são buscados em `products` no servidor, com checagem de estoque antes de criar a sessão do Stripe.
-
-- [x] **Matrícula grátis via RLS** — `supabase/migrations/00003_security_fixes.sql`, `app/api/stripe/checkout/route.ts`
-  Policy `enrollments_student_insert` removida — só service role insere. O fluxo de curso grátis em `checkout/route.ts` passou a usar `createAdminClient()` em vez do client da sessão do aluno.
-  **Mesma falha achada em `orders` na revisão da 00006:** `orders_student_insert` deixava qualquer aluno inserir um pedido com `status: 'paid'` direto do console, sem nunca passar pelo Stripe. `order_items` já não tinha policy de insert pra aluno (então não dava pra fabricar itens/baixar estoque), mas o pedido fantasma em si passava. Removida na `00007_close_self_update_holes.sql` — grep confirma que nenhum código do app insere em `orders` pelo client, só o webhook com service role.
-
-- [x] **Professor aprova o próprio curso** — `supabase/migrations/00003_security_fixes.sql`
-  Trigger `courses_guard_status_change` bloqueia qualquer mudança de `status` fora de `draft → pending_review` quando quem executa não é admin.
-
-- [x] **Webhook do Bunny sem autenticação** — `app/api/bunny/webhook/route.ts`
-  Exige `BUNNY_WEBHOOK_SECRET` via header `x-webhook-secret` ou querystring (`?secret=`), comparado com `timingSafeEqual`. Configurar a URL do webhook no painel do Bunny com o secret na querystring.
-
-- [x] **`stripe_account_id` exposto publicamente** — `supabase/migrations/00003_security_fixes.sql`
-  Policy `teacher_profiles_public_read` removida; leitura pública agora passa pela view `teacher_profiles_public` (`user_id, bio`).
-
-- [x] **`createAdminClient()` mistura service role com cookies do usuário** — `lib/supabase/server.ts`
-  Reescrito com `createClient` do `supabase-js`, sem cookie store — roda como service role de verdade. Passou a ser usado no fluxo de matrícula grátis.
-
-- [x] **Pedidos de produto nunca são registrados** — `app/api/stripe/webhook/route.ts`
-  Webhook agora ramifica por `session.metadata.type`: pedidos de produto criam `orders` + `order_items` com preço vindo do banco (não do Stripe), decrementam `products.stock`, e o handler de curso continua funcionando como antes. Qualquer evento fora de `checkout.session.completed`, ou faltando metadata essencial, responde 200 em vez de 400 pra não gerar retry storm do Stripe.
-
-- [x] **Webhook de curso sem idempotência** — `supabase/migrations/00004_stripe_idempotency.sql`, `app/api/stripe/webhook/route.ts`
-  Índices únicos parciais em `orders.stripe_payment_intent_id` e `teacher_payouts.stripe_transfer_id`. O payout do professor só é criado quando o insert da matrícula não colide (código `23505`) — ou seja, só na primeira vez que o evento chega.
-
-- [x] **Assinatura da URL do Bunny provavelmente inválida** — `app/api/bunny/signed-url/route.ts`
-  Trocado HMAC por hash simples `sha256(tokenAuthKey + videoId + expires)`, que é o esquema de token authentication do Bunny Stream. URL passou a apontar pro embed real (`iframe.mediadelivery.net/embed/{library}/{video}`) em vez da CDN direta. **Ainda precisa validar contra uma library real** com "Token Authentication" habilitado — se hoje o vídeo toca sem token, o auth está desligado na conta Bunny e isso é uma configuração a mudar lá, não só código.
-
-- [x] **`VideoPlayer` acumula listeners** — `components/player/VideoPlayer.tsx`
-  Listener de `message` migrou pra um `useEffect` próprio com cleanup, saindo do `onLoad` do iframe.
-
-- [x] **`CartContext` grava `[]` por cima do carrinho salvo** — `contexts/CartContext.tsx`
-  Novo estado `hydrated`, setado depois de ler o `localStorage`; o effect de persistência não escreve nada até isso acontecer.
-
-- [x] **Middleware consulta `profiles` em toda navegação** / **Checagem de role triplicada** — `supabase/migrations/00005_role_jwt_sync.sql`, `middleware.ts`, `lib/auth/session.ts`, `app/(aluno|professor|admin)/layout.tsx`, `components/layout/Navbar.tsx`
-  Trigger `sync_role_to_jwt` grava o role em `auth.users.raw_app_meta_data`, que o Supabase Auth embute no access token — `user.app_metadata.role` fica disponível sem SELECT. Middleware, os três layouts protegidos e a Navbar pararam de consultar `profiles`. Novo helper `getAuthedUser()` (`lib/auth/session.ts`) usa `React.cache()` pra dedupar `getUser()` dentro do mesmo request quando layout e página pedem o usuário. **Sessões já ativas só recebem o claim novo no próximo refresh de token** — o backfill cobre usuários existentes, mas o access token já emitido segue com o payload antigo até expirar/renovar.
-
-- [x] **Waterfall de queries sequenciais** — `app/(aluno)/aluno/cursos/[slug]/aulas/[lessonId]/page.tsx`, `app/(aluno)/aluno/cursos/[slug]/page.tsx`, `app/(professor)/professor/faturamento/page.tsx`
-  Queries que não dependem uma da outra agora rodam em `Promise.all`. Aula: 7 round-trips → 2 (`course` primeiro, resto em paralelo). Curso do aluno: 5 → 3 (`progressRows` continua depois porque precisa dos ids de `lessons`). Faturamento: 4 → 2 (`enrollments` continua depois porque precisa dos ids de `courses`).
-
-- [x] **Páginas públicas 100% dinâmicas** — `lib/supabase/public.ts` (novo), `app/(public)/page.tsx`, `app/(public)/cursos/page.tsx`
-  As duas páginas trocaram `createClient()` (cookies) por `createPublicClient()` (client anônimo, sem `cookies()`) e ganharam `export const revalidate = 300`. **Ressalva:** a `Navbar` (`components/layout/Navbar.tsx`), que fica no layout público, ainda chama `getAuthedUser()` → `cookies()` pra saber se tem sessão — isso continua forçando toda a rota pública a renderizar dinâmica no Next 14 (sem Partial Prerendering), então o ganho de latência real só aparece se a Navbar também parar de depender de cookies no servidor (ex.: checar sessão no client, ou habilitar PPR). Build confirma `/` e `/cursos` como `ƒ Dynamic` ainda.
-
-- [x] **`get_my_role()` e `auth.uid()` reavaliados por linha** / **Índices faltando** — `supabase/migrations/00006_rls_performance.sql`
-  Todas as policies com `auth.uid()` ou `get_my_role()` no `USING`/`WITH CHECK` foram alteradas via `ALTER POLICY` pra envolver as chamadas em subquery (`(select auth.uid())`), forçando o Postgres a resolver uma vez por statement. Adicionados os índices que faltavam: `orders(student_id)`, `order_items(order_id)`, `teacher_payouts(teacher_id)`, `documents(teacher_id)`.
-
-- [x] **Menu hambúrguer invisível no mobile** — `components/layout/MobileNav.tsx`
-  O `backdrop-blur-md` do header (`Navbar.tsx:64`) transforma o header em containing block pra descendentes `position: fixed`. O painel com `fixed inset-x-0 top-16 bottom-0` resolvia contra os 64px da barra e colapsava pra altura zero — sobrava só a linha do `border-t` sobre a página.
-  Resolvido com `createPortal` pro `document.body`, tirando o painel do containing block. Adicionado `overflow-y-auto` e `md:hidden` próprio (o painel não está mais dentro do wrapper que escondia no desktop).
-  Depois ganhou abertura e fechamento animados: o painel fica sempre montado (para animar a saída) e a curva da marca virou o token `--ease-azulejo` em `app/globals.css`, reusado por `.vidrado` e `.surge`.
+1. **Upload de vídeo** — sem isso não existe produto.
+2. **Fluxo de professor** — onboarding inalcançável, `connect/return` bloqueado, `refresh_url` 405. Os três são o mesmo caminho de usuário, resolve junto.
+3. **Checkout** — erro em JSON na tela e carrinho não limpo. Baratos, ambos visíveis pro usuário final.
+4. **Estoque atômico** e **renomear a migration duplicada**.
+5. **Páginas públicas dinâmicas** — tirar a Navbar da dependência de `cookies()`.
+6. **Limpeza** — deps órfãs, `card.tsx`, view `teacher_profiles_public`, tipos do React.
+7. **Performance com volume** — RPC de agregação e paginação. Só valem a pena com mais dados; deixados por último de propósito.
 
 ---
 
-## Ordem sugerida
+## ✅ Resolvido (05/08/2026)
 
-🔴 Crítico e 🟠 Funcionalidade quebrada resolvidos. Da 🟡 Performance, restam só paginação e RPC de agregação — deixados de lado de propósito porque só valem a pena com volume de dados maior. Restante:
+Histórico condensado — o racional detalhado de cada correção de banco está nos comentários das próprias migrations.
 
-1. **Agregações em JS sobre a tabela inteira** — RPC `sum()`/`group by` em `admin/page.tsx`, `admin/financeiro`, `professor/faturamento`. Maior esforço do que o resto (precisa de função SQL nova por tela).
-2. **Paginação** — `/cursos`, `/aluno/loja`, `/admin/matriculas`, `/admin/produtos`, `/admin/cursos`.
-3. Se quiser fechar de vez a latência das páginas públicas: tirar a `Navbar` da dependência de `cookies()` no servidor (ver ressalva acima) — só assim `/` e `/cursos` viram estáticas de verdade.
-4. 🔵 Qualidade: `as any`, lint/testes, `error.tsx` por rota — sem pressa, não bloqueiam nada.
+- [x] **Escalação de privilégio no cadastro** — `00003_security_fixes.sql`, `00007_close_self_update_holes.sql`. `handle_new_user()` força `role = 'student'`; a 00007 fechou a segunda porta (`profiles_self_update` / `teacher_profiles_self_update` sem restrição de coluna) com triggers que bloqueiam mudança de `role`, `status` e `commission_rate` pra quem não é admin.
+- [x] **Preço do carrinho vinha do cliente** — `app/api/stripe/checkout-products/route.ts`. Preço, nome e estoque agora vêm sempre do banco.
+- [x] **Matrícula grátis via RLS** — `00003`, `00007`, `app/api/stripe/checkout/route.ts`. Policies `enrollments_student_insert` e `orders_student_insert` removidas; só service role insere.
+- [x] **Professor aprovava o próprio curso** — `00003`. Trigger `courses_guard_status_change` restringe a transição a `draft → pending_review` fora do admin.
+- [x] **Webhook do Bunny sem autenticação** — `app/api/bunny/webhook/route.ts`. Exige `BUNNY_WEBHOOK_SECRET`, comparado com `timingSafeEqual`.
+- [x] **`stripe_account_id` exposto publicamente** — `00003`. Policy pública removida. (Ver item aberto sobre a view órfã que a substituiu.)
+- [x] **`createAdminClient()` misturava service role com cookies do usuário** — `lib/supabase/server.ts`. Reescrito sem cookie store.
+- [x] **Pedidos de produto nunca eram registrados** — `app/api/stripe/webhook/route.ts`. Webhook ramifica por `session.metadata.type`.
+- [x] **Webhook sem idempotência** — `00004_stripe_idempotency.sql`. Índices únicos parciais em `orders.stripe_payment_intent_id` e `teacher_payouts.stripe_transfer_id`.
+- [x] **Assinatura da URL do Bunny inválida** — `app/api/bunny/signed-url/route.ts`. Hash simples `sha256(tokenAuthKey + videoId + expires)` + URL de embed. **Ainda não validado contra uma library real** com Token Authentication habilitado.
+- [x] **`VideoPlayer` acumulava listeners** — `components/player/VideoPlayer.tsx`. Listener migrou pra `useEffect` com cleanup.
+- [x] **`CartContext` gravava `[]` por cima do carrinho salvo** — `contexts/CartContext.tsx`. Estado `hydrated` antes de persistir.
+- [x] **Middleware consultava `profiles` em toda navegação** — `00005_role_jwt_sync.sql`, `middleware.ts`, `lib/auth/session.ts`. Role vive em `app_metadata` do JWT. **Sessões ativas só recebem o claim novo no próximo refresh de token.**
+- [x] **Waterfall de queries sequenciais** — player de aula (7 → 2 round-trips), curso do aluno (5 → 3), faturamento (4 → 2).
+- [x] **RLS reavaliando `auth.uid()` por linha / índices faltando** — `00006_rls_performance.sql`. Policies envolvidas em subquery; índices em `orders(student_id)`, `order_items(order_id)`, `teacher_payouts(teacher_id)`, `documents(teacher_id)`.
+- [x] **Menu hambúrguer invisível no mobile** — `components/layout/MobileNav.tsx`. `createPortal` pro `body` (o `backdrop-blur` do header virava containing block), mais animação de entrada/saída com o token `--ease-azulejo`.
