@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Archivo, Bricolage_Grotesque } from 'next/font/google'
 import { Toaster } from 'sonner'
+import { RouteProgress } from '@/components/layout/RouteProgress'
 import './globals.css'
 
 const archivo = Archivo({
@@ -31,6 +32,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className={`${archivo.variable} ${bricolage.variable}`}>
       <body>
+        <RouteProgress />
         {children}
         <Toaster richColors position="top-right" />
       </body>

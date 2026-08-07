@@ -100,6 +100,99 @@
   .surge {
     animation: surge 700ms var(--ease-azulejo) both;
   }
+
+  /* --- Carregamento -------------------------------------------------------
+     O loader da marca é a parede sendo assentada: ladrilhos que acendem em
+     onda diagonal. A onda tem direção, e direção é o que faz o olho ler
+     "está progredindo" em vez de "está travado". */
+  .ladrilho-assentando {
+    animation: assentar 1400ms var(--ease-azulejo) infinite both;
+  }
+
+  /* Bloco de esqueleto: cal apagada com um brilho de vidrado passando por cima */
+  .esqueleto {
+    position: relative;
+    overflow: hidden;
+    background-color: color-mix(in srgb, var(--color-cobalto) 9%, var(--color-cal));
+  }
+
+  .esqueleto::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      color-mix(in srgb, var(--color-cal) 92%, transparent) 45%,
+      color-mix(in srgb, var(--color-cal) 92%, transparent) 55%,
+      transparent 100%
+    );
+    animation: varrer 1600ms var(--ease-azulejo) infinite;
+  }
+
+  /* Barra indeterminada: um cometa de brasa correndo no trilho de cobalto */
+  .barra-correndo {
+    animation: correr 1500ms var(--ease-azulejo) infinite;
+  }
+
+  /* Texto de status que respira junto com o loader */
+  .respirando {
+    animation: respirar 2200ms var(--ease-azulejo) infinite;
+  }
+}
+
+@keyframes assentar {
+  0% {
+    opacity: 0.14;
+    transform: scale(0.55);
+    background-color: var(--color-cobalto);
+  }
+  26% {
+    opacity: 1;
+    transform: scale(1);
+    background-color: var(--color-brasa);
+  }
+  55% {
+    opacity: 0.55;
+    transform: scale(0.9);
+    background-color: var(--color-cobalto-claro);
+  }
+  100% {
+    opacity: 0.14;
+    transform: scale(0.55);
+    background-color: var(--color-cobalto);
+  }
+}
+
+@keyframes varrer {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes correr {
+  0% {
+    transform: translateX(-100%) scaleX(0.4);
+  }
+  50% {
+    transform: translateX(25%) scaleX(0.75);
+  }
+  100% {
+    transform: translateX(280%) scaleX(0.4);
+  }
+}
+
+@keyframes respirar {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 @keyframes acender {
@@ -128,5 +221,28 @@
   .vidrado,
   .surge {
     animation: none;
+  }
+
+  /* Quem pediu menos movimento ainda precisa saber que algo está acontecendo:
+     trocamos deslocamento e escala por variação de opacidade, que é discreta
+     mas continua sinalizando atividade. */
+  .esqueleto::after,
+  .barra-correndo {
+    animation: none;
+  }
+
+  .esqueleto {
+    animation: respirar 2400ms ease-in-out infinite;
+  }
+
+  .ladrilho-assentando {
+    animation: respirar 1800ms ease-in-out infinite;
+    background-color: var(--color-cobalto);
+  }
+
+  .barra-correndo {
+    transform: none;
+    width: 100%;
+    opacity: 0.5;
   }
 }
