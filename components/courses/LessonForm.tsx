@@ -83,8 +83,8 @@ export function LessonForm({ courseId, lesson, orderIndex, onSaved, onCancel }: 
   }
 
   return (
-    <div className="border border-orange-200 rounded-xl p-4 bg-orange-50/30">
-      <h3 className="font-medium text-gray-900 mb-4">
+    <div className="border border-brasa/30 rounded-md p-4 bg-brasa/5">
+      <h3 className="font-medium text-tinta mb-4">
         {isEditing ? 'Editar aula' : 'Nova aula'}
       </h3>
 
@@ -92,7 +92,7 @@ export function LessonForm({ courseId, lesson, orderIndex, onSaved, onCancel }: 
         <div className="space-y-1">
           <Label htmlFor="lesson-title">Título da aula *</Label>
           <Input id="lesson-title" placeholder="Ex: Introdução à massa folhada" {...register('title')} />
-          {errors.title && <p className="text-xs text-red-500">{errors.title.message}</p>}
+          {errors.title && <p className="text-xs text-red-600">{errors.title.message}</p>}
         </div>
 
         <div className="space-y-1">
@@ -109,10 +109,10 @@ export function LessonForm({ courseId, lesson, orderIndex, onSaved, onCancel }: 
           <input
             type="checkbox"
             id="is_free_preview"
-            className="h-4 w-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+            className="h-4 w-4 rounded border-cobalto/20 text-brasa-escura focus:ring-brasa"
             {...register('is_free_preview')}
           />
-          <label htmlFor="is_free_preview" className="text-sm text-gray-700">
+          <label htmlFor="is_free_preview" className="text-sm text-tinta">
             Disponível como preview gratuito
           </label>
         </div>
@@ -128,7 +128,7 @@ export function LessonForm({ courseId, lesson, orderIndex, onSaved, onCancel }: 
       </form>
 
       {savedLessonId && (
-        <div className="mt-4 pt-4 border-t border-orange-200">
+        <div className="mt-4 pt-4 border-t border-brasa/30">
           <Label className="mb-2 block">Vídeo da aula</Label>
           <VideoUploader lessonId={savedLessonId} />
         </div>

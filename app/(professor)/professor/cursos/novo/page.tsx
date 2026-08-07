@@ -10,8 +10,8 @@ export default async function NewCoursePage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">Novo Curso</h1>
-      <p className="text-gray-500 mb-8">Preencha as informações básicas do seu curso.</p>
+      <h1 className="text-2xl font-bold text-tinta mb-2">Novo Curso</h1>
+      <p className="text-tinta-suave mb-8">Preencha as informações básicas do seu curso.</p>
       <CourseForm teacherId={user!.id} />
     </div>
   )

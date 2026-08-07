@@ -25,7 +25,7 @@ export function AddToCartButton({ product }: { product: Product }) {
   return (
     <Button size="sm" variant={added ? 'outline' : 'default'} onClick={handleAdd} className="gap-1.5">
       {added ? (
-        <><Check className="h-3.5 w-3.5 text-green-600" /> Adicionado</>
+        <><Check className="h-3.5 w-3.5 text-emerald-600" /> Adicionado</>
       ) : (
         <><ShoppingCart className="h-3.5 w-3.5" /> Adicionar</>
       )}

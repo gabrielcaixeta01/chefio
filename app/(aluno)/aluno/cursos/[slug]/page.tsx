@@ -73,36 +73,36 @@ export default async function AlunoCourseOverviewPage({
           </div>
         )}
         <div>
-          <h1 className="text-xl font-bold text-gray-900">{course.title}</h1>
-          <p className="text-sm text-gray-500">por {(course.teacher as any)?.name}</p>
+          <h1 className="text-xl font-bold text-tinta">{course.title}</h1>
+          <p className="text-sm text-tinta-suave">por {(course.teacher as any)?.name}</p>
         </div>
       </div>
 
       {/* Progresso */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
+      <div className="bg-white rounded-md border border-cobalto/15 p-4 mb-6">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-gray-700">Seu progresso</span>
-          <span className="text-sm font-bold text-orange-600">{progressPct}%</span>
+          <span className="text-sm font-medium text-tinta">Seu progresso</span>
+          <span className="text-sm font-bold text-brasa-escura">{progressPct}%</span>
         </div>
-        <div className="w-full bg-gray-100 rounded-full h-2">
+        <div className="w-full bg-cobalto/10 rounded-full h-2">
           <div
-            className="bg-orange-500 h-2 rounded-full transition-all duration-500"
+            className="bg-brasa h-2 rounded-full transition-all duration-500"
             style={{ width: `${progressPct}%` }}
           />
         </div>
-        <p className="text-xs text-gray-400 mt-1">{completedCount} de {totalLessons} aulas concluídas</p>
+        <p className="text-xs text-tinta-suave/70 mt-1">{completedCount} de {totalLessons} aulas concluídas</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Lista de aulas */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
+          <div className="bg-white rounded-md border border-cobalto/15 divide-y divide-cobalto/10">
             <div className="px-4 py-3 flex items-center justify-between">
-              <h2 className="font-semibold text-gray-900 text-sm">Aulas do curso</h2>
+              <h2 className="font-semibold text-tinta text-sm">Aulas do curso</h2>
               {firstLesson && (
                 <Link
                   href={`/aluno/cursos/${slug}/aulas/${firstLesson.id}`}
-                  className="text-xs text-orange-600 hover:underline font-medium"
+                  className="text-xs text-brasa-escura hover:underline font-medium"
                 >
                   {completedCount === 0 ? 'Começar →' : 'Continuar →'}
                 </Link>
@@ -115,29 +115,29 @@ export default async function AlunoCourseOverviewPage({
                 <Link
                   key={lesson.id}
                   href={`/aluno/cursos/${slug}/aulas/${lesson.id}`}
-                  className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors group"
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-cal-fundo transition-colors group"
                 >
                   {isCompleted ? (
-                    <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
+                    <CheckCircle className="h-4 w-4 text-emerald-600 shrink-0" />
                   ) : (
-                    <Circle className="h-4 w-4 text-gray-300 shrink-0" />
+                    <Circle className="h-4 w-4 text-cobalto/25 shrink-0" />
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm truncate ${isCompleted ? 'text-gray-400' : 'text-gray-700 group-hover:text-orange-600'}`}>
+                    <p className={`text-sm truncate ${isCompleted ? 'text-tinta-suave/70' : 'text-tinta group-hover:text-brasa-escura'}`}>
                       {index + 1}. {lesson.title}
                     </p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     {lesson.duration_seconds && (
-                      <span className="text-xs text-gray-400 flex items-center gap-1">
+                      <span className="text-xs text-tinta-suave/70 flex items-center gap-1">
                         <Clock className="h-3 w-3" />
                         {formatDuration(lesson.duration_seconds)}
                       </span>
                     )}
                     {hasVideo ? (
-                      <Play className="h-3.5 w-3.5 text-gray-400" />
+                      <Play className="h-3.5 w-3.5 text-tinta-suave/70" />
                     ) : (
-                      <Lock className="h-3.5 w-3.5 text-gray-300" />
+                      <Lock className="h-3.5 w-3.5 text-cobalto/25" />
                     )}
                   </div>
                 </Link>

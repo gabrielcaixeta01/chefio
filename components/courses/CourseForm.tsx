@@ -121,11 +121,11 @@ export function CourseForm({ course, teacherId }: CourseFormProps) {
       <div className="space-y-2">
         <Label>Capa do curso</Label>
         <div className="flex items-start gap-4">
-          <div className="w-40 h-24 rounded-lg border-2 border-dashed border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0">
+          <div className="w-40 h-24 rounded-sm border-2 border-dashed border-cobalto/15 bg-cal-fundo flex items-center justify-center overflow-hidden shrink-0">
             {thumbnailPreview ? (
               <img src={thumbnailPreview} alt="Capa" className="w-full h-full object-cover" />
             ) : (
-              <span className="text-xs text-gray-400 text-center px-2">Sem imagem</span>
+              <span className="text-xs text-tinta-suave/70 text-center px-2">Sem imagem</span>
             )}
           </div>
           <div>
@@ -138,11 +138,11 @@ export function CourseForm({ course, teacherId }: CourseFormProps) {
             />
             <label
               htmlFor="thumbnail"
-              className="cursor-pointer inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-700 bg-white hover:bg-gray-50"
+              className="cursor-pointer inline-flex items-center px-3 py-2 border border-cobalto/20 rounded-md text-sm text-tinta bg-white hover:bg-cal-fundo"
             >
               Escolher imagem
             </label>
-            <p className="text-xs text-gray-400 mt-1">JPG, PNG ou WebP. Proporção 16:9 recomendada.</p>
+            <p className="text-xs text-tinta-suave/70 mt-1">JPG, PNG ou WebP. Proporção 16:9 recomendada.</p>
           </div>
         </div>
       </div>
@@ -151,7 +151,7 @@ export function CourseForm({ course, teacherId }: CourseFormProps) {
       <div className="space-y-1">
         <Label htmlFor="title">Título do curso *</Label>
         <Input id="title" placeholder="Ex: Confeitaria Francesa do Zero" {...register('title')} />
-        {errors.title && <p className="text-xs text-red-500">{errors.title.message}</p>}
+        {errors.title && <p className="text-xs text-red-600">{errors.title.message}</p>}
       </div>
 
       {/* Descrição */}
@@ -163,7 +163,7 @@ export function CourseForm({ course, teacherId }: CourseFormProps) {
           rows={4}
           {...register('description')}
         />
-        {errors.description && <p className="text-xs text-red-500">{errors.description.message}</p>}
+        {errors.description && <p className="text-xs text-red-600">{errors.description.message}</p>}
       </div>
 
       {/* Categoria e Preço */}
@@ -172,7 +172,7 @@ export function CourseForm({ course, teacherId }: CourseFormProps) {
           <Label htmlFor="category">Categoria</Label>
           <select
             id="category"
-            className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+            className="flex h-10 w-full rounded-md border border-cobalto/20 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brasa"
             {...register('category')}
           >
             <option value="">Selecione...</option>
@@ -192,8 +192,8 @@ export function CourseForm({ course, teacherId }: CourseFormProps) {
             placeholder="0,00"
             {...register('price')}
           />
-          {errors.price && <p className="text-xs text-red-500">{errors.price.message}</p>}
-          <p className="text-xs text-gray-400">Use 0 para curso gratuito</p>
+          {errors.price && <p className="text-xs text-red-600">{errors.price.message}</p>}
+          <p className="text-xs text-tinta-suave/70">Use 0 para curso gratuito</p>
         </div>
       </div>
 

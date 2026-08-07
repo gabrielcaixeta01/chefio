@@ -43,52 +43,52 @@ export default async function AdminFinancialPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">Financeiro</h1>
-      <p className="text-gray-500 mb-8">Receitas e repasses da plataforma</p>
+      <h1 className="text-2xl font-bold text-tinta mb-2">Financeiro</h1>
+      <p className="text-tinta-suave mb-8">Receitas e repasses da plataforma</p>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <div className="bg-white rounded-md border border-cobalto/15 p-6">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-sm text-gray-500">Receita bruta total</p>
-            <TrendingUp className="h-4 w-4 text-gray-400" />
+            <p className="text-sm text-tinta-suave">Receita bruta total</p>
+            <TrendingUp className="h-4 w-4 text-tinta-suave/70" />
           </div>
-          <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalGross)}</p>
-          <p className="text-xs text-gray-400 mt-1">{totalSales} vendas</p>
+          <p className="text-2xl font-bold text-tinta">{formatCurrency(totalGross)}</p>
+          <p className="text-xs text-tinta-suave/70 mt-1">{totalSales} vendas</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <div className="bg-white rounded-md border border-cobalto/15 p-6">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-sm text-gray-500">Comissão da plataforma</p>
-            <DollarSign className="h-4 w-4 text-green-500" />
+            <p className="text-sm text-tinta-suave">Comissão da plataforma</p>
+            <DollarSign className="h-4 w-4 text-emerald-600" />
           </div>
-          <p className="text-2xl font-bold text-green-600">{formatCurrency(platformRevenue)}</p>
+          <p className="text-2xl font-bold text-emerald-600">{formatCurrency(platformRevenue)}</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <div className="bg-white rounded-md border border-cobalto/15 p-6">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-sm text-gray-500">Repasses a professores</p>
-            <Users className="h-4 w-4 text-gray-400" />
+            <p className="text-sm text-tinta-suave">Repasses a professores</p>
+            <Users className="h-4 w-4 text-tinta-suave/70" />
           </div>
-          <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalPayouts)}</p>
+          <p className="text-2xl font-bold text-tinta">{formatCurrency(totalPayouts)}</p>
         </div>
       </div>
 
       {/* Gráfico de barras mensal */}
       {sortedMonths.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-          <h2 className="font-semibold text-gray-900 mb-6">Receita mensal</h2>
+        <div className="bg-white rounded-md border border-cobalto/15 p-6 mb-6">
+          <h2 className="font-semibold text-tinta mb-6">Receita mensal</h2>
           <div className="flex items-end gap-3 h-40">
             {sortedMonths.map(([month, value]) => {
               const pct = (value / maxMonthly) * 100
               const [year, mm] = month.split('-')
               return (
                 <div key={month} className="flex-1 flex flex-col items-center gap-1">
-                  <span className="text-xs text-gray-500">{formatCurrency(value)}</span>
+                  <span className="text-xs text-tinta-suave">{formatCurrency(value)}</span>
                   <div className="w-full flex items-end justify-center" style={{ height: '100px' }}>
                     <div
-                      className="w-full bg-orange-400 rounded-t-md transition-all"
+                      className="w-full bg-brasa-clara rounded-t-md transition-all"
                       style={{ height: `${Math.max(pct, 4)}%` }}
                     />
                   </div>
-                  <span className="text-xs text-gray-400">{MONTH_NAMES[mm]}</span>
+                  <span className="text-xs text-tinta-suave/70">{MONTH_NAMES[mm]}</span>
                 </div>
               )
             })}
@@ -97,24 +97,24 @@ export default async function AdminFinancialPage() {
       )}
 
       {/* Últimas vendas */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-        <h2 className="font-semibold text-gray-900 mb-4">Últimas vendas</h2>
+      <div className="bg-white rounded-md border border-cobalto/15 p-6 mb-6">
+        <h2 className="font-semibold text-tinta mb-4">Últimas vendas</h2>
         {!recentSales || recentSales.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-6">Nenhuma venda ainda.</p>
+          <p className="text-sm text-tinta-suave/70 text-center py-6">Nenhuma venda ainda.</p>
         ) : (
           <div className="space-y-2">
             {recentSales.map((e, i) => {
               const course = e.course as any
               return (
-                <div key={i} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                <div key={i} className="flex items-center justify-between py-2 border-b border-cobalto/10 last:border-0">
                   <div>
-                    <p className="text-sm font-medium text-gray-900">{course?.title ?? '—'}</p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-sm font-medium text-tinta">{course?.title ?? '—'}</p>
+                    <p className="text-xs text-tinta-suave/70">
                       {course?.teacher?.name ?? '—'} ·{' '}
                       {new Date(e.created_at).toLocaleDateString('pt-BR')}
                     </p>
                   </div>
-                  <span className="text-sm font-semibold text-gray-900">
+                  <span className="text-sm font-semibold text-tinta">
                     {e.amount_paid === 0 ? 'Grátis' : formatCurrency(e.amount_paid ?? 0)}
                   </span>
                 </div>
@@ -125,24 +125,24 @@ export default async function AdminFinancialPage() {
       </div>
 
       {/* Repasses pendentes */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <h2 className="font-semibold text-gray-900 mb-4">Repasses recentes</h2>
+      <div className="bg-white rounded-md border border-cobalto/15 p-6">
+        <h2 className="font-semibold text-tinta mb-4">Repasses recentes</h2>
         {!payouts || payouts.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-6">Nenhum repasse registrado.</p>
+          <p className="text-sm text-tinta-suave/70 text-center py-6">Nenhum repasse registrado.</p>
         ) : (
           <div className="space-y-2">
             {payouts.map((p) => (
-              <div key={p.created_at} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+              <div key={p.created_at} className="flex items-center justify-between py-2 border-b border-cobalto/10 last:border-0">
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{(p.teacher as any)?.name ?? '—'}</p>
-                  <p className="text-xs text-gray-400">{new Date(p.created_at).toLocaleDateString('pt-BR')}</p>
+                  <p className="text-sm font-medium text-tinta">{(p.teacher as any)?.name ?? '—'}</p>
+                  <p className="text-xs text-tinta-suave/70">{new Date(p.created_at).toLocaleDateString('pt-BR')}</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-semibold">{formatCurrency(p.amount)}</span>
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                    p.status === 'paid' ? 'bg-green-100 text-green-700' :
-                    p.status === 'failed' ? 'bg-red-100 text-red-700' :
-                    'bg-yellow-100 text-yellow-700'
+                    p.status === 'paid' ? 'bg-emerald-50 text-emerald-700' :
+                    p.status === 'failed' ? 'bg-red-50 text-red-700' :
+                    'bg-amber-50 text-amber-800'
                   }`}>
                     {p.status === 'paid' ? 'Pago' : p.status === 'failed' ? 'Falhou' : 'Pendente'}
                   </span>

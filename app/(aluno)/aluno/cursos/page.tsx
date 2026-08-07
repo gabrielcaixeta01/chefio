@@ -26,8 +26,8 @@ export default async function AlunoCoursesPage() {
     <div>
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Meus cursos</h1>
-          <p className="text-gray-500 mt-1">Seus cursos comprados e em andamento</p>
+          <h1 className="text-2xl font-bold text-tinta">Meus cursos</h1>
+          <p className="text-tinta-suave mt-1">Seus cursos comprados e em andamento</p>
         </div>
         <Link href="/cursos">
           <Button variant="outline">Explorar mais cursos</Button>
@@ -35,7 +35,7 @@ export default async function AlunoCoursesPage() {
       </div>
 
       {pendingTeacherProfile && (
-        <div className="flex items-start gap-3 mb-8 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+        <div className="flex items-start gap-3 mb-8 p-4 bg-amber-50 border border-amber-200 rounded-md">
           <ChefHat className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
           <div>
             <p className="text-amber-800 text-sm font-medium">Seu cadastro como professor está em análise</p>
@@ -47,10 +47,10 @@ export default async function AlunoCoursesPage() {
       )}
 
       {!enrollments || enrollments.length === 0 ? (
-        <div className="text-center py-20 bg-white rounded-xl border border-gray-200">
-          <BookOpen className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">Você ainda não tem cursos</h2>
-          <p className="text-gray-500 text-sm mb-6">Explore nossa biblioteca e comece sua jornada culinária!</p>
+        <div className="text-center py-20 bg-white rounded-md border border-cobalto/15">
+          <BookOpen className="h-12 w-12 text-cobalto/25 mx-auto mb-4" />
+          <h2 className="text-lg font-semibold text-tinta mb-2">Você ainda não tem cursos</h2>
+          <p className="text-tinta-suave text-sm mb-6">Explore nossa biblioteca e comece sua jornada culinária!</p>
           <Link href="/cursos">
             <Button>Ver cursos disponíveis</Button>
           </Link>
@@ -63,9 +63,9 @@ export default async function AlunoCoursesPage() {
               <Link
                 key={enrollment.id}
                 href={`/aluno/cursos/${course?.slug}`}
-                className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow group"
+                className="bg-white rounded-md border border-cobalto/15 overflow-hidden hover:shadow-md transition-shadow group"
               >
-                <div className="relative aspect-video bg-gray-100">
+                <div className="relative aspect-video bg-cobalto/10">
                   {course?.thumbnail_url ? (
                     <Image
                       src={course.thumbnail_url}
@@ -75,7 +75,7 @@ export default async function AlunoCoursesPage() {
                     />
                   ) : (
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <BookOpen className="h-10 w-10 text-gray-300" />
+                      <BookOpen className="h-10 w-10 text-cobalto/25" />
                     </div>
                   )}
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -83,8 +83,8 @@ export default async function AlunoCoursesPage() {
                   </div>
                 </div>
                 <div className="p-4">
-                  <h3 className="font-semibold text-gray-900 text-sm line-clamp-2">{course?.title}</h3>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <h3 className="font-semibold text-tinta text-sm line-clamp-2">{course?.title}</h3>
+                  <p className="text-xs text-tinta-suave mt-1">
                     por {(course?.teacher as any)?.name ?? 'Professor'}
                   </p>
                 </div>

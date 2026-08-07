@@ -53,13 +53,13 @@ export function Notebook({ courseId, studentId, initialContent }: NotebookProps)
   }, [])
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-        <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-          <BookOpen className="h-4 w-4 text-orange-500" />
+    <div className="bg-white rounded-md border border-cobalto/15">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-cobalto/10">
+        <div className="flex items-center gap-2 text-sm font-medium text-tinta">
+          <BookOpen className="h-4 w-4 text-brasa-escura" />
           Caderno
         </div>
-        <span className="text-xs text-gray-400">
+        <span className="text-xs text-tinta-suave/70">
           {saving ? (
             <span className="flex items-center gap-1">
               <Loader2 className="h-3 w-3 animate-spin" /> Salvando...

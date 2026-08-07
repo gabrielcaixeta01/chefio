@@ -7,9 +7,9 @@ export default async function AlunoLayout({ children }: { children: React.ReactN
 
   return (
     <CartProvider>
-      <div className="flex min-h-screen bg-gray-50">
+      <div className="flex min-h-screen bg-cal-fundo">
         <AlunoSidebar />
-        <main className="flex-1 p-8 overflow-auto">{children}</main>
+        <main className="flex-1 overflow-auto p-8">{children}</main>
       </div>
     </CartProvider>
   )

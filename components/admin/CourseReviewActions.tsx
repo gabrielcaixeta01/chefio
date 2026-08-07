@@ -35,7 +35,7 @@ export function CourseReviewActions({ courseId, currentStatus }: CourseReviewAct
 
   if (currentStatus === 'approved') {
     return (
-      <span className="text-xs text-green-600 flex items-center gap-1 shrink-0">
+      <span className="text-xs text-emerald-600 flex items-center gap-1 shrink-0">
         <CheckCircle className="h-3.5 w-3.5" /> Aprovado
       </span>
     )
@@ -48,7 +48,7 @@ export function CourseReviewActions({ courseId, currentStatus }: CourseReviewAct
       <Button
         size="sm"
         variant="outline"
-        className="gap-1 text-green-600 border-green-200 hover:bg-green-50"
+        className="gap-1 text-emerald-600 border-emerald-200 hover:bg-emerald-50"
         disabled={!!loading}
         onClick={() => updateStatus('approved')}
       >

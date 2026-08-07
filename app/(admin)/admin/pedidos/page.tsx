@@ -7,10 +7,10 @@ import { Package } from 'lucide-react'
 export const metadata: Metadata = { title: 'Admin — Pedidos' }
 
 const STATUS_LABELS: Record<string, { label: string; className: string }> = {
-  pending: { label: 'Aguardando pagamento', className: 'bg-yellow-100 text-yellow-700' },
-  paid: { label: 'Pago', className: 'bg-blue-100 text-blue-700' },
-  shipped: { label: 'Enviado', className: 'bg-purple-100 text-purple-700' },
-  delivered: { label: 'Entregue', className: 'bg-green-100 text-green-700' },
+  pending: { label: 'Aguardando pagamento', className: 'bg-amber-50 text-amber-800' },
+  paid: { label: 'Pago', className: 'bg-cobalto/15 text-cobalto' },
+  shipped: { label: 'Enviado', className: 'bg-cobalto/15 text-cobalto' },
+  delivered: { label: 'Entregue', className: 'bg-emerald-50 text-emerald-700' },
 }
 
 export default async function AdminOrdersPage() {
@@ -38,26 +38,26 @@ export default async function AdminOrdersPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">Pedidos</h1>
-      <p className="text-gray-500 mb-6">{orders?.length ?? 0} pedido(s)</p>
+      <h1 className="text-2xl font-bold text-tinta mb-2">Pedidos</h1>
+      <p className="text-tinta-suave mb-6">{orders?.length ?? 0} pedido(s)</p>
 
       {!orders || orders.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-200 p-16 text-center">
-          <Package className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-400 text-sm">Nenhum pedido ainda.</p>
+        <div className="bg-white rounded-md border border-cobalto/15 p-16 text-center">
+          <Package className="h-10 w-10 text-cobalto/25 mx-auto mb-3" />
+          <p className="text-tinta-suave/70 text-sm">Nenhum pedido ainda.</p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
+        <div className="bg-white rounded-md border border-cobalto/15 divide-y divide-cobalto/10">
           {orders.map((order) => {
             const s = STATUS_LABELS[order.status] ?? STATUS_LABELS.pending
             const items = itemsByOrder[order.id] ?? []
             return (
               <div key={order.id} className="flex items-center gap-4 p-4">
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-900 text-sm truncate">
+                  <p className="font-medium text-tinta text-sm truncate">
                     {(order.student as any)?.name ?? 'Aluno'}
                   </p>
-                  <p className="text-xs text-gray-400 mt-0.5 truncate">
+                  <p className="text-xs text-tinta-suave/70 mt-0.5 truncate">
                     {items.map((i) => `${i.quantity}x ${i.product?.name ?? 'Produto'}`).join(', ') || 'Sem itens'}
                     {' · '}
                     {new Date(order.created_at).toLocaleDateString('pt-BR')}
@@ -66,7 +66,7 @@ export default async function AdminOrdersPage() {
                 <span className={`text-xs px-2.5 py-1 rounded-full font-medium shrink-0 ${s.className}`}>
                   {s.label}
                 </span>
-                <span className="text-sm font-semibold text-gray-900 shrink-0 w-24 text-right">
+                <span className="text-sm font-semibold text-tinta shrink-0 w-24 text-right">
                   {formatCurrency(order.total)}
                 </span>
                 <div className="shrink-0">

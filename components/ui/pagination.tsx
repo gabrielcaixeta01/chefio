@@ -22,14 +22,16 @@ export function Pagination({ page, totalPages, buildHref }: PaginationProps) {
         aria-disabled={prevDisabled}
         tabIndex={prevDisabled ? -1 : undefined}
         className={cn(
-          'flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium border border-gray-200 bg-white transition-colors',
-          prevDisabled ? 'pointer-events-none opacity-40' : 'text-gray-700 hover:bg-gray-50'
+          'flex items-center gap-1 rounded-sm border-2 px-3.5 py-1.5 text-sm font-semibold transition-colors',
+          prevDisabled
+            ? 'pointer-events-none border-cobalto/10 text-tinta-suave/40'
+            : 'border-cobalto/20 text-tinta hover:border-cobalto/50'
         )}
       >
         <ChevronLeft className="h-4 w-4" />
         Anterior
       </Link>
-      <span className="text-sm text-gray-500">
+      <span className="text-sm text-tinta-suave">
         Página {page} de {totalPages}
       </span>
       <Link
@@ -37,8 +39,10 @@ export function Pagination({ page, totalPages, buildHref }: PaginationProps) {
         aria-disabled={nextDisabled}
         tabIndex={nextDisabled ? -1 : undefined}
         className={cn(
-          'flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium border border-gray-200 bg-white transition-colors',
-          nextDisabled ? 'pointer-events-none opacity-40' : 'text-gray-700 hover:bg-gray-50'
+          'flex items-center gap-1 rounded-sm border-2 px-3.5 py-1.5 text-sm font-semibold transition-colors',
+          nextDisabled
+            ? 'pointer-events-none border-cobalto/10 text-tinta-suave/40'
+            : 'border-cobalto/20 text-tinta hover:border-cobalto/50'
         )}
       >
         Próxima

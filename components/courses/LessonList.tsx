@@ -51,39 +51,39 @@ function SortableLesson({
     <div
       ref={setNodeRef}
       style={style}
-      className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg group"
+      className="flex items-center gap-3 p-3 bg-white border border-cobalto/15 rounded-sm group"
     >
       <button
         {...attributes}
         {...listeners}
-        className="cursor-grab text-gray-300 hover:text-gray-500 touch-none"
+        className="cursor-grab text-cobalto/25 hover:text-tinta-suave touch-none"
       >
         <GripVertical className="h-4 w-4" />
       </button>
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-900 truncate">{lesson.title}</span>
+          <span className="text-sm font-medium text-tinta truncate">{lesson.title}</span>
           {lesson.is_free_preview && (
-            <span className="inline-flex items-center gap-1 text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded">
+            <span className="inline-flex items-center gap-1 text-xs text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
               <Eye className="h-3 w-3" />
               Preview
             </span>
           )}
           {!lesson.is_free_preview && (
-            <span className="inline-flex items-center gap-1 text-xs text-gray-400">
+            <span className="inline-flex items-center gap-1 text-xs text-tinta-suave/70">
               <Lock className="h-3 w-3" />
             </span>
           )}
         </div>
         <div className="flex items-center gap-2 mt-0.5">
           {lesson.bunny_video_id ? (
-            <span className="inline-flex items-center gap-1 text-xs text-blue-600">
+            <span className="inline-flex items-center gap-1 text-xs text-cobalto">
               <Video className="h-3 w-3" />
               {lesson.duration_seconds ? formatDuration(lesson.duration_seconds) : 'Vídeo enviado'}
             </span>
           ) : (
-            <span className="text-xs text-gray-400">Sem vídeo</span>
+            <span className="text-xs text-tinta-suave/70">Sem vídeo</span>
           )}
         </div>
       </div>
@@ -91,13 +91,13 @@ function SortableLesson({
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         <button
           onClick={() => onEdit(lesson)}
-          className="p-1.5 text-gray-400 hover:text-gray-700 rounded"
+          className="p-1.5 text-tinta-suave/70 hover:text-tinta rounded"
         >
           <Pencil className="h-3.5 w-3.5" />
         </button>
         <button
           onClick={() => onDelete(lesson.id)}
-          className="p-1.5 text-gray-400 hover:text-red-600 rounded"
+          className="p-1.5 text-tinta-suave/70 hover:text-red-600 rounded"
         >
           <Trash2 className="h-3.5 w-3.5" />
         </button>
@@ -194,7 +194,7 @@ export function LessonList({ courseId, lessons: initialLessons }: LessonListProp
       ) : (
         <button
           onClick={() => setShowForm(true)}
-          className="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-gray-200 rounded-lg text-sm text-gray-500 hover:border-orange-300 hover:text-orange-600 transition-colors"
+          className="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-cobalto/15 rounded-sm text-sm text-tinta-suave hover:border-brasa/50 hover:text-brasa-escura transition-colors"
         >
           <Plus className="h-4 w-4" />
           Adicionar aula

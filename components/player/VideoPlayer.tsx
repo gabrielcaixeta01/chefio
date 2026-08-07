@@ -33,10 +33,10 @@ export function VideoPlayer({ lessonId, onEnded }: VideoPlayerProps) {
 
   if (error) {
     return (
-      <div className="aspect-video bg-gray-900 rounded-xl flex items-center justify-center">
+      <div className="aspect-video bg-cobalto-escuro rounded-md flex items-center justify-center">
         <div className="text-center text-white">
-          <AlertCircle className="h-10 w-10 mx-auto mb-2 text-red-400" />
-          <p className="text-sm text-gray-300">{error}</p>
+          <AlertCircle className="h-10 w-10 mx-auto mb-2 text-red-500" />
+          <p className="text-sm text-cobalto/25">{error}</p>
         </div>
       </div>
     )
@@ -44,14 +44,14 @@ export function VideoPlayer({ lessonId, onEnded }: VideoPlayerProps) {
 
   if (!signedUrl) {
     return (
-      <div className="aspect-video bg-gray-900 rounded-xl flex items-center justify-center">
+      <div className="aspect-video bg-cobalto-escuro rounded-md flex items-center justify-center">
         <Loader2 className="h-8 w-8 text-white animate-spin" />
       </div>
     )
   }
 
   return (
-    <div className="aspect-video rounded-xl overflow-hidden bg-black">
+    <div className="aspect-video rounded-md overflow-hidden bg-black">
       <iframe
         src={signedUrl}
         className="w-full h-full"

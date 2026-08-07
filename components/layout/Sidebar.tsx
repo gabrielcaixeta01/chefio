@@ -38,12 +38,11 @@ const iconMap = {
 
 interface SidebarProps {
   title: string
-  subtitle: string
   items: NavItem[]
   userName?: string
 }
 
-export function Sidebar({ title, subtitle, items, userName }: SidebarProps) {
+export function Sidebar({ title, items, userName }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
 
@@ -56,17 +55,20 @@ export function Sidebar({ title, subtitle, items, userName }: SidebarProps) {
   }
 
   return (
-    <aside className="w-64 min-h-screen bg-gray-900 text-gray-100 flex flex-col">
+    <aside className="flex min-h-screen w-64 shrink-0 flex-col bg-cobalto-escuro text-cal">
       {/* Header */}
-      <div className="p-6 border-b border-gray-700">
-        <Link href="/" className="text-orange-400 font-bold text-lg">
+      <div className="border-b border-cal/15 p-6">
+        <Link
+          href="/"
+          className="font-display text-xl font-extrabold tracking-tight text-cal transition-colors hover:text-brasa-clara"
+        >
           Chefio
         </Link>
-        <p className="text-xs text-gray-400 mt-1">{title}</p>
+        <p className="olho mt-2 text-brasa-clara">{title}</p>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 p-4 space-y-1">
+      <nav className="flex-1 space-y-1 p-4">
         {items.map((item) => {
           const Icon = iconMap[item.icon]
           const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
@@ -74,14 +76,15 @@ export function Sidebar({ title, subtitle, items, userName }: SidebarProps) {
             <Link
               key={item.href}
               href={item.href}
+              aria-current={isActive ? 'page' : undefined}
               className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                'flex items-center gap-3 rounded-sm px-3 py-2.5 text-sm font-semibold transition-colors',
                 isActive
-                  ? 'bg-orange-600 text-white'
-                  : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                  ? 'bg-brasa text-tinta'
+                  : 'text-cal/70 hover:bg-cal/10 hover:text-cal'
               )}
             >
-              <Icon className="h-4 w-4 shrink-0" />
+              <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
               {item.label}
             </Link>
           )
@@ -89,15 +92,15 @@ export function Sidebar({ title, subtitle, items, userName }: SidebarProps) {
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-gray-700">
+      <div className="border-t border-cal/15 p-4">
         {userName && (
-          <p className="text-xs text-gray-400 mb-2 truncate">{userName}</p>
+          <p className="mb-2 truncate text-xs text-cal/60">{userName}</p>
         )}
         <button
           onClick={handleLogout}
-          className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors w-full"
+          className="flex w-full items-center gap-2 text-sm font-semibold text-cal/70 transition-colors hover:text-cal"
         >
-          <LogOut className="h-4 w-4" />
+          <LogOut className="h-4 w-4" aria-hidden="true" />
           Sair
         </button>
       </div>

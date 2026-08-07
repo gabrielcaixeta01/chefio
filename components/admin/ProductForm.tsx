@@ -50,13 +50,13 @@ export function ProductForm() {
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5">
-      <h2 className="font-semibold text-gray-900 mb-4">Novo produto</h2>
+    <div className="bg-white rounded-md border border-cobalto/15 p-5">
+      <h2 className="font-semibold text-tinta mb-4">Novo produto</h2>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-1">
           <Label htmlFor="name">Nome *</Label>
           <Input id="name" placeholder="Ex: Forma de silicone antiaderente" {...register('name')} />
-          {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
+          {errors.name && <p className="text-xs text-red-600">{errors.name.message}</p>}
         </div>
 
         <div className="space-y-1">
@@ -67,7 +67,7 @@ export function ProductForm() {
         <div className="space-y-1">
           <Label htmlFor="price">Preço (R$) *</Label>
           <Input id="price" type="number" min="0" step="0.01" placeholder="0,00" {...register('price')} />
-          {errors.price && <p className="text-xs text-red-500">{errors.price.message}</p>}
+          {errors.price && <p className="text-xs text-red-600">{errors.price.message}</p>}
         </div>
 
         <Button type="submit" disabled={loading} className="w-full">

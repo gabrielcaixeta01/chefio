@@ -66,7 +66,7 @@ export function LessonProgressButton({
     >
       {completed ? (
         <>
-          <CheckCircle className="h-4 w-4 text-green-600" />
+          <CheckCircle className="h-4 w-4 text-emerald-600" />
           {nextLessonId ? 'Próxima aula' : 'Concluída'}
         </>
       ) : (

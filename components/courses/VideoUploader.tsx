@@ -81,7 +81,7 @@ export function VideoUploader({ lessonId, onUploaded }: VideoUploaderProps) {
 
   if (done) {
     return (
-      <div className="flex items-center gap-2 text-green-600 text-sm">
+      <div className="flex items-center gap-2 text-emerald-600 text-sm">
         <CheckCircle className="h-4 w-4" />
         Vídeo enviado com sucesso. Processamento em andamento...
       </div>
@@ -101,13 +101,13 @@ export function VideoUploader({ lessonId, onUploaded }: VideoUploaderProps) {
 
       {uploading ? (
         <div className="space-y-2">
-          <div className="flex items-center gap-2 text-sm text-gray-600">
+          <div className="flex items-center gap-2 text-sm text-tinta-suave">
             <Loader2 className="h-4 w-4 animate-spin" />
             Enviando... {progress}%
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="w-full bg-cobalto/15 rounded-full h-2">
             <div
-              className="bg-orange-500 h-2 rounded-full transition-all duration-300"
+              className="bg-brasa h-2 rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -116,14 +116,14 @@ export function VideoUploader({ lessonId, onUploaded }: VideoUploaderProps) {
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+          className="flex items-center gap-2 px-3 py-2 border border-cobalto/20 rounded-md text-sm text-tinta bg-white hover:bg-cal-fundo transition-colors"
         >
           <Upload className="h-4 w-4" />
           Selecionar vídeo
         </button>
       )}
 
-      <p className="text-xs text-gray-400 mt-1">MP4, MOV ou AVI. Sem limite de tamanho.</p>
+      <p className="text-xs text-tinta-suave/70 mt-1">MP4, MOV ou AVI. Sem limite de tamanho.</p>
     </div>
   )
 }

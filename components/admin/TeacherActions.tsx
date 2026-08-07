@@ -65,9 +65,9 @@ export function TeacherActions({ teacherProfileId, userId, currentStatus, curren
             max={100}
             value={commission}
             onChange={(e) => setCommission(Number(e.target.value))}
-            className="w-16 h-8 text-sm border border-gray-300 rounded px-2 text-center"
+            className="w-16 h-8 text-sm border border-cobalto/20 rounded px-2 text-center"
           />
-          <span className="text-sm text-gray-500">%</span>
+          <span className="text-sm text-tinta-suave">%</span>
           <Button size="sm" onClick={saveCommission} disabled={loading === 'commission'}>
             {loading === 'commission' ? '...' : 'Salvar'}
           </Button>
@@ -80,7 +80,7 @@ export function TeacherActions({ teacherProfileId, userId, currentStatus, curren
           <Button
             size="sm"
             variant="outline"
-            className="gap-1 text-gray-600"
+            className="gap-1 text-tinta-suave"
             onClick={() => setEditingCommission(true)}
           >
             <Percent className="h-3.5 w-3.5" />
@@ -89,7 +89,7 @@ export function TeacherActions({ teacherProfileId, userId, currentStatus, curren
           <Button
             size="sm"
             variant="outline"
-            className={`gap-1 ${currentStatus === 'active' ? 'text-red-600 border-red-200 hover:bg-red-50' : 'text-green-600 border-green-200 hover:bg-green-50'}`}
+            className={`gap-1 ${currentStatus === 'active' ? 'text-red-600 border-red-200 hover:bg-red-50' : 'text-emerald-600 border-emerald-200 hover:bg-emerald-50'}`}
             disabled={loading === 'status'}
             onClick={toggleStatus}
           >

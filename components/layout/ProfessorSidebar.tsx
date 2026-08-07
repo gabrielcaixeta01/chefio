@@ -22,7 +22,6 @@ export async function ProfessorSidebar() {
   return (
     <Sidebar
       title="Professor"
-      subtitle="Área do professor"
       items={items}
       userName={profile?.name}
     />

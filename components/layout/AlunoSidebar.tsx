@@ -23,7 +23,6 @@ export async function AlunoSidebar() {
   return (
     <Sidebar
       title="Aluno"
-      subtitle="Área do aluno"
       items={items}
       userName={profile?.name}
     />

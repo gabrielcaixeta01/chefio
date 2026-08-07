@@ -89,20 +89,20 @@ export default async function LessonPlayerPage({
 
   return (
     <div className="max-w-5xl">
-      <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
-        <Link href={`/aluno/cursos/${slug}`} className="hover:text-orange-600 transition-colors">
+      <div className="flex items-center gap-2 text-sm text-tinta-suave mb-4">
+        <Link href={`/aluno/cursos/${slug}`} className="hover:text-brasa-escura transition-colors">
           {course.title}
         </Link>
         <span>/</span>
-        <span className="text-gray-700 truncate">{lesson.title}</span>
+        <span className="text-tinta truncate">{lesson.title}</span>
       </div>
 
       <div className="mb-4">
         {lesson.bunny_video_id ? (
           <VideoPlayer lessonId={lessonId} />
         ) : (
-          <div className="aspect-video bg-gray-100 rounded-xl flex items-center justify-center">
-            <div className="text-center text-gray-400">
+          <div className="aspect-video bg-cobalto/10 rounded-md flex items-center justify-center">
+            <div className="text-center text-tinta-suave/70">
               <Lock className="h-10 w-10 mx-auto mb-2" />
               <p className="text-sm">Vídeo ainda não disponível</p>
             </div>
@@ -112,9 +112,9 @@ export default async function LessonPlayerPage({
 
       <div className="flex items-start justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">{lesson.title}</h1>
+          <h1 className="text-xl font-bold text-tinta">{lesson.title}</h1>
           {lesson.description && (
-            <p className="text-sm text-gray-500 mt-1">{lesson.description}</p>
+            <p className="text-sm text-tinta-suave mt-1">{lesson.description}</p>
           )}
         </div>
         <LessonProgressButton
@@ -133,7 +133,7 @@ export default async function LessonPlayerPage({
         {prevLesson ? (
           <Link
             href={`/aluno/cursos/${slug}/aulas/${prevLesson.id}`}
-            className="flex items-center gap-1 text-sm text-gray-500 hover:text-orange-600 transition-colors"
+            className="flex items-center gap-1 text-sm text-tinta-suave hover:text-brasa-escura transition-colors"
           >
             <ChevronLeft className="h-4 w-4" />
             <span className="truncate max-w-50">{prevLesson.title}</span>
@@ -142,7 +142,7 @@ export default async function LessonPlayerPage({
         {nextLesson ? (
           <Link
             href={`/aluno/cursos/${slug}/aulas/${nextLesson.id}`}
-            className="flex items-center gap-1 text-sm text-gray-500 hover:text-orange-600 transition-colors"
+            className="flex items-center gap-1 text-sm text-tinta-suave hover:text-brasa-escura transition-colors"
           >
             <span className="truncate max-w-50">{nextLesson.title}</span>
             <ChevronRight className="h-4 w-4" />
@@ -151,7 +151,7 @@ export default async function LessonPlayerPage({
       </div>
 
       <div className="flex items-center justify-between mb-3">
-        <span className="text-sm font-semibold text-gray-700">Caderno</span>
+        <span className="text-sm font-semibold text-tinta">Caderno</span>
         <ExportNotebook courseTitle={course.title} notebookId={notebookDomId} />
       </div>
       <div id={notebookDomId}>

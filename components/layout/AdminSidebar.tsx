@@ -24,7 +24,6 @@ export async function AdminSidebar() {
   return (
     <Sidebar
       title="Administrador"
-      subtitle="Painel admin"
       items={items}
       userName={profile?.name}
     />

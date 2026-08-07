@@ -5,9 +5,9 @@ export default async function ProfessorLayout({ children }: { children: React.Re
   await requireRole('teacher')
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-cal-fundo">
       <ProfessorSidebar />
-      <main className="flex-1 p-8 overflow-auto">{children}</main>
+      <main className="flex-1 overflow-auto p-8">{children}</main>
     </div>
   )
 }
