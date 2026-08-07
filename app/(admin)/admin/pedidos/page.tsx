@@ -38,16 +38,16 @@ export default async function AdminOrdersPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-tinta mb-2">Pedidos</h1>
+      <h1 className="font-display text-3xl font-extrabold text-tinta mb-2 tracking-tight">Pedidos</h1>
       <p className="text-tinta-suave mb-6">{orders?.length ?? 0} pedido(s)</p>
 
       {!orders || orders.length === 0 ? (
-        <div className="bg-white rounded-md border border-cobalto/15 p-16 text-center">
+        <div className="bg-cal rounded-md border border-cobalto/15 p-16 text-center">
           <Package className="h-10 w-10 text-cobalto/25 mx-auto mb-3" />
           <p className="text-tinta-suave/70 text-sm">Nenhum pedido ainda.</p>
         </div>
       ) : (
-        <div className="bg-white rounded-md border border-cobalto/15 divide-y divide-cobalto/10">
+        <div className="bg-cal rounded-md border border-cobalto/15 divide-y divide-cobalto/10">
           {orders.map((order) => {
             const s = STATUS_LABELS[order.status] ?? STATUS_LABELS.pending
             const items = itemsByOrder[order.id] ?? []
@@ -63,7 +63,7 @@ export default async function AdminOrdersPage() {
                     {new Date(order.created_at).toLocaleDateString('pt-BR')}
                   </p>
                 </div>
-                <span className={`text-xs px-2.5 py-1 rounded-full font-medium shrink-0 ${s.className}`}>
+                <span className={`rounded-sm px-2.5 py-1 text-[0.6875rem] font-semibold uppercase tracking-[0.08em] shrink-0 ${s.className}`}>
                   {s.label}
                 </span>
                 <span className="text-sm font-semibold text-tinta shrink-0 w-24 text-right">

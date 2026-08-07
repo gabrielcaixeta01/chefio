@@ -46,7 +46,7 @@ export default async function OrdersPage({
     <div>
       {params.success && <ClearCartOnSuccess />}
 
-      <h1 className="text-2xl font-bold text-tinta mb-2">Meus Pedidos</h1>
+      <h1 className="font-display text-3xl font-extrabold text-tinta mb-2 tracking-tight">Meus Pedidos</h1>
       <p className="text-tinta-suave mb-6">{orders?.length ?? 0} pedido(s)</p>
 
       {params.success && (
@@ -59,7 +59,7 @@ export default async function OrdersPage({
       )}
 
       {!orders || orders.length === 0 ? (
-        <div className="bg-white rounded-md border border-cobalto/15 p-16 text-center">
+        <div className="bg-cal rounded-md border border-cobalto/15 p-16 text-center">
           <Package className="h-12 w-12 text-cobalto/25 mx-auto mb-4" />
           <p className="text-tinta-suave font-medium">Nenhum pedido ainda</p>
           <p className="text-tinta-suave/70 text-sm mt-1">
@@ -71,7 +71,7 @@ export default async function OrdersPage({
           {orders.map((order) => {
             const s = STATUS_LABELS[order.status] ?? STATUS_LABELS.pending
             return (
-              <div key={order.id} className="bg-white rounded-md border border-cobalto/15 p-5">
+              <div key={order.id} className="bg-cal rounded-md border border-cobalto/15 p-5">
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <p className="text-xs text-tinta-suave/70">
@@ -79,7 +79,7 @@ export default async function OrdersPage({
                     </p>
                     <p className="font-semibold text-tinta mt-0.5">{formatCurrency(order.total)}</p>
                   </div>
-                  <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${s.className}`}>
+                  <span className={`rounded-sm px-2.5 py-1 text-[0.6875rem] font-semibold uppercase tracking-[0.08em] ${s.className}`}>
                     {s.label}
                   </span>
                 </div>

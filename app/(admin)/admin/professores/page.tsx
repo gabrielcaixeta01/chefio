@@ -15,16 +15,16 @@ export default async function AdminTeachersPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-tinta mb-2">Professores</h1>
+      <h1 className="font-display text-3xl font-extrabold text-tinta mb-2 tracking-tight">Professores</h1>
       <p className="text-tinta-suave mb-6">{teachers?.length ?? 0} professor(es) cadastrado(s)</p>
 
       {!teachers || teachers.length === 0 ? (
-        <div className="bg-white rounded-md border border-cobalto/15 p-16 text-center">
+        <div className="bg-cal rounded-md border border-cobalto/15 p-16 text-center">
           <Users className="h-10 w-10 text-cobalto/25 mx-auto mb-3" />
           <p className="text-tinta-suave/70 text-sm">Nenhum professor cadastrado.</p>
         </div>
       ) : (
-        <div className="bg-white rounded-md border border-cobalto/15 divide-y divide-cobalto/10">
+        <div className="bg-cal rounded-md border border-cobalto/15 divide-y divide-cobalto/10">
           {teachers.map((teacher) => {
             const profile = teacher.profile as any
             return (
@@ -38,7 +38,7 @@ export default async function AdminTeachersPage() {
                     <span className="text-xs text-tinta-suave/70">
                       Comissão: <strong>{teacher.commission_rate}%</strong>
                     </span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                    <span className={`rounded-sm px-2 py-0.5 text-[0.6875rem] font-semibold uppercase tracking-[0.08em] ${
                       teacher.status === 'active' ? 'bg-emerald-50 text-emerald-700' :
                       teacher.status === 'suspended' ? 'bg-red-50 text-red-700' :
                       'bg-amber-50 text-amber-800'

@@ -28,7 +28,7 @@ export function StripeOnboardingButton({ isConnected, isActive }: StripeOnboardi
 
   if (isActive) {
     return (
-      <p className="text-sm text-green-600 font-medium">
+      <p className="text-sm text-emerald-600 font-medium">
         Conta ativa. Seus cursos podem ser vendidos normalmente.
       </p>
     )

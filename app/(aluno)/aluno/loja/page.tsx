@@ -35,14 +35,14 @@ export default async function StorePagePage({
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-tinta">Loja</h1>
+          <h1 className="font-display text-3xl font-extrabold text-tinta tracking-tight">Loja</h1>
           <p className="text-tinta-suave mt-1">Utensílios e ingredientes para sua cozinha</p>
         </div>
         <CartButton />
       </div>
 
       {!products || products.length === 0 ? (
-        <div className="bg-white rounded-md border border-cobalto/15 p-16 text-center">
+        <div className="bg-cal rounded-md border border-cobalto/15 p-16 text-center">
           <Package className="h-12 w-12 text-cobalto/25 mx-auto mb-4" />
           <p className="text-tinta-suave font-medium">Nenhum produto disponível</p>
           <p className="text-tinta-suave/70 text-sm mt-1">Em breve novos produtos serão adicionados.</p>
@@ -50,7 +50,7 @@ export default async function StorePagePage({
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {products.map((product) => (
-            <div key={product.id} className="bg-white rounded-md border border-cobalto/15 overflow-hidden hover:shadow-md transition-shadow">
+            <div key={product.id} className="bg-cal rounded-md border border-cobalto/15 overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:border-cobalto/50">
               <div className="aspect-square bg-cal-fundo relative overflow-hidden">
                 {product.image_url ? (
                   <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
@@ -61,7 +61,7 @@ export default async function StorePagePage({
                 )}
               </div>
               <div className="p-4">
-                <h3 className="font-semibold text-tinta text-sm">{product.name}</h3>
+                <h3 className="font-display font-bold text-tinta text-sm tracking-tight">{product.name}</h3>
                 {product.description && (
                   <p className="text-xs text-tinta-suave mt-1 line-clamp-2">{product.description}</p>
                 )}

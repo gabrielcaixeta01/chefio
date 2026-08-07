@@ -172,7 +172,7 @@ export function CourseForm({ course, teacherId }: CourseFormProps) {
           <Label htmlFor="category">Categoria</Label>
           <select
             id="category"
-            className="flex h-10 w-full rounded-md border border-cobalto/20 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brasa"
+            className="flex h-11 w-full rounded-sm border-2 border-cobalto/20 bg-white px-3.5 text-sm text-tinta transition-colors hover:border-cobalto/40 focus:border-cobalto focus:outline-none"
             {...register('category')}
           >
             <option value="">Selecione...</option>

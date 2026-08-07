@@ -41,8 +41,8 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
 
       <div className="flex items-start justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-tinta">{course.title}</h1>
-          <span className={`inline-block mt-1 text-xs px-2.5 py-1 rounded-full font-medium ${
+          <h1 className="font-display text-3xl font-extrabold text-tinta tracking-tight">{course.title}</h1>
+          <span className={`inline-block mt-1 rounded-sm px-2.5 py-1 text-[0.6875rem] font-semibold uppercase tracking-[0.08em] ${
             course.status === 'approved' ? 'bg-emerald-50 text-emerald-700' :
             course.status === 'pending_review' ? 'bg-amber-50 text-amber-800' :
             course.status === 'rejected' ? 'bg-red-50 text-red-700' :
@@ -76,12 +76,12 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
       )}
 
       <section className="mb-10">
-        <h2 className="text-lg font-semibold text-tinta mb-4">Informações do curso</h2>
+        <h2 className="font-display text-lg font-bold text-tinta mb-4 tracking-tight">Informações do curso</h2>
         <CourseForm course={course} teacherId={user!.id} />
       </section>
 
       <section>
-        <h2 className="text-lg font-semibold text-tinta mb-4">Aulas</h2>
+        <h2 className="font-display text-lg font-bold text-tinta mb-4 tracking-tight">Aulas</h2>
         <LessonList courseId={course.id} lessons={lessons ?? []} />
       </section>
     </div>

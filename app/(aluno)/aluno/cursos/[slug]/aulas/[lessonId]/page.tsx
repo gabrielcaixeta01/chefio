@@ -112,7 +112,7 @@ export default async function LessonPlayerPage({
 
       <div className="flex items-start justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-xl font-bold text-tinta">{lesson.title}</h1>
+          <h1 className="font-display text-2xl font-bold text-tinta tracking-tight">{lesson.title}</h1>
           {lesson.description && (
             <p className="text-sm text-tinta-suave mt-1">{lesson.description}</p>
           )}

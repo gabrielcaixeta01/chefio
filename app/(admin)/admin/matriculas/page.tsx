@@ -30,16 +30,16 @@ export default async function AdminEnrollmentsPage({
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-tinta mb-2">Matrículas</h1>
+      <h1 className="font-display text-3xl font-extrabold text-tinta mb-2 tracking-tight">Matrículas</h1>
       <p className="text-tinta-suave mb-6">{count ?? 0} matrícula(s)</p>
 
       {!enrollments || enrollments.length === 0 ? (
-        <div className="bg-white rounded-md border border-cobalto/15 p-16 text-center">
+        <div className="bg-cal rounded-md border border-cobalto/15 p-16 text-center">
           <ClipboardList className="h-10 w-10 text-cobalto/25 mx-auto mb-3" />
           <p className="text-tinta-suave/70 text-sm">Nenhuma matrícula ainda.</p>
         </div>
       ) : (
-        <div className="bg-white rounded-md border border-cobalto/15 divide-y divide-cobalto/10">
+        <div className="bg-cal rounded-md border border-cobalto/15 divide-y divide-cobalto/10">
           {enrollments.map((e) => (
             <div key={e.id} className="flex items-center gap-4 p-4">
               <div className="flex-1 min-w-0">

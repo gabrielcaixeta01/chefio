@@ -12,17 +12,17 @@ export function NotFoundView() {
     <div className="min-h-screen flex flex-col items-center justify-center px-4 text-center">
       <Link
         href="/"
-        className="flex items-center gap-2 font-bold text-xl text-orange-600 mb-8"
+        className="mb-8 flex items-center gap-2 font-display text-xl font-extrabold tracking-tight text-cobalto"
       >
-        <ChefHat className="h-6 w-6" />
+        <ChefHat className="h-6 w-6" aria-hidden="true" />
         <span>Chefio</span>
       </Link>
 
-      <p className="text-sm font-semibold text-orange-600">404</p>
-      <h1 className="mt-2 text-3xl font-bold text-gray-900">
+      <p className="olho text-brasa-escura">404</p>
+      <h1 className="mt-3 font-display text-4xl font-extrabold tracking-tight text-tinta">
         Página não encontrada
       </h1>
-      <p className="mt-3 max-w-md text-gray-600">
+      <p className="mt-3 max-w-md text-tinta-suave">
         A página que você procura não existe ou foi movida.
       </p>
 

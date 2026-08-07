@@ -47,7 +47,7 @@ export default async function BillingPage() {
     <div>
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-tinta">Faturamento</h1>
+          <h1 className="font-display text-3xl font-extrabold text-tinta tracking-tight">Faturamento</h1>
           <p className="text-tinta-suave mt-1">Comissão da plataforma: {commissionRate}%</p>
         </div>
         {teacherProfile?.stripe_account_id && (
@@ -74,33 +74,33 @@ export default async function BillingPage() {
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-md border border-cobalto/15 p-6">
+        <div className="bg-cal rounded-md border border-cobalto/15 p-6">
           <div className="flex items-center justify-between mb-3">
             <p className="text-sm text-tinta-suave">Receita bruta</p>
             <TrendingUp className="h-4 w-4 text-tinta-suave/70" />
           </div>
-          <p className="text-2xl font-bold text-tinta">{formatCurrency(totalGross)}</p>
+          <p className="font-display text-3xl font-extrabold tabular-nums tracking-tight text-tinta">{formatCurrency(totalGross)}</p>
         </div>
-        <div className="bg-white rounded-md border border-cobalto/15 p-6">
+        <div className="bg-cal rounded-md border border-cobalto/15 p-6">
           <div className="flex items-center justify-between mb-3">
             <p className="text-sm text-tinta-suave">Ganhos líquidos</p>
             <DollarSign className="h-4 w-4 text-emerald-600" />
           </div>
-          <p className="text-2xl font-bold text-emerald-600">{formatCurrency(totalNet)}</p>
+          <p className="font-display text-3xl font-extrabold tabular-nums tracking-tight text-emerald-700">{formatCurrency(totalNet)}</p>
           <p className="text-xs text-tinta-suave/70 mt-1">Após {commissionRate}% de comissão</p>
         </div>
-        <div className="bg-white rounded-md border border-cobalto/15 p-6">
+        <div className="bg-cal rounded-md border border-cobalto/15 p-6">
           <div className="flex items-center justify-between mb-3">
             <p className="text-sm text-tinta-suave">Total de vendas</p>
             <Users className="h-4 w-4 text-tinta-suave/70" />
           </div>
-          <p className="text-2xl font-bold text-tinta">{totalSales}</p>
+          <p className="font-display text-3xl font-extrabold tabular-nums tracking-tight text-tinta">{totalSales}</p>
         </div>
       </div>
 
       {Object.keys(courseRevenue).length > 0 && (
-        <div className="bg-white rounded-md border border-cobalto/15 p-6 mb-6">
-          <h2 className="font-semibold text-tinta mb-4">Receita por curso</h2>
+        <div className="bg-cal rounded-md border border-cobalto/15 p-6 mb-6">
+          <h2 className="font-display font-bold text-tinta mb-4 tracking-tight">Receita por curso</h2>
           <div className="space-y-3">
             {Object.entries(courseRevenue).map(([courseId, data]) => (
               <div key={courseId} className="flex items-center justify-between py-2 border-b border-cobalto/10 last:border-0">
@@ -118,8 +118,8 @@ export default async function BillingPage() {
         </div>
       )}
 
-      <div className="bg-white rounded-md border border-cobalto/15 p-6">
-        <h2 className="font-semibold text-tinta mb-4">Histórico de repasses</h2>
+      <div className="bg-cal rounded-md border border-cobalto/15 p-6">
+        <h2 className="font-display font-bold text-tinta mb-4 tracking-tight">Histórico de repasses</h2>
         {!payouts || payouts.length === 0 ? (
           <p className="text-sm text-tinta-suave/70 text-center py-8">Nenhum repasse registrado ainda.</p>
         ) : (
@@ -132,7 +132,7 @@ export default async function BillingPage() {
                     {new Date(payout.created_at).toLocaleDateString('pt-BR')}
                   </p>
                 </div>
-                <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                <span className={`rounded-sm px-2 py-1 text-[0.6875rem] font-semibold uppercase tracking-[0.08em] ${
                   payout.status === 'paid' ? 'bg-emerald-50 text-emerald-700' :
                   payout.status === 'failed' ? 'bg-red-50 text-red-700' :
                   'bg-amber-50 text-amber-800'

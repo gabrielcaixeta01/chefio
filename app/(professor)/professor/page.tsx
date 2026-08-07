@@ -35,7 +35,7 @@ export default async function ProfessorDashboard() {
     <div>
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-tinta">Dashboard</h1>
+          <h1 className="font-display text-3xl font-extrabold text-tinta tracking-tight">Dashboard</h1>
           <p className="text-tinta-suave mt-1">Bem-vindo à sua área de professor</p>
         </div>
         <Link href="/professor/cursos/novo">
@@ -57,26 +57,26 @@ export default async function ProfessorDashboard() {
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-md border border-cobalto/15 p-6">
+        <div className="bg-cal rounded-md border border-cobalto/15 p-6">
           <div className="flex items-center justify-between mb-4">
             <p className="text-sm text-tinta-suave">Cursos publicados</p>
             <span className="p-2 rounded-sm text-cobalto bg-cobalto/10"><BookOpen className="h-4 w-4" /></span>
           </div>
-          <p className="text-2xl font-bold text-tinta">{approvedCourses.length}</p>
+          <p className="font-display text-3xl font-extrabold tabular-nums tracking-tight text-tinta">{approvedCourses.length}</p>
         </div>
-        <div className="bg-white rounded-md border border-cobalto/15 p-6">
+        <div className="bg-cal rounded-md border border-cobalto/15 p-6">
           <div className="flex items-center justify-between mb-4">
             <p className="text-sm text-tinta-suave">Total de alunos</p>
             <span className="p-2 rounded-sm text-cobalto-claro bg-cobalto/10"><Users className="h-4 w-4" /></span>
           </div>
-          <p className="text-2xl font-bold text-tinta">{enrollments?.length ?? 0}</p>
+          <p className="font-display text-3xl font-extrabold tabular-nums tracking-tight text-tinta">{enrollments?.length ?? 0}</p>
         </div>
-        <div className="bg-white rounded-md border border-cobalto/15 p-6">
+        <div className="bg-cal rounded-md border border-cobalto/15 p-6">
           <div className="flex items-center justify-between mb-4">
             <p className="text-sm text-tinta-suave">Ganhos líquidos</p>
             <span className="p-2 rounded-sm text-emerald-600 bg-emerald-50"><DollarSign className="h-4 w-4" /></span>
           </div>
-          <p className="text-2xl font-bold text-tinta">{formatCurrency(netRevenue)}</p>
+          <p className="font-display text-3xl font-extrabold tabular-nums tracking-tight text-tinta">{formatCurrency(netRevenue)}</p>
           <p className="text-xs text-tinta-suave/70 mt-1">Após {commissionRate}% de comissão da plataforma</p>
         </div>
       </div>
@@ -89,8 +89,8 @@ export default async function ProfessorDashboard() {
         </div>
       )}
 
-      <div className="bg-white rounded-md border border-cobalto/15 p-6">
-        <h2 className="font-semibold text-tinta mb-4">Seus cursos</h2>
+      <div className="bg-cal rounded-md border border-cobalto/15 p-6">
+        <h2 className="font-display font-bold text-tinta mb-4 tracking-tight">Seus cursos</h2>
         {courses?.length === 0 ? (
           <div className="text-center py-8 text-tinta-suave/70">
             <p>Você ainda não criou nenhum curso.</p>
@@ -104,7 +104,7 @@ export default async function ProfessorDashboard() {
               <div key={course.id} className="flex items-center justify-between py-2 border-b border-cobalto/10 last:border-0">
                 <span className="text-sm text-tinta">{course.title}</span>
                 <div className="flex items-center gap-3">
-                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                  <span className={`rounded-sm px-2 py-1 text-[0.6875rem] font-semibold uppercase tracking-[0.08em] ${
                     course.status === 'approved' ? 'bg-emerald-50 text-emerald-700' :
                     course.status === 'pending_review' ? 'bg-amber-50 text-amber-800' :
                     course.status === 'rejected' ? 'bg-red-50 text-red-700' :

@@ -25,7 +25,7 @@ export default async function OnboardingPage({
 
   return (
     <div className="max-w-2xl">
-      <h1 className="text-2xl font-bold text-tinta mb-2">Configurar Recebimentos</h1>
+      <h1 className="font-display text-3xl font-extrabold text-tinta mb-2 tracking-tight">Configurar Recebimentos</h1>
       <p className="text-tinta-suave mb-8">
         Para publicar cursos pagos e receber pagamentos, conecte sua conta Stripe.
       </p>
@@ -52,15 +52,15 @@ export default async function OnboardingPage({
         </div>
       )}
 
-      <div className="bg-white border border-cobalto/15 rounded-md p-6">
+      <div className="bg-cal border border-cobalto/15 rounded-md p-6">
         <div className="flex items-start justify-between">
           <div>
-            <h2 className="font-semibold text-tinta">Stripe Express</h2>
+            <h2 className="font-display font-bold text-tinta tracking-tight">Stripe Express</h2>
             <p className="text-sm text-tinta-suave mt-1">
               Receba pagamentos diretamente na sua conta bancária via Stripe.
             </p>
           </div>
-          <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
+          <span className={`rounded-sm px-2.5 py-1 text-[0.6875rem] font-semibold uppercase tracking-[0.08em] ${
             isActive ? 'bg-emerald-50 text-emerald-700' :
             isConnected ? 'bg-amber-50 text-amber-800' :
             'bg-cobalto/10 text-tinta-suave'

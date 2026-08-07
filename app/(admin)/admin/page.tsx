@@ -25,21 +25,21 @@ export default async function AdminDashboard() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-tinta mb-2">Dashboard</h1>
+      <h1 className="font-display text-3xl font-extrabold text-tinta mb-2 tracking-tight">Dashboard</h1>
       <p className="text-tinta-suave mb-8">Visão geral da plataforma Chefio</p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {stats.map((stat) => {
           const Icon = stat.icon
           return (
-            <div key={stat.label} className="bg-white rounded-md border border-cobalto/15 p-6">
+            <div key={stat.label} className="bg-cal rounded-md border border-cobalto/15 p-6">
               <div className="flex items-center justify-between mb-4">
                 <p className="text-sm text-tinta-suave">{stat.label}</p>
                 <span className={`p-2 rounded-sm ${stat.color}`}>
                   <Icon className="h-4 w-4" />
                 </span>
               </div>
-              <p className="text-2xl font-bold text-tinta">{stat.value}</p>
+              <p className="font-display text-3xl font-extrabold tabular-nums tracking-tight text-tinta">{stat.value}</p>
             </div>
           )
         })}

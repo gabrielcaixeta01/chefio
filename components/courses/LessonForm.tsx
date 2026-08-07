@@ -84,7 +84,7 @@ export function LessonForm({ courseId, lesson, orderIndex, onSaved, onCancel }: 
 
   return (
     <div className="border border-brasa/30 rounded-md p-4 bg-brasa/5">
-      <h3 className="font-medium text-tinta mb-4">
+      <h3 className="font-display font-bold text-tinta mb-4 tracking-tight">
         {isEditing ? 'Editar aula' : 'Nova aula'}
       </h3>
 

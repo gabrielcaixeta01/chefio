@@ -51,7 +51,7 @@ function SortableLesson({
     <div
       ref={setNodeRef}
       style={style}
-      className="flex items-center gap-3 p-3 bg-white border border-cobalto/15 rounded-sm group"
+      className="flex items-center gap-3 p-3 bg-cal border border-cobalto/15 rounded-sm group"
     >
       <button
         {...attributes}

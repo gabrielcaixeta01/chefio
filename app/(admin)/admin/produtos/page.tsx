@@ -33,7 +33,7 @@ export default async function AdminProductsPage({
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-tinta">Produtos</h1>
+          <h1 className="font-display text-3xl font-extrabold text-tinta tracking-tight">Produtos</h1>
           <p className="text-tinta-suave mt-1">{count ?? 0} produto(s) cadastrado(s)</p>
         </div>
       </div>
@@ -42,13 +42,13 @@ export default async function AdminProductsPage({
         {/* Lista */}
         <div className="lg:col-span-2">
           {!products || products.length === 0 ? (
-            <div className="bg-white rounded-md border border-cobalto/15 p-16 text-center">
+            <div className="bg-cal rounded-md border border-cobalto/15 p-16 text-center">
               <Package className="h-10 w-10 text-cobalto/25 mx-auto mb-3" />
               <p className="text-tinta-suave/70 text-sm">Nenhum produto cadastrado.</p>
               <p className="text-tinta-suave/70 text-xs mt-1">Adicione produtos usando o formulário ao lado.</p>
             </div>
           ) : (
-            <div className="bg-white rounded-md border border-cobalto/15 divide-y divide-cobalto/10">
+            <div className="bg-cal rounded-md border border-cobalto/15 divide-y divide-cobalto/10">
               {products.map((product) => (
                 <div key={product.id} className="flex items-center gap-4 p-4">
                   <div className="w-12 h-12 rounded-sm bg-cobalto/10 shrink-0 overflow-hidden">

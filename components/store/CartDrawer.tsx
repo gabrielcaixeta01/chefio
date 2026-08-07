@@ -20,7 +20,7 @@ export function CartButton() {
       >
         <ShoppingCart className="h-5 w-5" />
         {count > 0 && (
-          <span className="absolute -top-1 -right-1 w-4 h-4 bg-brasa text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+          <span className="absolute -top-1 -right-1 w-4 h-4 bg-brasa text-tinta text-[10px] font-bold rounded-full flex items-center justify-center">
             {count > 9 ? '9+' : count}
           </span>
         )}
@@ -59,7 +59,7 @@ function CartDrawer({ onClose }: { onClose: () => void }) {
       <div className="fixed inset-0 bg-black/30 z-40" onClick={onClose} />
       <div className="fixed right-0 top-0 h-full w-full max-w-sm bg-white shadow-xl z-50 flex flex-col">
         <div className="flex items-center justify-between p-4 border-b border-cobalto/10">
-          <h2 className="font-semibold text-tinta">Carrinho</h2>
+          <h2 className="font-display font-bold text-tinta tracking-tight">Carrinho</h2>
           <button onClick={onClose} className="p-1 text-tinta-suave/70 hover:text-tinta">
             <X className="h-5 w-5" />
           </button>

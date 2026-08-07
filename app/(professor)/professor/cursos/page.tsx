@@ -28,7 +28,7 @@ export default async function ProfessorCoursesPage() {
     <div>
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-tinta">Meus Cursos</h1>
+          <h1 className="font-display text-3xl font-extrabold text-tinta tracking-tight">Meus Cursos</h1>
           <p className="text-tinta-suave mt-1">{courses?.length ?? 0} curso(s) criado(s)</p>
         </div>
         <Link href="/professor/cursos/novo">
@@ -40,16 +40,16 @@ export default async function ProfessorCoursesPage() {
       </div>
 
       {!courses || courses.length === 0 ? (
-        <div className="bg-white rounded-md border border-dashed border-cobalto/20 p-16 text-center">
+        <div className="bg-cal rounded-md border border-dashed border-cobalto/20 p-16 text-center">
           <BookOpen className="h-12 w-12 text-cobalto/25 mx-auto mb-4" />
-          <h3 className="font-semibold text-tinta mb-2">Nenhum curso ainda</h3>
+          <h3 className="font-display font-bold text-tinta mb-2 tracking-tight">Nenhum curso ainda</h3>
           <p className="text-tinta-suave/70 text-sm mb-6">Crie seu primeiro curso e comece a ensinar!</p>
           <Link href="/professor/cursos/novo">
             <Button>Criar primeiro curso</Button>
           </Link>
         </div>
       ) : (
-        <div className="bg-white rounded-md border border-cobalto/15 divide-y divide-cobalto/10">
+        <div className="bg-cal rounded-md border border-cobalto/15 divide-y divide-cobalto/10">
           {courses.map((course) => {
             const status = STATUS_LABELS[course.status ?? 'draft'] ?? STATUS_LABELS.draft
             return (
@@ -75,7 +75,7 @@ export default async function ProfessorCoursesPage() {
                     </span>
                   </div>
                 </div>
-                <span className={`text-xs px-2.5 py-1 rounded-full font-medium shrink-0 ${status.className}`}>
+                <span className={`rounded-sm px-2.5 py-1 text-[0.6875rem] font-semibold uppercase tracking-[0.08em] shrink-0 ${status.className}`}>
                   {status.label}
                 </span>
                 <Link href={`/professor/cursos/${course.id}`}>

@@ -51,7 +51,7 @@ export function ProductForm() {
 
   return (
     <div className="bg-white rounded-md border border-cobalto/15 p-5">
-      <h2 className="font-semibold text-tinta mb-4">Novo produto</h2>
+      <h2 className="font-display font-bold text-tinta mb-4 tracking-tight">Novo produto</h2>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-1">
           <Label htmlFor="name">Nome *</Label>

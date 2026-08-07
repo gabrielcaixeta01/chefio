@@ -73,20 +73,20 @@ export default async function AlunoCourseOverviewPage({
           </div>
         )}
         <div>
-          <h1 className="text-xl font-bold text-tinta">{course.title}</h1>
+          <h1 className="font-display text-2xl font-bold text-tinta tracking-tight">{course.title}</h1>
           <p className="text-sm text-tinta-suave">por {(course.teacher as any)?.name}</p>
         </div>
       </div>
 
       {/* Progresso */}
-      <div className="bg-white rounded-md border border-cobalto/15 p-4 mb-6">
+      <div className="bg-cal rounded-md border border-cobalto/15 p-4 mb-6">
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-medium text-tinta">Seu progresso</span>
           <span className="text-sm font-bold text-brasa-escura">{progressPct}%</span>
         </div>
-        <div className="w-full bg-cobalto/10 rounded-full h-2">
+        <div className="w-full bg-cobalto/10 rounded-sm h-2">
           <div
-            className="bg-brasa h-2 rounded-full transition-all duration-500"
+            className="bg-brasa h-2 rounded-sm transition-all duration-500"
             style={{ width: `${progressPct}%` }}
           />
         </div>
@@ -96,9 +96,9 @@ export default async function AlunoCourseOverviewPage({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Lista de aulas */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-md border border-cobalto/15 divide-y divide-cobalto/10">
+          <div className="bg-cal rounded-md border border-cobalto/15 divide-y divide-cobalto/10">
             <div className="px-4 py-3 flex items-center justify-between">
-              <h2 className="font-semibold text-tinta text-sm">Aulas do curso</h2>
+              <h2 className="font-display font-bold text-tinta text-sm tracking-tight">Aulas do curso</h2>
               {firstLesson && (
                 <Link
                   href={`/aluno/cursos/${slug}/aulas/${firstLesson.id}`}

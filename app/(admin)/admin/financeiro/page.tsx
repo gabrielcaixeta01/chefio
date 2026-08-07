@@ -43,38 +43,38 @@ export default async function AdminFinancialPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-tinta mb-2">Financeiro</h1>
+      <h1 className="font-display text-3xl font-extrabold text-tinta mb-2 tracking-tight">Financeiro</h1>
       <p className="text-tinta-suave mb-8">Receitas e repasses da plataforma</p>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-md border border-cobalto/15 p-6">
+        <div className="bg-cal rounded-md border border-cobalto/15 p-6">
           <div className="flex items-center justify-between mb-3">
             <p className="text-sm text-tinta-suave">Receita bruta total</p>
             <TrendingUp className="h-4 w-4 text-tinta-suave/70" />
           </div>
-          <p className="text-2xl font-bold text-tinta">{formatCurrency(totalGross)}</p>
+          <p className="font-display text-3xl font-extrabold tabular-nums tracking-tight text-tinta">{formatCurrency(totalGross)}</p>
           <p className="text-xs text-tinta-suave/70 mt-1">{totalSales} vendas</p>
         </div>
-        <div className="bg-white rounded-md border border-cobalto/15 p-6">
+        <div className="bg-cal rounded-md border border-cobalto/15 p-6">
           <div className="flex items-center justify-between mb-3">
             <p className="text-sm text-tinta-suave">Comissão da plataforma</p>
             <DollarSign className="h-4 w-4 text-emerald-600" />
           </div>
-          <p className="text-2xl font-bold text-emerald-600">{formatCurrency(platformRevenue)}</p>
+          <p className="font-display text-3xl font-extrabold tabular-nums tracking-tight text-emerald-700">{formatCurrency(platformRevenue)}</p>
         </div>
-        <div className="bg-white rounded-md border border-cobalto/15 p-6">
+        <div className="bg-cal rounded-md border border-cobalto/15 p-6">
           <div className="flex items-center justify-between mb-3">
             <p className="text-sm text-tinta-suave">Repasses a professores</p>
             <Users className="h-4 w-4 text-tinta-suave/70" />
           </div>
-          <p className="text-2xl font-bold text-tinta">{formatCurrency(totalPayouts)}</p>
+          <p className="font-display text-3xl font-extrabold tabular-nums tracking-tight text-tinta">{formatCurrency(totalPayouts)}</p>
         </div>
       </div>
 
       {/* Gráfico de barras mensal */}
       {sortedMonths.length > 0 && (
-        <div className="bg-white rounded-md border border-cobalto/15 p-6 mb-6">
-          <h2 className="font-semibold text-tinta mb-6">Receita mensal</h2>
+        <div className="bg-cal rounded-md border border-cobalto/15 p-6 mb-6">
+          <h2 className="font-display font-bold text-tinta mb-6 tracking-tight">Receita mensal</h2>
           <div className="flex items-end gap-3 h-40">
             {sortedMonths.map(([month, value]) => {
               const pct = (value / maxMonthly) * 100
@@ -97,8 +97,8 @@ export default async function AdminFinancialPage() {
       )}
 
       {/* Últimas vendas */}
-      <div className="bg-white rounded-md border border-cobalto/15 p-6 mb-6">
-        <h2 className="font-semibold text-tinta mb-4">Últimas vendas</h2>
+      <div className="bg-cal rounded-md border border-cobalto/15 p-6 mb-6">
+        <h2 className="font-display font-bold text-tinta mb-4 tracking-tight">Últimas vendas</h2>
         {!recentSales || recentSales.length === 0 ? (
           <p className="text-sm text-tinta-suave/70 text-center py-6">Nenhuma venda ainda.</p>
         ) : (
@@ -125,8 +125,8 @@ export default async function AdminFinancialPage() {
       </div>
 
       {/* Repasses pendentes */}
-      <div className="bg-white rounded-md border border-cobalto/15 p-6">
-        <h2 className="font-semibold text-tinta mb-4">Repasses recentes</h2>
+      <div className="bg-cal rounded-md border border-cobalto/15 p-6">
+        <h2 className="font-display font-bold text-tinta mb-4 tracking-tight">Repasses recentes</h2>
         {!payouts || payouts.length === 0 ? (
           <p className="text-sm text-tinta-suave/70 text-center py-6">Nenhum repasse registrado.</p>
         ) : (
@@ -139,7 +139,7 @@ export default async function AdminFinancialPage() {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-semibold">{formatCurrency(p.amount)}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                  <span className={`rounded-sm px-2 py-0.5 text-[0.6875rem] font-semibold uppercase tracking-[0.08em] ${
                     p.status === 'paid' ? 'bg-emerald-50 text-emerald-700' :
                     p.status === 'failed' ? 'bg-red-50 text-red-700' :
                     'bg-amber-50 text-amber-800'

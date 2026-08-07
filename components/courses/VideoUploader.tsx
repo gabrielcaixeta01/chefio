@@ -105,9 +105,9 @@ export function VideoUploader({ lessonId, onUploaded }: VideoUploaderProps) {
             <Loader2 className="h-4 w-4 animate-spin" />
             Enviando... {progress}%
           </div>
-          <div className="w-full bg-cobalto/15 rounded-full h-2">
+          <div className="w-full bg-cobalto/15 rounded-sm h-2">
             <div
-              className="bg-brasa h-2 rounded-full transition-all duration-300"
+              className="bg-brasa h-2 rounded-sm transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>

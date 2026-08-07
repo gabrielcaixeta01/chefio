@@ -20,14 +20,14 @@ export default function Error({
     <div className="min-h-screen flex flex-col items-center justify-center px-4 text-center">
       <Link
         href="/"
-        className="flex items-center gap-2 font-bold text-xl text-orange-600 mb-8"
+        className="flex items-center gap-2 font-bold text-xl text-brasa-escura mb-8"
       >
         <ChefHat className="h-6 w-6" />
         <span>Chefio</span>
       </Link>
 
-      <h1 className="text-3xl font-bold text-gray-900">Algo deu errado</h1>
-      <p className="mt-3 max-w-md text-gray-600">
+      <h1 className="font-display text-3xl font-bold text-tinta tracking-tight">Algo deu errado</h1>
+      <p className="mt-3 max-w-md text-tinta-suave">
         Não foi possível carregar esta página. Tente novamente ou volte para a
         home.
       </p>

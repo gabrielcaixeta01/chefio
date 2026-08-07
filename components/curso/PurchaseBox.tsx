@@ -56,7 +56,7 @@ export function PurchaseBox({ courseId, courseSlug, price }: PurchaseBoxProps) {
   return (
     <>
       {erro && ERROS_CHECKOUT[erro] && (
-        <div className="mt-4 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+        <div className="mt-4 flex items-start gap-2 rounded-sm border border-red-200 bg-red-50 p-3 text-sm text-red-700">
           <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
           <p>{ERROS_CHECKOUT[erro]}</p>
         </div>
@@ -64,7 +64,7 @@ export function PurchaseBox({ courseId, courseSlug, price }: PurchaseBoxProps) {
 
       <div className="mt-4">
         {status === 'checking' && (
-          <div className="h-12 w-full rounded-md bg-gray-100 animate-pulse" aria-hidden="true" />
+          <div className="h-12 w-full rounded-md bg-cobalto/10 animate-pulse" aria-hidden="true" />
         )}
 
         {status === 'enrolled' && (

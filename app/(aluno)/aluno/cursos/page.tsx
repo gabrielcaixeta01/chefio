@@ -26,7 +26,7 @@ export default async function AlunoCoursesPage() {
     <div>
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-tinta">Meus cursos</h1>
+          <h1 className="font-display text-3xl font-extrabold text-tinta tracking-tight">Meus cursos</h1>
           <p className="text-tinta-suave mt-1">Seus cursos comprados e em andamento</p>
         </div>
         <Link href="/cursos">
@@ -47,9 +47,9 @@ export default async function AlunoCoursesPage() {
       )}
 
       {!enrollments || enrollments.length === 0 ? (
-        <div className="text-center py-20 bg-white rounded-md border border-cobalto/15">
+        <div className="text-center py-20 bg-cal rounded-md border border-cobalto/15">
           <BookOpen className="h-12 w-12 text-cobalto/25 mx-auto mb-4" />
-          <h2 className="text-lg font-semibold text-tinta mb-2">Você ainda não tem cursos</h2>
+          <h2 className="font-display text-lg font-bold text-tinta mb-2 tracking-tight">Você ainda não tem cursos</h2>
           <p className="text-tinta-suave text-sm mb-6">Explore nossa biblioteca e comece sua jornada culinária!</p>
           <Link href="/cursos">
             <Button>Ver cursos disponíveis</Button>
@@ -63,7 +63,7 @@ export default async function AlunoCoursesPage() {
               <Link
                 key={enrollment.id}
                 href={`/aluno/cursos/${course?.slug}`}
-                className="bg-white rounded-md border border-cobalto/15 overflow-hidden hover:shadow-md transition-shadow group"
+                className="bg-cal rounded-md border border-cobalto/15 overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:border-cobalto/50 group"
               >
                 <div className="relative aspect-video bg-cobalto/10">
                   {course?.thumbnail_url ? (
@@ -83,7 +83,7 @@ export default async function AlunoCoursesPage() {
                   </div>
                 </div>
                 <div className="p-4">
-                  <h3 className="font-semibold text-tinta text-sm line-clamp-2">{course?.title}</h3>
+                  <h3 className="font-display font-bold text-tinta text-sm line-clamp-2 tracking-tight">{course?.title}</h3>
                   <p className="text-xs text-tinta-suave mt-1">
                     por {(course?.teacher as any)?.name ?? 'Professor'}
                   </p>
