@@ -31,15 +31,19 @@ export default async function LandingPage() {
   let featuredCourses: any[] = []
   try {
     const supabase = createPublicClient()
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('courses')
       .select('id, title, slug, thumbnail_url, price, teacher:profiles(name)')
       .eq('status', 'approved')
       .order('created_at', { ascending: false })
       .limit(4)
+    // supabase-js não lança em erro HTTP — sem ler `error`, um 401 de RLS
+    // vira "nenhum curso" e a home anuncia catálogo em construção enquanto
+    // o problema é permissão. Aconteceu de verdade em 10/08/2026.
+    if (error) throw error
     featuredCourses = data ?? []
-  } catch {
-    // Supabase não configurado
+  } catch (err) {
+    console.error('[/] falha ao carregar cursos em destaque:', err)
   }
 
   return (

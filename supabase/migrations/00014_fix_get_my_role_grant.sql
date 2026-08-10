@@ -1,0 +1,50 @@
+-- ============================================================
+-- Migration 00014: Desfaz o revoke de get_my_role() (10/08/2026)
+-- Execute APÓS 00012_rpc_grants_and_null_role_guard.sql
+--
+-- ⚠️ CORRIGE UMA REGRESSÃO INTRODUZIDA PELA PRÓPRIA 00012.
+--
+-- A 00012 terminava com:
+--
+--     revoke execute on function public.get_my_role() from public, anon;
+--
+-- justificando que a função "é usada dentro das policies, nunca pela
+-- aplicação, e as policies a chamam no contexto do servidor, o que
+-- independe deste grant".
+--
+-- A justificativa está errada. Expressão de RLS é avaliada COMO O PAPEL
+-- QUE CONSULTA — `anon` ou `authenticated` —, não como o dono da tabela.
+-- Se a policy chama uma função, o papel chamador precisa de EXECUTE nela.
+--
+-- Efeito prático: `courses` tem três policies permissivas de SELECT, e
+-- duas delas (courses_admin_all e courses_teacher_own_all) chamam
+-- get_my_role(). O Postgres avalia as permissivas em conjunto, então um
+-- visitante anônimo esbarrava nelas mesmo querendo apenas a
+-- courses_public_approved_read. Resultado:
+--
+--     HTTP 401 — permission denied for function get_my_role
+--
+-- O catálogo público (/cursos e a home) ficou fora do ar para quem não
+-- estava logado, do momento em que a 00012 rodou até esta migration.
+-- Passou despercebido porque `authenticated` manteve o grant — todo
+-- teste feito com sessão aberta funcionava.
+--
+-- Demorou a aparecer também porque app/(public)/cursos/page.tsx engole o
+-- erro: o 401 virava lista vazia e a tela mostrava "O catálogo está sendo
+-- montado", que parece estado de produto novo em vez de falha. É o item
+-- "try/catch engolindo erro" do MELHORIAS.md cobrando o preço.
+--
+-- LIÇÃO: antes de revogar EXECUTE de qualquer função, verifique se ela
+-- aparece em alguma policy:
+--
+--     select schemaname, tablename, policyname, qual, with_check
+--     from pg_policies
+--     where schemaname = 'public'
+--       and (qual::text like '%get_my_role%' or with_check::text like '%get_my_role%');
+--
+-- As outras revogações da 00012 seguem corretas e NÃO devem ser desfeitas:
+-- create_product_order e as get_admin_* são chamadas por .rpc() a partir
+-- da aplicação, não por policy nenhuma.
+-- ============================================================
+
+grant execute on function public.get_my_role() to anon, authenticated, service_role;

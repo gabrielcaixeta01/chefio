@@ -39,6 +39,13 @@ export default async function CourseCatalogPage({
 
   let courses: CourseCardData[] = []
   let total = 0
+  // Falha de verdade (RLS, rede, schema) tem que ser distinguível de
+  // "ainda não há curso": em 10/08/2026 um `permission denied` deixou o
+  // catálogo público fora do ar por horas mostrando "O catálogo está sendo
+  // montado" — que parece estado normal de produto novo. supabase-js não
+  // lança em erro HTTP, devolve `{ data: null, error }`, então o try/catk
+  // sozinho nunca ia pegar isso.
+  let falhou = false
   try {
     const supabase = createPublicClient()
     let query = supabase
@@ -49,11 +56,13 @@ export default async function CourseCatalogPage({
       .range(from, to)
     if (category) query = query.eq('category', category)
     if (q) query = query.ilike('title', `%${q}%`)
-    const { data, count } = await query
+    const { data, count, error } = await query
+    if (error) throw error
     courses = (data as CourseCardData[] | null) ?? []
     total = count ?? 0
-  } catch {
-    // Supabase não configurado
+  } catch (err) {
+    falhou = true
+    console.error('[/cursos] falha ao carregar catálogo:', err)
   }
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
@@ -208,6 +217,25 @@ export default async function CourseCatalogPage({
                 </nav>
               )}
             </>
+          ) : falhou ? (
+            /* Falha de carregamento — nunca se disfarça de catálogo vazio */
+            <div className="flex flex-col items-start gap-6 rounded-md border-2 border-red-200 bg-red-50 p-10 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="mt-1 h-5 w-5 shrink-0 text-red-700" aria-hidden="true" />
+                <div>
+                  <p className="font-display text-2xl font-bold tracking-tight text-red-900">
+                    Não foi possível carregar o catálogo.
+                  </p>
+                  <p className="mt-2 max-w-md text-red-800">
+                    O problema é do nosso lado, não da sua busca. Tente de novo
+                    em instantes.
+                  </p>
+                </div>
+              </div>
+              <ActionLink href="/cursos" variant="cobalto">
+                Tentar de novo
+              </ActionLink>
+            </div>
           ) : filtrando ? (
             /* Vazio por causa do filtro — o caminho de saída é limpar o filtro */
             <div className="flex flex-col items-start gap-6 rounded-md border-2 border-dashed border-cobalto/30 p-10 sm:flex-row sm:items-center sm:justify-between">
