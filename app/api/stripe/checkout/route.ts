@@ -13,12 +13,18 @@ export async function POST(req: NextRequest) {
   const courseId = formData.get('courseId') as string
   if (!courseId) return NextResponse.redirect(new URL('/cursos?erro=curso_invalido', req.url), 302)
 
+  // `teacher_profiles` NÃO pode ser embutido aqui: não existe FK entre
+  // `courses` e `teacher_profiles` (as duas apontam pra `profiles`), então o
+  // PostgREST responde PGRST200 e derruba a query inteira. E mesmo com a FK,
+  // a RLS de `teacher_profiles` não deixa o aluno ler a linha do professor —
+  // um `!inner` sumiria com o curso. Por isso são duas queries, a segunda
+  // com service role.
   const { data: course } = await supabase
     .from('courses')
-    .select('id, title, slug, price, teacher_id, teacher_profiles!inner(stripe_account_id, commission_rate)')
+    .select('id, title, slug, price, teacher_id')
     .eq('id', courseId)
     .eq('status', 'approved')
-    .single()
+    .maybeSingle()
 
   if (!course) return NextResponse.redirect(new URL('/cursos?erro=curso_indisponivel', req.url), 302)
 
@@ -28,7 +34,7 @@ export async function POST(req: NextRequest) {
     .select('id')
     .eq('student_id', user.id)
     .eq('course_id', courseId)
-    .single()
+    .maybeSingle()
 
   if (existing) {
     return NextResponse.redirect(new URL(`/aluno/cursos/${course.slug}`, req.url), 302)
@@ -38,11 +44,16 @@ export async function POST(req: NextRequest) {
   // enrollments (RLS não libera insert pro aluno), então usa o admin client.
   if (course.price === 0) {
     const admin = createAdminClient()
-    await admin.from('enrollments').insert({
+    const { error: enrollError } = await admin.from('enrollments').insert({
       student_id: user.id,
       course_id: courseId,
       amount_paid: 0,
     })
+    // 23505 = já matriculado (corrida de duplo clique) — segue pro curso.
+    if (enrollError && enrollError.code !== '23505') {
+      console.error('Free enrollment error:', enrollError)
+      return NextResponse.redirect(new URL(`/curso/${course.slug}?erro=matricula_falhou`, req.url), 302)
+    }
     return NextResponse.redirect(new URL(`/aluno/cursos/${course.slug}`, req.url), 302)
   }
 
@@ -50,8 +61,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.redirect(new URL(`/curso/${course.slug}?erro=stripe_nao_configurado`, req.url), 302)
   }
 
+  const admin = createAdminClient()
+  const { data: teacherProfile } = await admin
+    .from('teacher_profiles')
+    .select('stripe_account_id, commission_rate')
+    .eq('user_id', course.teacher_id)
+    .maybeSingle()
+
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
-  const teacherProfile = (course as any).teacher_profiles
   const commissionRate = teacherProfile?.commission_rate ?? 20
   const priceInCents = Math.round(course.price * 100)
   const appFeeInCents = Math.round(priceInCents * (commissionRate / 100))

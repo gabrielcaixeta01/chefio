@@ -74,7 +74,7 @@ async function handleCourseEnrollment(
       .from('teacher_profiles')
       .select('commission_rate')
       .eq('user_id', teacherId)
-      .single()
+      .maybeSingle()
 
     const commissionRate = teacherProfile?.commission_rate ?? 20
     const teacherAmount = amountPaid * (1 - commissionRate / 100)

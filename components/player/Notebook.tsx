@@ -16,9 +16,14 @@ interface NotebookProps {
 export function Notebook({ courseId, studentId, initialContent }: NotebookProps) {
   const [saving, setSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
+  const [erro, setErro] = useState(false)
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const editor = useEditor({
+    // A página é renderizada no servidor antes de hidratar. Sem isso o Tiptap
+    // v3 aborta com "SSR has been detected" — ele precisa saber que a primeira
+    // renderização não deve montar o editor.
+    immediatelyRender: false,
     extensions: [
       StarterKit,
       Placeholder.configure({ placeholder: 'Suas anotações sobre este curso...' }),
@@ -38,11 +43,19 @@ export function Notebook({ courseId, studentId, initialContent }: NotebookProps)
   async function saveContent(content: any) {
     setSaving(true)
     const supabase = createClient()
-    await supabase.from('notebooks').upsert(
+    const { error } = await supabase.from('notebooks').upsert(
       { student_id: studentId, course_id: courseId, content },
       { onConflict: 'student_id,course_id' }
     )
     setSaving(false)
+
+    // Anotação perdida em silêncio é pior que anotação não salva: sem checar
+    // o erro, a UI dizia "Salvo às HH:MM" mesmo com o upsert falhando.
+    if (error) {
+      setErro(true)
+      return
+    }
+    setErro(false)
     setLastSaved(new Date())
   }
 
@@ -59,11 +72,13 @@ export function Notebook({ courseId, studentId, initialContent }: NotebookProps)
           <BookOpen className="h-4 w-4 text-brasa-escura" />
           Caderno
         </div>
-        <span className="text-xs text-tinta-suave/70">
+        <span className={`text-xs ${erro ? 'font-semibold text-red-700' : 'text-tinta-suave/70'}`}>
           {saving ? (
             <span className="flex items-center gap-1">
               <Loader2 className="h-3 w-3 animate-spin" /> Salvando...
             </span>
+          ) : erro ? (
+            'Não foi possível salvar — não feche a página'
           ) : lastSaved ? (
             `Salvo às ${lastSaved.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
           ) : (

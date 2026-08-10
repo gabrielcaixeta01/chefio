@@ -81,32 +81,48 @@ export function CourseForm({ course, teacherId }: CourseFormProps) {
         toast.success('Curso atualizado!')
         router.refresh()
       } else {
-        // Gera slug único
-        let slug = slugify(data.title)
-        const { data: existing } = await supabase
-          .from('courses')
-          .select('slug')
-          .like('slug', `${slug}%`)
-        if (existing && existing.length > 0) slug = `${slug}-${existing.length + 1}`
+        // O slug precisa ser único na tabela inteira, mas a RLS só deixa este
+        // professor enxergar os próprios cursos (mais os aprovados) — contar
+        // slugs parecidos com um SELECT nunca vê o curso em rascunho de outro
+        // professor e colide. Em vez de perguntar antes, tenta inserir e trata
+        // o 23505: é o único caminho que enxerga a tabela toda.
+        const base = slugify(data.title)
+        const novoCurso = {
+          teacher_id: teacherId,
+          title: data.title,
+          description: data.description || null,
+          category: data.category || null,
+          price: data.price,
+          thumbnail_url: thumbnailUrl,
+          status: 'draft' as const,
+        }
 
-        const { data: newCourse, error } = await supabase
-          .from('courses')
-          .insert({
-            teacher_id: teacherId,
-            title: data.title,
-            slug,
-            description: data.description || null,
-            category: data.category || null,
-            price: data.price,
-            thumbnail_url: thumbnailUrl,
-            status: 'draft',
-          })
-          .select()
-          .single()
+        let created: { id: string } | null = null
+        let ultimoErro: unknown = null
 
-        if (error) throw error
+        for (let tentativa = 0; tentativa < 5 && !created; tentativa++) {
+          const slug = tentativa === 0
+            ? base
+            : `${base}-${Math.random().toString(36).slice(2, 7)}`
+
+          const { data: row, error } = await supabase
+            .from('courses')
+            .insert({ ...novoCurso, slug })
+            .select('id')
+            .single()
+
+          if (!error) {
+            created = row
+            break
+          }
+          if (error.code !== '23505') throw error
+          ultimoErro = error
+        }
+
+        if (!created) throw ultimoErro ?? new Error('Não foi possível gerar um endereço único para o curso.')
+
         toast.success('Curso criado!')
-        router.push(`/professor/cursos/${newCourse.id}`)
+        router.push(`/professor/cursos/${created.id}`)
       }
     } catch (err: any) {
       toast.error(err.message ?? 'Erro ao salvar curso.')

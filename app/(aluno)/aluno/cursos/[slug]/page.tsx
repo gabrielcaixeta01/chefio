@@ -35,18 +35,20 @@ export default async function AlunoCourseOverviewPage({
       .select('id')
       .eq('student_id', user!.id)
       .eq('course_id', course.id)
-      .single(),
+      .maybeSingle(),
     supabase
       .from('lessons')
       .select('id, title, duration_seconds, order_index, is_free_preview, bunny_video_id')
       .eq('course_id', course.id)
       .order('order_index', { ascending: true }),
+    // Aluno que ainda não escreveu nada não tem linha em notebooks — com
+    // .single() isso vira erro PGRST116 descartado a cada abertura do curso.
     supabase
       .from('notebooks')
       .select('content')
       .eq('student_id', user!.id)
       .eq('course_id', course.id)
-      .single(),
+      .maybeSingle(),
   ])
 
   if (!enrollment) redirect(`/curso/${slug}`)

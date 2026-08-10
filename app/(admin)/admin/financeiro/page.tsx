@@ -21,7 +21,7 @@ export default async function AdminFinancialPage() {
       .limit(15),
     supabase
       .from('teacher_payouts')
-      .select('amount, status, created_at, teacher:profiles(name)')
+      .select('id, amount, status, created_at, teacher:profiles(name)')
       .order('created_at', { ascending: false })
       .limit(20),
   ])
@@ -132,7 +132,7 @@ export default async function AdminFinancialPage() {
         ) : (
           <div className="space-y-2">
             {payouts.map((p) => (
-              <div key={p.created_at} className="flex items-center justify-between py-2 border-b border-cobalto/10 last:border-0">
+              <div key={p.id} className="flex items-center justify-between py-2 border-b border-cobalto/10 last:border-0">
                 <div>
                   <p className="text-sm font-medium text-tinta">{(p.teacher as any)?.name ?? '—'}</p>
                   <p className="text-xs text-tinta-suave/70">{new Date(p.created_at).toLocaleDateString('pt-BR')}</p>

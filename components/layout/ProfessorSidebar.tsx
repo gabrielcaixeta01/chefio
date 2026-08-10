@@ -8,14 +8,16 @@ export async function ProfessorSidebar() {
   const user = await getAuthedUser()
   const supabase = await createClient()
   const { data: profile } = user
-    ? await supabase.from('profiles').select('name').eq('id', user.id).single()
+    ? await supabase.from('profiles').select('name').eq('id', user.id).maybeSingle()
     : { data: null }
 
   const items = [
     { label: 'Dashboard', href: '/professor', icon: 'LayoutDashboard' },
     { label: 'Meus Cursos', href: '/professor/cursos', icon: 'BookOpen' },
     { label: 'Faturamento', href: '/professor/faturamento', icon: 'DollarSign' },
-    { label: 'Documentos', href: '/professor/documentos', icon: 'FileText' },
+    // 'Documentos' saiu daqui: /professor/documentos nunca existiu e o item
+    // dava 404. A tabela `documents`, a RLS e o bucket já estão prontos —
+    // quando a página existir, é só devolver a linha.
     { label: 'Conta Stripe', href: '/professor/onboarding', icon: 'CreditCard' },
   ] satisfies NavItem[]
 

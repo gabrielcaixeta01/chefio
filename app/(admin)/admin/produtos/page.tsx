@@ -68,6 +68,13 @@ export default async function AdminProductsPage({
                   </div>
                   <div className="text-right shrink-0">
                     <p className="font-semibold text-brasa-escura text-sm">{formatCurrency(product.price)}</p>
+                    {/* Estoque zerado bloqueia a compra no checkout, então
+                        precisa ser visível na lista, não só no formulário. */}
+                    <p className={`text-xs mt-0.5 ${
+                      product.stock > 0 ? 'text-tinta-suave/70' : 'font-semibold text-red-700'
+                    }`}>
+                      {product.stock > 0 ? `${product.stock} em estoque` : 'Sem estoque'}
+                    </p>
                     {!product.is_active && (
                       <span className="text-xs text-tinta-suave/70">Inativo</span>
                     )}

@@ -17,7 +17,14 @@ interface LessonFormProps {
   courseId: string
   lesson?: Lesson
   orderIndex: number
-  onSaved: (lesson: Lesson) => void
+  /**
+   * `manterAberto` existe porque criar aula e editar aula terminam em lugares
+   * diferentes: depois de criar, o formulário precisa continuar montado pra
+   * revelar o <VideoUploader> (que só existe quando já há um lessonId). Fechar
+   * nos dois casos era o motivo de "Aula criada! Agora faça o upload do vídeo"
+   * aparecer junto com o sumiço do campo de upload.
+   */
+  onSaved: (lesson: Lesson, manterAberto: boolean) => void
   onCancel: () => void
 }
 
@@ -55,8 +62,8 @@ export function LessonForm({ courseId, lesson, orderIndex, onSaved, onCancel }: 
 
         if (error) throw error
         setSavedLessonId(updated.id)
-        onSaved(updated)
         toast.success('Aula atualizada!')
+        onSaved(updated, false)
       } else {
         const { data: created, error } = await supabase
           .from('lessons')
@@ -73,7 +80,7 @@ export function LessonForm({ courseId, lesson, orderIndex, onSaved, onCancel }: 
         if (error) throw error
         setSavedLessonId(created.id)
         toast.success('Aula criada! Agora faça o upload do vídeo.')
-        onSaved(created)
+        onSaved(created, true)
       }
     } catch (err: any) {
       toast.error(err.message ?? 'Erro ao salvar aula.')

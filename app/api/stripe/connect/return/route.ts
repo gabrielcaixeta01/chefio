@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
     .from('teacher_profiles')
     .select('stripe_account_id')
     .eq('user_id', user.id)
-    .single()
+    .maybeSingle()
 
   if (teacherProfile?.stripe_account_id) {
     const account = await stripe.accounts.retrieve(teacherProfile.stripe_account_id)

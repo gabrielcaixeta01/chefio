@@ -33,7 +33,9 @@ const buttonVariants = cva(
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
-  asChild?: boolean
+  // `asChild` foi removido daqui na revisão de 10/08/2026: era declarado mas
+  // nunca implementado (não há Slot no projeto) e não estava desestruturado,
+  // então quem passasse a prop veria React reclamar de `aschild` no DOM.
   /** Mostra o spinner, bloqueia o clique e marca aria-busy. */
   loading?: boolean
   /** Texto que substitui o rótulo enquanto carrega. Sem isso o rótulo fica. */

@@ -16,6 +16,10 @@ const productSchema = z.object({
   name: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres').max(120),
   description: z.string().max(500).optional().or(z.literal('')),
   price: z.coerce.number().min(0).max(99999),
+  // Sem este campo o produto nascia com stock=0 (default da tabela) e o
+  // checkout reprovava com "Estoque insuficiente" — a loja não vendia nada.
+  stock: z.coerce.number().int('Use um número inteiro').min(0).max(99999),
+  image_url: z.string().url('Informe uma URL válida').optional().or(z.literal('')),
 })
 
 type ProductFormData = z.infer<typeof productSchema>
@@ -26,7 +30,7 @@ export function ProductForm() {
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<ProductFormData>({
     resolver: zodResolver(productSchema) as any,
-    defaultValues: { name: '', description: '', price: 0 },
+    defaultValues: { name: '', description: '', price: 0, stock: 0, image_url: '' },
   })
 
   async function onSubmit(data: ProductFormData) {
@@ -36,6 +40,8 @@ export function ProductForm() {
       name: data.name,
       description: data.description || null,
       price: data.price,
+      stock: data.stock,
+      image_url: data.image_url || null,
       is_active: true,
     })
 
@@ -64,10 +70,25 @@ export function ProductForm() {
           <Textarea id="description" rows={3} placeholder="Descreva o produto..." {...register('description')} />
         </div>
 
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <Label htmlFor="price">Preço (R$) *</Label>
+            <Input id="price" type="number" min="0" step="0.01" placeholder="0,00" {...register('price')} />
+            {errors.price && <p className="text-xs text-red-600">{errors.price.message}</p>}
+          </div>
+
+          <div className="space-y-1">
+            <Label htmlFor="stock">Estoque *</Label>
+            <Input id="stock" type="number" min="0" step="1" placeholder="0" {...register('stock')} />
+            {errors.stock && <p className="text-xs text-red-600">{errors.stock.message}</p>}
+            <p className="text-xs text-tinta-suave/70">Com 0 o produto não pode ser comprado.</p>
+          </div>
+        </div>
+
         <div className="space-y-1">
-          <Label htmlFor="price">Preço (R$) *</Label>
-          <Input id="price" type="number" min="0" step="0.01" placeholder="0,00" {...register('price')} />
-          {errors.price && <p className="text-xs text-red-600">{errors.price.message}</p>}
+          <Label htmlFor="image_url">URL da imagem</Label>
+          <Input id="image_url" type="url" placeholder="https://..." {...register('image_url')} />
+          {errors.image_url && <p className="text-xs text-red-600">{errors.image_url.message}</p>}
         </div>
 
         <Button type="submit" disabled={loading} className="w-full">

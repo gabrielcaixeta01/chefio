@@ -8,7 +8,18 @@ import { Button } from '@/components/ui/button'
 
 export const metadata: Metadata = { title: 'Faturamento' }
 
-export default async function BillingPage() {
+const ERROS: Record<string, string> = {
+  stripe_nao_configurado: 'Pagamentos estão temporariamente indisponíveis.',
+  conta_nao_conectada: 'Conecte sua conta Stripe antes de abrir o painel.',
+  onboarding_incompleto: 'Termine o cadastro no Stripe para liberar o painel financeiro.',
+}
+
+export default async function BillingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ erro?: string }>
+}) {
+  const { erro } = await searchParams
   const supabase = await createClient()
   const user = await getAuthedUser()
 
@@ -20,7 +31,7 @@ export default async function BillingPage() {
       .from('teacher_profiles')
       .select('stripe_account_id, commission_rate, status')
       .eq('user_id', user!.id)
-      .single(),
+      .maybeSingle(),
     supabase
       .from('teacher_payouts')
       .select('*')
@@ -51,11 +62,9 @@ export default async function BillingPage() {
           <p className="text-tinta-suave mt-1">Comissão da plataforma: {commissionRate}%</p>
         </div>
         {teacherProfile?.stripe_account_id && (
-          <a
-            href={`https://dashboard.stripe.com/`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+          /* Login link de uso único gerado pela rota — conta Express não
+             entra pelo dashboard.stripe.com direto. */
+          <a href="/api/stripe/connect/dashboard">
             <Button variant="outline" size="sm" className="gap-2">
               <ExternalLink className="h-4 w-4" />
               Dashboard Stripe
@@ -63,6 +72,12 @@ export default async function BillingPage() {
           </a>
         )}
       </div>
+
+      {erro && ERROS[erro] && (
+        <div className="mb-8 rounded-md border border-red-200 bg-red-50 p-4">
+          <p className="text-sm text-red-800">{ERROS[erro]}</p>
+        </div>
+      )}
 
       {!teacherProfile?.stripe_account_id && (
         <div className="bg-amber-50 border border-amber-200 rounded-md p-4 flex items-center justify-between mb-8">

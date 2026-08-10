@@ -42,13 +42,13 @@ export default async function LessonPlayerPage({
       .select('id')
       .eq('student_id', user!.id)
       .eq('course_id', course.id)
-      .single(),
+      .maybeSingle(),
     supabase
       .from('lessons')
       .select('id, title, description, order_index, bunny_video_id, is_free_preview')
       .eq('id', lessonId)
       .eq('course_id', course.id)
-      .single(),
+      .maybeSingle(),
     supabase
       .from('lessons')
       .select('id, title, order_index')
@@ -59,13 +59,13 @@ export default async function LessonPlayerPage({
       .select('completed_at')
       .eq('student_id', user!.id)
       .eq('lesson_id', lessonId)
-      .single(),
+      .maybeSingle(),
     supabase
       .from('notebooks')
       .select('content')
       .eq('student_id', user!.id)
       .eq('course_id', course.id)
-      .single(),
+      .maybeSingle(),
     supabase
       .from('lesson_products')
       .select('product:products(id, name, price, image_url, description)')

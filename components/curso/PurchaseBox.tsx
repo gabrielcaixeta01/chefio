@@ -10,6 +10,7 @@ import { AlertCircle } from 'lucide-react'
 
 const ERROS_CHECKOUT: Record<string, string> = {
   stripe_nao_configurado: 'Pagamentos estão temporariamente indisponíveis. Tente novamente em instantes.',
+  matricula_falhou: 'Não foi possível concluir sua inscrição. Tente novamente em instantes.',
 }
 
 type Status = 'checking' | 'anonymous' | 'enrolled' | 'not_enrolled'

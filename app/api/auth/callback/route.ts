@@ -10,7 +10,12 @@ const DASHBOARD_BY_ROLE: Record<string, string> = {
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/'
+
+  // `next` vem da URL. Sem validar, um `next=https://exemplo.com` monta
+  // `${origin}https://exemplo.com` — URL inválida, e o redirect estoura 500.
+  // Mesma regra já aplicada em app/(public)/login/page.tsx.
+  const nextParam = searchParams.get('next')
+  const next = nextParam?.startsWith('/') && !nextParam.startsWith('//') ? nextParam : '/'
 
   if (code) {
     const supabase = await createClient()
@@ -24,11 +29,10 @@ export async function GET(request: NextRequest) {
           .from('profiles')
           .select('role')
           .eq('id', user.id)
-          .single()
+          .maybeSingle()
 
-        const destination = profile?.role
-          ? DASHBOARD_BY_ROLE[profile.role]
-          : next
+        const destination =
+          (profile?.role ? DASHBOARD_BY_ROLE[profile.role] : undefined) ?? next
 
         return NextResponse.redirect(`${origin}${destination}`)
       }

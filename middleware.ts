@@ -13,6 +13,20 @@ const DASHBOARD_BY_ROLE: Record<string, string> = {
   student: '/aluno',
 }
 
+/**
+ * `NextResponse.redirect()` cria uma resposta nova — os cookies de sessão que
+ * `updateSession()` acabou de renovar vivem em `supabaseResponse` e seriam
+ * descartados. Sem copiar, um access token expirado nunca é substituído: o
+ * browser reenvia o token velho, `getUser()` devolve null de novo e a pessoa
+ * fica em loop entre a rota protegida e o /login. Só aparece em produção,
+ * porque em dev a sessão raramente expira no meio do teste.
+ */
+function redirectPreservandoSessao(url: URL, base: NextResponse) {
+  const response = NextResponse.redirect(url)
+  base.cookies.getAll().forEach((cookie) => response.cookies.set(cookie))
+  return response
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
@@ -37,25 +51,31 @@ export async function middleware(request: NextRequest) {
       const loginUrl = request.nextUrl.clone()
       loginUrl.pathname = '/login'
       loginUrl.searchParams.set('next', pathname)
-      return NextResponse.redirect(loginUrl)
+      return redirectPreservandoSessao(loginUrl, supabaseResponse)
     }
 
     const requiredRole = ROLE_ROUTES[protectedPrefix]
 
     if (role !== requiredRole) {
-      // Role errado → redireciona para o dashboard correto
-      const correctDashboard = role ? DASHBOARD_BY_ROLE[role] : '/login'
+      // Role errado → redireciona para o dashboard correto.
+      // Autenticado mas sem claim de role (JWT emitido antes da 00005, ou
+      // trigger que não rodou) cairia em /login e voltaria pra cá em loop,
+      // já que a regra de baixo só desvia de /login quem TEM role. Mandar
+      // pra home quebra o ciclo e deixa a pessoa navegar.
+      const correctDashboard = role ? DASHBOARD_BY_ROLE[role] ?? '/' : '/'
       const redirectUrl = request.nextUrl.clone()
       redirectUrl.pathname = correctDashboard
-      return NextResponse.redirect(redirectUrl)
+      redirectUrl.search = ''
+      return redirectPreservandoSessao(redirectUrl, supabaseResponse)
     }
   }
 
   // Usuário autenticado tentando acessar /login ou /cadastro → redireciona
   if (user && role && (pathname === '/login' || pathname === '/cadastro')) {
     const redirectUrl = request.nextUrl.clone()
-    redirectUrl.pathname = DASHBOARD_BY_ROLE[role]
-    return NextResponse.redirect(redirectUrl)
+    redirectUrl.pathname = DASHBOARD_BY_ROLE[role] ?? '/'
+    redirectUrl.search = ''
+    return redirectPreservandoSessao(redirectUrl, supabaseResponse)
   }
 
   return supabaseResponse

@@ -13,7 +13,7 @@ export default async function ProfessorDashboard() {
     { data: teacherProfile },
   ] = await Promise.all([
     supabase.from('courses').select('id, title, status, price').eq('teacher_id', user!.id),
-    supabase.from('teacher_profiles').select('*').eq('user_id', user!.id).single(),
+    supabase.from('teacher_profiles').select('*').eq('user_id', user!.id).maybeSingle(),
   ])
 
   const approvedCourses = courses?.filter(c => c.status === 'approved') ?? []

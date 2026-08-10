@@ -21,21 +21,13 @@ export type OrderItem = Database['public']['Tables']['order_items']['Row']
 export type TeacherPayout = Database['public']['Tables']['teacher_payouts']['Row']
 export type Document = Database['public']['Tables']['documents']['Row']
 
-// Tipos compostos usados em queries com joins
-export type CourseWithTeacher = Course & {
-  teacher: Pick<Profile, 'id' | 'name' | 'avatar_url'> & {
-    teacher_profile: Pick<TeacherProfile, 'bio' | 'status'> | null
-  }
-}
-
-export type LessonWithProducts = Lesson & {
-  lesson_products: Array<{ product: Product }>
-  lesson_attachments: LessonAttachment[]
-}
-
-export type EnrollmentWithCourse = Enrollment & {
-  course: Course
-}
+// CourseWithTeacher, LessonWithProducts e EnrollmentWithCourse viviam aqui e
+// foram removidos na revisão de 10/08/2026: zero importações no projeto, e o
+// primeiro descrevia um join (`teacher.teacher_profile`) que o PostgREST nem
+// resolve — não existe FK entre courses e teacher_profiles. As páginas que
+// fazem join continuam com `as any`; substituir isso por tipos de verdade é
+// item de ⚪ Qualidade no MELHORIAS.md, não se resolve declarando shapes que
+// ninguém usa.
 
 // Formato esperado pelo @supabase/supabase-js
 export type Database = {

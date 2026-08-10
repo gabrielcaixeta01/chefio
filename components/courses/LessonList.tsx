@@ -155,13 +155,22 @@ export function LessonList({ courseId, lessons: initialLessons }: LessonListProp
     setEditingLesson(null)
   }
 
-  function handleLessonSaved(lesson: Lesson) {
+  function handleLessonSaved(lesson: Lesson, manterAberto: boolean) {
     setLessons((prev) => {
       const exists = prev.find((l) => l.id === lesson.id)
       if (exists) return prev.map((l) => (l.id === lesson.id ? lesson : l))
       return [...prev, lesson]
     })
-    handleFormClose()
+
+    if (!manterAberto) {
+      handleFormClose()
+      return
+    }
+
+    // Aula recém-criada: mantém o formulário montado pro upload de vídeo e
+    // passa pro modo de edição, senão um segundo submit criaria uma aula nova
+    // em vez de atualizar a que acabou de nascer.
+    setEditingLesson(lesson)
   }
 
   return (

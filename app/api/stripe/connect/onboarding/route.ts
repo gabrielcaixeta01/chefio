@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     .from('teacher_profiles')
     .select('stripe_account_id')
     .eq('user_id', user.id)
-    .single()
+    .maybeSingle()
 
   let accountId = teacherProfile?.stripe_account_id
 

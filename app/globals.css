@@ -14,20 +14,10 @@
   --color-tinta: #101820;
   --color-tinta-suave: #55606c;
 
-  /* Tokens legados usados pelos dashboards */
-  --color-primary: #e85d04;
-  --color-primary-foreground: #ffffff;
-  --color-secondary: #fef3c7;
-  --color-secondary-foreground: #92400e;
-  --color-background: #ffffff;
-  --color-foreground: #0f172a;
-  --color-muted: #f8fafc;
-  --color-muted-foreground: #64748b;
-  --color-border: #e2e8f0;
-  --color-card: #ffffff;
-  --color-card-foreground: #0f172a;
-  --color-destructive: #ef4444;
-  --color-destructive-foreground: #ffffff;
+  /* Os tokens legados (--color-primary, --color-muted, --color-card etc.)
+     saíram daqui na revisão de 10/08/2026: a migração pro Azulejo de 07/08
+     zerou o uso dos 13, confirmado por grep classe a classe. Cada um gerava
+     utilitários no bundle (bg-*, text-*, border-*) que ninguém referenciava. */
 
   --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-bricolage), var(--font-archivo), ui-sans-serif, sans-serif;

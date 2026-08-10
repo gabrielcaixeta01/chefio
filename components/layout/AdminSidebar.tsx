@@ -8,7 +8,7 @@ export async function AdminSidebar() {
   const user = await getAuthedUser()
   const supabase = await createClient()
   const { data: profile } = user
-    ? await supabase.from('profiles').select('name').eq('id', user.id).single()
+    ? await supabase.from('profiles').select('name').eq('id', user.id).maybeSingle()
     : { data: null }
 
   const items = [
