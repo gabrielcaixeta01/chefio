@@ -185,7 +185,11 @@ export function Sidebar({ title, items, userName }: SidebarProps) {
           <nav className="flex-1 space-y-0.5 overflow-y-auto px-3">
             {items.map((item) => {
               const Icon = iconMap[item.icon]
-              const ativo = pathname === item.href || pathname.startsWith(item.href + '/')
+              const hrefNormalizado = item.href.replace(/\/+$/, '') || '/'
+              const pathnameNormalizado = pathname.replace(/\/+$/, '') || '/'
+              const isRootSection = hrefNormalizado === '/aluno' || hrefNormalizado === '/professor' || hrefNormalizado === '/admin'
+              const ativo = pathnameNormalizado === hrefNormalizado || (!isRootSection && pathnameNormalizado.startsWith(`${hrefNormalizado}/`))
+
               return (
                 <Link
                   key={item.href}
