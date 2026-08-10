@@ -5,17 +5,17 @@ import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import { getAuthedUser } from '@/lib/auth/session'
 import { formatDuration } from '@/lib/utils'
+import { PageHeader, PageBody } from '@/components/layout/PageShell'
+import { Panel, SectionHeading } from '@/components/ui/panel'
 import { Notebook } from '@/components/player/Notebook'
-import { CheckCircle, Circle, Play, Lock, Clock, ChefHat } from 'lucide-react'
+import { CheckCircle, Circle, Play, Lock, Clock, ArrowRight } from 'lucide-react'
 
 export const metadata: Metadata = { title: 'Assistir curso' }
 
 export default async function AlunoCourseOverviewPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ slug: string }>
-  searchParams: Promise<{ success?: string }>
 }) {
   const { slug } = await params
   const supabase = await createClient()
@@ -41,8 +41,6 @@ export default async function AlunoCourseOverviewPage({
       .select('id, title, duration_seconds, order_index, is_free_preview, bunny_video_id')
       .eq('course_id', course.id)
       .order('order_index', { ascending: true }),
-    // Aluno que ainda não escreveu nada não tem linha em notebooks — com
-    // .single() isso vira erro PGRST116 descartado a cada abertura do curso.
     supabase
       .from('notebooks')
       .select('content')
@@ -67,96 +65,96 @@ export default async function AlunoCourseOverviewPage({
   const firstLesson = lessons?.[0]
 
   return (
-    <div>
-      <div className="flex items-center gap-3 mb-6">
-        {(course.thumbnail_url) && (
-          <div className="relative w-16 h-10 rounded overflow-hidden shrink-0">
-            <Image src={course.thumbnail_url} alt={course.title} fill className="object-cover" />
-          </div>
-        )}
-        <div>
-          <h1 className="font-display text-2xl font-bold text-tinta tracking-tight">{course.title}</h1>
-          <p className="text-sm text-tinta-suave">por {(course.teacher as any)?.name}</p>
-        </div>
-      </div>
+    <>
+      <PageHeader
+        olho="Curso"
+        titulo={course.title}
+        descricao={`por ${(course.teacher as any)?.name ?? 'Chefio'}`}
+        acoes={
+          firstLesson ? (
+            <Link href={`/aluno/cursos/${slug}/aulas/${firstLesson.id}`} className="inline-flex items-center gap-2 rounded-sm bg-cobalto px-4 py-2.5 text-sm font-semibold text-cal transition-colors hover:bg-cobalto-claro">
+              {completedCount === 0 ? 'Começar agora' : 'Continuar'}
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          ) : undefined
+        }
+      />
 
-      {/* Progresso */}
-      <div className="bg-cal rounded-md border border-cobalto/15 p-4 mb-6">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-tinta">Seu progresso</span>
-          <span className="text-sm font-bold text-brasa-escura">{progressPct}%</span>
-        </div>
-        <div className="w-full bg-cobalto/10 rounded-sm h-2">
-          <div
-            className="bg-brasa h-2 rounded-sm transition-all duration-500"
-            style={{ width: `${progressPct}%` }}
-          />
-        </div>
-        <p className="text-xs text-tinta-suave/70 mt-1">{completedCount} de {totalLessons} aulas concluídas</p>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Lista de aulas */}
-        <div className="lg:col-span-2">
-          <div className="bg-cal rounded-md border border-cobalto/15 divide-y divide-cobalto/10">
-            <div className="px-4 py-3 flex items-center justify-between">
-              <h2 className="font-display font-bold text-tinta text-sm tracking-tight">Aulas do curso</h2>
-              {firstLesson && (
-                <Link
-                  href={`/aluno/cursos/${slug}/aulas/${firstLesson.id}`}
-                  className="text-xs text-brasa-escura hover:underline font-medium"
-                >
-                  {completedCount === 0 ? 'Começar →' : 'Continuar →'}
-                </Link>
-              )}
+      <PageBody>
+        <Panel className="mb-6 p-5">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-medium text-tinta">Seu progresso</p>
+              <p className="mt-1 text-sm text-tinta-suave">{completedCount} de {totalLessons} aulas concluídas</p>
             </div>
-            {(lessons ?? []).map((lesson, index) => {
-              const isCompleted = completedIds.has(lesson.id)
-              const hasVideo = !!lesson.bunny_video_id
-              return (
-                <Link
-                  key={lesson.id}
-                  href={`/aluno/cursos/${slug}/aulas/${lesson.id}`}
-                  className="flex items-center gap-3 px-4 py-3 hover:bg-cal-fundo transition-colors group"
-                >
-                  {isCompleted ? (
-                    <CheckCircle className="h-4 w-4 text-emerald-600 shrink-0" />
-                  ) : (
-                    <Circle className="h-4 w-4 text-cobalto/25 shrink-0" />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className={`text-sm truncate ${isCompleted ? 'text-tinta-suave/70' : 'text-tinta group-hover:text-brasa-escura'}`}>
-                      {index + 1}. {lesson.title}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    {lesson.duration_seconds && (
-                      <span className="text-xs text-tinta-suave/70 flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {formatDuration(lesson.duration_seconds)}
-                      </span>
-                    )}
-                    {hasVideo ? (
-                      <Play className="h-3.5 w-3.5 text-tinta-suave/70" />
+            <span className="text-lg font-extrabold text-brasa-escura">{progressPct}%</span>
+          </div>
+          <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-cobalto/10">
+            <div className="h-2 rounded-full bg-brasa transition-all duration-500" style={{ width: `${progressPct}%` }} />
+          </div>
+        </Panel>
+
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.65fr_0.95fr]">
+          <Panel className="overflow-hidden">
+            <SectionHeading
+              titulo="Aulas do curso"
+              acao={
+                firstLesson ? (
+                  <Link href={`/aluno/cursos/${slug}/aulas/${firstLesson.id}`} className="text-sm font-semibold text-brasa-escura hover:underline">
+                    {completedCount === 0 ? 'Começar →' : 'Continuar →'}
+                  </Link>
+                ) : undefined
+              }
+              className="border-b border-cobalto/10 px-4 py-3"
+            />
+            <div className="divide-y divide-cobalto/10">
+              {(lessons ?? []).map((lesson, index) => {
+                const isCompleted = completedIds.has(lesson.id)
+                const hasVideo = !!lesson.bunny_video_id
+                return (
+                  <Link
+                    key={lesson.id}
+                    href={`/aluno/cursos/${slug}/aulas/${lesson.id}`}
+                    className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-cal-fundo"
+                  >
+                    {isCompleted ? (
+                      <CheckCircle className="h-4 w-4 shrink-0 text-emerald-600" />
                     ) : (
-                      <Lock className="h-3.5 w-3.5 text-cobalto/25" />
+                      <Circle className="h-4 w-4 shrink-0 text-cobalto/25" />
                     )}
-                  </div>
-                </Link>
-              )
-            })}
+                    <div className="min-w-0 flex-1">
+                      <p className={`truncate text-sm ${isCompleted ? 'text-tinta-suave/70' : 'text-tinta'}`}>
+                        {index + 1}. {lesson.title}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      {lesson.duration_seconds && (
+                        <span className="flex items-center gap-1 text-xs text-tinta-suave/70">
+                          <Clock className="h-3 w-3" />
+                          {formatDuration(lesson.duration_seconds)}
+                        </span>
+                      )}
+                      {hasVideo ? (
+                        <Play className="h-3.5 w-3.5 text-tinta-suave/70" />
+                      ) : (
+                        <Lock className="h-3.5 w-3.5 text-cobalto/25" />
+                      )}
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+          </Panel>
+
+          <div>
+            <Notebook
+              courseId={course.id}
+              studentId={user!.id}
+              initialContent={notebook?.content}
+            />
           </div>
         </div>
-
-        {/* Caderno */}
-        <div className="lg:col-span-1">
-          <Notebook
-            courseId={course.id}
-            studentId={user!.id}
-            initialContent={notebook?.content}
-          />
-        </div>
-      </div>
-    </div>
+      </PageBody>
+    </>
   )
 }

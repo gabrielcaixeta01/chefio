@@ -5,6 +5,10 @@ import { formatCurrency } from '@/lib/utils'
 import { DollarSign, TrendingUp, Users, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import { PageHeader, PageBody } from '@/components/layout/PageShell'
+import { Panel, SectionHeading } from '@/components/ui/panel'
+import { StatTile } from '@/components/ui/stat-tile'
+import { EmptyState } from '@/components/ui/empty-state'
 
 export const metadata: Metadata = { title: 'Faturamento' }
 
@@ -23,9 +27,6 @@ export default async function BillingPage({
   const supabase = await createClient()
   const user = await getAuthedUser()
 
-  // Receita por curso agrupada no Postgres (RPC filtra por auth.uid()
-  // internamente, não recebe o id como parâmetro) — antes isso puxava toda
-  // enrollment do professor pra somar/agrupar em JS.
   const [{ data: teacherProfile }, { data: payouts }, { data: revenueByCourse }] = await Promise.all([
     supabase
       .from('teacher_profiles')
@@ -55,110 +56,92 @@ export default async function BillingPage({
     )
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="font-display text-3xl font-extrabold text-tinta tracking-tight">Faturamento</h1>
-          <p className="text-tinta-suave mt-1">Comissão da plataforma: {commissionRate}%</p>
-        </div>
-        {teacherProfile?.stripe_account_id && (
-          /* Login link de uso único gerado pela rota — conta Express não
-             entra pelo dashboard.stripe.com direto. */
-          <a href="/api/stripe/connect/dashboard">
-            <Button variant="outline" size="sm" className="gap-2">
-              <ExternalLink className="h-4 w-4" />
-              Dashboard Stripe
-            </Button>
-          </a>
+    <>
+      <PageHeader
+        olho="Financeiro"
+        titulo="Faturamento"
+        descricao={`Comissão da plataforma: ${commissionRate}%`}
+        acoes={
+          teacherProfile?.stripe_account_id ? (
+            <a href="/api/stripe/connect/dashboard">
+              <Button variant="outline" size="sm" className="gap-2">
+                <ExternalLink className="h-4 w-4" />
+                Dashboard Stripe
+              </Button>
+            </a>
+          ) : undefined
+        }
+      />
+
+      <PageBody>
+        {erro && ERROS[erro] && (
+          <Panel className="mb-8 border-red-200 bg-red-50/80 p-4">
+            <p className="text-sm text-red-800">{ERROS[erro]}</p>
+          </Panel>
         )}
-      </div>
 
-      {erro && ERROS[erro] && (
-        <div className="mb-8 rounded-md border border-red-200 bg-red-50 p-4">
-          <p className="text-sm text-red-800">{ERROS[erro]}</p>
-        </div>
-      )}
-
-      {!teacherProfile?.stripe_account_id && (
-        <div className="bg-amber-50 border border-amber-200 rounded-md p-4 flex items-center justify-between mb-8">
-          <p className="text-amber-800 text-sm">Configure sua conta Stripe para receber pagamentos.</p>
-          <Link href="/professor/onboarding">
-            <Button size="sm">Configurar agora</Button>
-          </Link>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-        <div className="bg-cal rounded-md border border-cobalto/15 p-6">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-sm text-tinta-suave">Receita bruta</p>
-            <TrendingUp className="h-4 w-4 text-tinta-suave/70" />
-          </div>
-          <p className="font-display text-3xl font-extrabold tabular-nums tracking-tight text-tinta">{formatCurrency(totalGross)}</p>
-        </div>
-        <div className="bg-cal rounded-md border border-cobalto/15 p-6">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-sm text-tinta-suave">Ganhos líquidos</p>
-            <DollarSign className="h-4 w-4 text-emerald-600" />
-          </div>
-          <p className="font-display text-3xl font-extrabold tabular-nums tracking-tight text-emerald-700">{formatCurrency(totalNet)}</p>
-          <p className="text-xs text-tinta-suave/70 mt-1">Após {commissionRate}% de comissão</p>
-        </div>
-        <div className="bg-cal rounded-md border border-cobalto/15 p-6">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-sm text-tinta-suave">Total de vendas</p>
-            <Users className="h-4 w-4 text-tinta-suave/70" />
-          </div>
-          <p className="font-display text-3xl font-extrabold tabular-nums tracking-tight text-tinta">{totalSales}</p>
-        </div>
-      </div>
-
-      {Object.keys(courseRevenue).length > 0 && (
-        <div className="bg-cal rounded-md border border-cobalto/15 p-6 mb-6">
-          <h2 className="font-display font-bold text-tinta mb-4 tracking-tight">Receita por curso</h2>
-          <div className="space-y-3">
-            {Object.entries(courseRevenue).map(([courseId, data]) => (
-              <div key={courseId} className="flex items-center justify-between py-2 border-b border-cobalto/10 last:border-0">
-                <div>
-                  <p className="text-sm font-medium text-tinta">{data.title}</p>
-                  <p className="text-xs text-tinta-suave/70">{data.count} venda(s)</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-medium text-tinta">{formatCurrency(data.gross * (1 - platformRate))}</p>
-                  <p className="text-xs text-tinta-suave/70">líquido</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div className="bg-cal rounded-md border border-cobalto/15 p-6">
-        <h2 className="font-display font-bold text-tinta mb-4 tracking-tight">Histórico de repasses</h2>
-        {!payouts || payouts.length === 0 ? (
-          <p className="text-sm text-tinta-suave/70 text-center py-8">Nenhum repasse registrado ainda.</p>
-        ) : (
-          <div className="space-y-2">
-            {payouts.map((payout) => (
-              <div key={payout.id} className="flex items-center justify-between py-2 border-b border-cobalto/10 last:border-0">
-                <div>
-                  <p className="text-sm text-tinta">{formatCurrency(payout.amount)}</p>
-                  <p className="text-xs text-tinta-suave/70">
-                    {new Date(payout.created_at).toLocaleDateString('pt-BR')}
-                  </p>
-                </div>
-                <span className={`rounded-sm px-2 py-1 text-[0.6875rem] font-semibold uppercase tracking-[0.08em] ${
-                  payout.status === 'paid' ? 'bg-emerald-50 text-emerald-700' :
-                  payout.status === 'failed' ? 'bg-red-50 text-red-700' :
-                  'bg-amber-50 text-amber-800'
-                }`}>
-                  {payout.status === 'paid' ? 'Pago' : payout.status === 'failed' ? 'Falhou' : 'Pendente'}
-                </span>
-              </div>
-            ))}
-          </div>
+        {!teacherProfile?.stripe_account_id && (
+          <Panel className="mb-8 flex flex-wrap items-center justify-between gap-4 border-amber-200 bg-amber-50/80 p-4">
+            <p className="text-sm text-amber-800">Configure sua conta Stripe para receber pagamentos.</p>
+            <Link href="/professor/onboarding">
+              <Button size="sm">Configurar agora</Button>
+            </Link>
+          </Panel>
         )}
-      </div>
-    </div>
+
+        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <StatTile icon={TrendingUp} label="Receita bruta" valor={formatCurrency(totalGross)} destaque />
+          <StatTile icon={DollarSign} label="Ganhos líquidos" valor={formatCurrency(totalNet)} nota={`Após ${commissionRate}% de comissão`} />
+          <StatTile icon={Users} label="Total de vendas" valor={totalSales} />
+        </div>
+
+        {Object.keys(courseRevenue).length > 0 && (
+          <Panel className="mb-6 p-0">
+            <SectionHeading titulo="Receita por curso" className="border-b border-cobalto/10 px-5 py-4" />
+            <div className="divide-y divide-cobalto/10">
+              {Object.entries(courseRevenue).map(([courseId, data]) => (
+                <div key={courseId} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+                  <div>
+                    <p className="text-sm font-medium text-tinta">{data.title}</p>
+                    <p className="text-xs text-tinta-suave/70">{data.count} venda(s)</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-tinta">{formatCurrency(data.gross * (1 - platformRate))}</p>
+                    <p className="text-xs text-tinta-suave/70">líquido</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Panel>
+        )}
+
+        <Panel className="p-0">
+          <SectionHeading titulo="Histórico de repasses" className="border-b border-cobalto/10 px-5 py-4" />
+          {!payouts || payouts.length === 0 ? (
+            <div className="px-5 py-8">
+              <EmptyState icon={DollarSign} titulo="Nenhum repasse registrado ainda" descricao="Quando houver pagamentos, eles aparecem aqui com status e data." />
+            </div>
+          ) : (
+            <div className="divide-y divide-cobalto/10">
+              {payouts.map((payout) => (
+                <div key={payout.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+                  <div>
+                    <p className="text-sm text-tinta">{formatCurrency(payout.amount)}</p>
+                    <p className="text-xs text-tinta-suave/70">{new Date(payout.created_at).toLocaleDateString('pt-BR')}</p>
+                  </div>
+                  <span className={`rounded-sm px-2 py-1 text-[0.6875rem] font-semibold uppercase tracking-[0.08em] ${
+                    payout.status === 'paid' ? 'bg-emerald-50 text-emerald-700' :
+                    payout.status === 'failed' ? 'bg-red-50 text-red-700' :
+                    'bg-amber-50 text-amber-800'
+                  }`}>
+                    {payout.status === 'paid' ? 'Pago' : payout.status === 'failed' ? 'Falhou' : 'Pendente'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </Panel>
+      </PageBody>
+    </>
   )
 }
