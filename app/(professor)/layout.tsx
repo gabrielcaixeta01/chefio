@@ -1,13 +1,9 @@
 import { requireRole } from '@/lib/auth/session'
 import { ProfessorSidebar } from '@/components/layout/ProfessorSidebar'
+import { AppShell } from '@/components/layout/PageShell'
 
 export default async function ProfessorLayout({ children }: { children: React.ReactNode }) {
   await requireRole('teacher')
 
-  return (
-    <div className="flex min-h-screen bg-cal-fundo">
-      <ProfessorSidebar />
-      <main className="flex-1 overflow-auto p-8">{children}</main>
-    </div>
-  )
+  return <AppShell sidebar={<ProfessorSidebar />}>{children}</AppShell>
 }

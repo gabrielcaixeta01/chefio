@@ -45,18 +45,30 @@ export function StudentCourseCard({ course }: { course: StudentCourse }) {
   )
 }
 
-export function CourseProgressBar({ course }: { course: StudentCourse }) {
+/** `tom="escuro"` é pro painel de "continue de onde parou", que corre sobre
+    a parede de azulejo — no cal padrão o texto sumiria. */
+export function CourseProgressBar({
+  course,
+  tom = 'claro',
+}: {
+  course: StudentCourse
+  tom?: 'claro' | 'escuro'
+}) {
+  const escuro = tom === 'escuro'
+
   return (
     <>
       <div className="mb-1.5 flex items-center justify-between text-xs">
-        <span className="text-tinta-suave/70">
+        <span className={escuro ? 'text-cal/70' : 'text-tinta-suave/70'}>
           {course.totalLessons === 0
             ? 'Sem aulas publicadas'
             : `${course.completedLessons} de ${course.totalLessons} aulas`}
         </span>
-        <span className="font-bold text-brasa-escura">{course.progressPct}%</span>
+        <span className={`font-bold tabular-nums ${escuro ? 'text-brasa-clara' : 'text-brasa-escura'}`}>
+          {course.progressPct}%
+        </span>
       </div>
-      <div className="h-1.5 w-full rounded-sm bg-cobalto/10">
+      <div className={`h-1.5 w-full rounded-sm ${escuro ? 'bg-cal/20' : 'bg-cobalto/10'}`}>
         <div
           className="h-1.5 rounded-sm bg-brasa transition-all duration-500"
           style={{ width: `${course.progressPct}%` }}

@@ -5,7 +5,13 @@ import { createClient } from '@/lib/supabase/server'
 import { getAuthedUser } from '@/lib/auth/session'
 import { getStudentCourses, pickCourseToResume } from '@/lib/data/student-courses'
 import { StudentCourseCard, CourseProgressBar } from '@/components/aluno/StudentCourseCard'
+import { PageHeader, PageBody } from '@/components/layout/PageShell'
 import { Button } from '@/components/ui/button'
+import { Panel, SectionHeading } from '@/components/ui/panel'
+import { StatTile } from '@/components/ui/stat-tile'
+import { EmptyState } from '@/components/ui/empty-state'
+import { Notice } from '@/components/ui/notice'
+import { Ladrilho } from '@/components/ui/ladrilho'
 import { formatCurrency } from '@/lib/utils'
 import { BookOpen, ChefHat, CheckCircle, GraduationCap, Package, PlayCircle } from 'lucide-react'
 
@@ -49,177 +55,183 @@ export default async function AlunoDashboard() {
   const cursosConcluidos = courses.filter((c) => c.status === 'concluido').length
 
   return (
-    <div>
-      <div className="mb-8 flex items-center justify-between gap-6">
-        <div>
-          <h1 className="font-display text-3xl font-extrabold tracking-tight text-tinta">
-            {primeiroNome ? `Olá, ${primeiroNome}` : 'Minha área'}
-          </h1>
-          <p className="mt-1 text-tinta-suave">Um resumo da sua jornada na cozinha</p>
-        </div>
-        <Link href="/cursos">
-          <Button variant="outline">Explorar mais cursos</Button>
-        </Link>
-      </div>
-
-      {pendingTeacherProfile && (
-        <div className="mb-8 flex items-start gap-3 rounded-md border border-amber-200 bg-amber-50 p-4">
-          <ChefHat className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
-          <div>
-            <p className="text-sm font-medium text-amber-800">Seu cadastro como professor está em análise</p>
-            <p className="mt-1 text-xs text-amber-700">
-              Assim que for aprovado, você ganha acesso à área do professor pra publicar cursos e configurar recebimentos. Enquanto isso, pode usar a plataforma normalmente como aluno.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {courses.length === 0 ? (
-        <div className="rounded-md border border-cobalto/15 bg-cal py-20 text-center">
-          <BookOpen className="mx-auto mb-4 h-12 w-12 text-cobalto/25" />
-          <h2 className="mb-2 font-display text-lg font-bold tracking-tight text-tinta">
-            Sua jornada começa aqui
-          </h2>
-          <p className="mb-6 text-sm text-tinta-suave">
-            Você ainda não tem cursos. Explore a biblioteca e escolha o primeiro.
-          </p>
+    <>
+      <PageHeader
+        olho="Minha área"
+        titulo={primeiroNome ? `Olá, ${primeiroNome}` : 'Sua cozinha'}
+        descricao="O que está em andamento, o que chegou e o que falta assistir."
+        acoes={
           <Link href="/cursos">
-            <Button>Ver cursos disponíveis</Button>
+            <Button variant="outline">Explorar cursos</Button>
           </Link>
-        </div>
-      ) : (
-        <>
-          <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
-            <Metrica icon={BookOpen} label="Cursos" valor={String(courses.length)} />
-            <Metrica icon={PlayCircle} label="Aulas concluídas" valor={String(aulasConcluidas)} />
-            <Metrica icon={GraduationCap} label="Cursos concluídos" valor={String(cursosConcluidos)} />
-            <Metrica icon={Package} label="Pedidos" valor={String(ordersCount ?? 0)} />
-          </div>
+        }
+      />
 
-          {retomar && (
-            <section className="mb-10">
-              <h2 className="mb-3 font-display text-lg font-bold tracking-tight text-tinta">
-                Continue de onde parou
-              </h2>
-              <div className="flex flex-col gap-5 rounded-md border border-cobalto/15 bg-cal p-5 sm:flex-row">
-                <div className="relative aspect-video w-full shrink-0 overflow-hidden rounded-sm bg-cobalto/10 sm:w-64">
-                  {retomar.thumbnailUrl ? (
-                    <Image src={retomar.thumbnailUrl} alt={retomar.title} fill className="object-cover" />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <BookOpen className="h-10 w-10 text-cobalto/25" />
+      <PageBody>
+        {pendingTeacherProfile && (
+          <Notice
+            tipo="atencao"
+            icon={ChefHat}
+            titulo="Seu cadastro como professor está em análise"
+            className="mb-8"
+          >
+            Assim que for aprovado, você ganha acesso à área do professor pra publicar cursos e
+            configurar recebimentos. Enquanto isso, pode usar a plataforma normalmente como aluno.
+          </Notice>
+        )}
+
+        {courses.length === 0 ? (
+          <EmptyState
+            icon={BookOpen}
+            titulo="Sua jornada começa aqui"
+            descricao="Você ainda não tem cursos. Escolha o primeiro no catálogo e comece a cozinhar hoje."
+            acao={
+              <Link href="/cursos">
+                <Button>Ver cursos disponíveis</Button>
+              </Link>
+            }
+          />
+        ) : (
+          <>
+            {/* ---------- Retomar: o motivo de o aluno voltar ----------
+                Roda sobre a parede de azulejo porque é o único bloco da página
+                que precisa ser visto antes de qualquer outro. */}
+            {retomar && (
+              <section className="azulejo-escuro relative mb-10 overflow-hidden rounded-md [--azulejo-tamanho:72px]">
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-0 bg-linear-to-r from-cobalto-escuro/92 via-cobalto-escuro/80 to-cobalto-escuro/55"
+                />
+                <div className="relative flex flex-col gap-6 p-6 sm:flex-row sm:items-center sm:p-7">
+                  <div className="relative aspect-video w-full shrink-0 overflow-hidden rounded-sm bg-cobalto-escuro sm:w-60">
+                    {retomar.thumbnailUrl ? (
+                      <Image src={retomar.thumbnailUrl} alt={retomar.title} fill className="object-cover" />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <BookOpen className="h-10 w-10 text-cal/25" aria-hidden="true" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex min-w-0 flex-1 flex-col">
+                    <p className="olho text-brasa-clara">Continue de onde parou</p>
+                    <h2 className="mt-2.5 font-display text-2xl font-extrabold tracking-tight text-cal">
+                      {retomar.title}
+                    </h2>
+                    <p className="mt-1 text-sm text-cal/60">por {retomar.teacherName}</p>
+
+                    {retomar.nextLesson && (
+                      <p className="mt-4 flex items-center gap-2 text-sm text-cal">
+                        <Ladrilho tom="apagado" tamanho="sm">
+                          <PlayCircle className="h-4 w-4" aria-hidden="true" />
+                        </Ladrilho>
+                        <span className="truncate">
+                          <span className="text-cal/55">Próxima aula · </span>
+                          {retomar.nextLesson.position}. {retomar.nextLesson.title}
+                        </span>
+                      </p>
+                    )}
+
+                    <div className="mt-5 max-w-md">
+                      <CourseProgressBar course={retomar} tom="escuro" />
                     </div>
-                  )}
-                </div>
-                <div className="flex flex-1 flex-col">
-                  <h3 className="font-display text-xl font-bold tracking-tight text-tinta">{retomar.title}</h3>
-                  <p className="mt-1 text-sm text-tinta-suave">por {retomar.teacherName}</p>
-                  {retomar.nextLesson && (
-                    <p className="mt-3 text-sm text-tinta">
-                      <span className="text-tinta-suave/70">Próxima aula · </span>
-                      {retomar.nextLesson.position}. {retomar.nextLesson.title}
-                    </p>
-                  )}
-                  <div className="mt-4 max-w-md">
-                    <CourseProgressBar course={retomar} />
-                  </div>
-                  <div className="mt-5">
-                    <Link
-                      href={
-                        retomar.nextLesson
-                          ? `/aluno/cursos/${retomar.slug}/aulas/${retomar.nextLesson.id}`
-                          : `/aluno/cursos/${retomar.slug}`
-                      }
-                    >
-                      <Button>
-                        {retomar.completedLessons === 0 ? 'Começar curso' : 'Continuar assistindo'}
-                      </Button>
-                    </Link>
+
+                    <div className="mt-6">
+                      <Link
+                        href={
+                          retomar.nextLesson
+                            ? `/aluno/cursos/${retomar.slug}/aulas/${retomar.nextLesson.id}`
+                            : `/aluno/cursos/${retomar.slug}`
+                        }
+                      >
+                        <Button>
+                          {retomar.completedLessons === 0 ? 'Começar curso' : 'Continuar assistindo'}
+                        </Button>
+                      </Link>
+                    </div>
                   </div>
                 </div>
+              </section>
+            )}
+
+            <div className="mb-10 grid grid-cols-2 gap-4 lg:grid-cols-4">
+              <StatTile icon={BookOpen} label="Cursos" valor={courses.length} />
+              <StatTile icon={PlayCircle} label="Aulas concluídas" valor={aulasConcluidas} />
+              <StatTile icon={GraduationCap} label="Cursos concluídos" valor={cursosConcluidos} />
+              <StatTile icon={Package} label="Pedidos" valor={ordersCount ?? 0} />
+            </div>
+
+            <section className="mb-10">
+              <SectionHeading
+                titulo="Seus cursos"
+                acao={
+                  <Link
+                    href="/aluno/cursos"
+                    className="text-sm font-semibold text-cobalto underline-offset-4 hover:underline"
+                  >
+                    Ver todos ({courses.length}) →
+                  </Link>
+                }
+              />
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {courses.slice(0, 3).map((course) => (
+                  <StudentCourseCard key={course.id} course={course} />
+                ))}
               </div>
             </section>
-          )}
 
-          <section className="mb-10">
-            <div className="mb-3 flex items-baseline justify-between gap-4">
-              <h2 className="font-display text-lg font-bold tracking-tight text-tinta">Seus cursos</h2>
-              <Link href="/aluno/cursos" className="text-sm font-medium text-brasa-escura hover:underline">
-                Ver todos ({courses.length}) →
-              </Link>
-            </div>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {courses.slice(0, 3).map((course) => (
-                <StudentCourseCard key={course.id} course={course} />
-              ))}
-            </div>
-          </section>
-
-          <section>
-            <div className="mb-3 flex items-baseline justify-between gap-4">
-              <h2 className="font-display text-lg font-bold tracking-tight text-tinta">Pedidos recentes</h2>
-              <Link href="/aluno/pedidos" className="text-sm font-medium text-brasa-escura hover:underline">
-                Ver pedidos →
-              </Link>
-            </div>
-            {!orders || orders.length === 0 ? (
-              <div className="rounded-md border border-cobalto/15 bg-cal p-8 text-center">
-                <Package className="mx-auto mb-3 h-8 w-8 text-cobalto/25" />
-                <p className="text-sm text-tinta-suave">
-                  Nenhum pedido ainda. Dá uma olhada na{' '}
-                  <Link href="/aluno/loja" className="text-brasa-escura hover:underline">
-                    loja
+            <section>
+              <SectionHeading
+                titulo="Pedidos recentes"
+                acao={
+                  <Link
+                    href="/aluno/pedidos"
+                    className="text-sm font-semibold text-cobalto underline-offset-4 hover:underline"
+                  >
+                    Ver pedidos →
                   </Link>
-                  .
-                </p>
-              </div>
-            ) : (
-              <ul className="divide-y divide-cobalto/10 rounded-md border border-cobalto/15 bg-cal">
-                {orders.map((order) => (
-                  <li key={order.id} className="flex items-center gap-3 px-5 py-3.5">
-                    <CheckCircle
-                      className={`h-4 w-4 shrink-0 ${
-                        order.status === 'delivered' ? 'text-emerald-600' : 'text-cobalto/40'
-                      }`}
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-tinta">{formatCurrency(order.total)}</p>
-                      <p className="text-xs text-tinta-suave/70">
-                        {new Date(order.created_at).toLocaleDateString('pt-BR')}
-                      </p>
-                    </div>
-                    <span className="shrink-0 text-xs text-tinta-suave">
-                      {STATUS_PEDIDO[order.status] ?? order.status}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-        </>
-      )}
-    </div>
-  )
-}
-
-function Metrica({
-  icon: Icon,
-  label,
-  valor,
-}: {
-  icon: typeof BookOpen
-  label: string
-  valor: string
-}) {
-  return (
-    <div className="rounded-md border border-cobalto/15 bg-cal p-5">
-      <div className="mb-3 flex items-center justify-between">
-        <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-tinta-suave/70">
-          {label}
-        </span>
-        <Icon className="h-4 w-4 text-cobalto/40" />
-      </div>
-      <p className="font-display text-2xl font-extrabold tracking-tight text-tinta">{valor}</p>
-    </div>
+                }
+              />
+              {!orders || orders.length === 0 ? (
+                <EmptyState
+                  icon={Package}
+                  titulo="Nenhum pedido ainda"
+                  descricao="Os ingredientes e utensílios de cada aula ficam na loja, a um clique."
+                  acao={
+                    <Link href="/aluno/loja">
+                      <Button variant="outline">Ir para a loja</Button>
+                    </Link>
+                  }
+                />
+              ) : (
+                <Panel>
+                  <ul className="divide-y divide-cobalto/10">
+                    {orders.map((order) => (
+                      <li key={order.id} className="flex items-center gap-3 px-5 py-4">
+                        <CheckCircle
+                          aria-hidden="true"
+                          className={`h-4 w-4 shrink-0 ${
+                            order.status === 'delivered' ? 'text-emerald-600' : 'text-cobalto/40'
+                          }`}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-tinta">{formatCurrency(order.total)}</p>
+                          <p className="text-xs text-tinta-suave/70">
+                            {new Date(order.created_at).toLocaleDateString('pt-BR')}
+                          </p>
+                        </div>
+                        <span className="shrink-0 text-xs text-tinta-suave">
+                          {STATUS_PEDIDO[order.status] ?? order.status}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </Panel>
+              )}
+            </section>
+          </>
+        )}
+      </PageBody>
+    </>
   )
 }

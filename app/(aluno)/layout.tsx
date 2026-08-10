@@ -1,5 +1,6 @@
 import { requireRole } from '@/lib/auth/session'
 import { AlunoSidebar } from '@/components/layout/AlunoSidebar'
+import { AppShell } from '@/components/layout/PageShell'
 import { CartProvider } from '@/contexts/CartContext'
 
 export default async function AlunoLayout({ children }: { children: React.ReactNode }) {
@@ -7,10 +8,7 @@ export default async function AlunoLayout({ children }: { children: React.ReactN
 
   return (
     <CartProvider>
-      <div className="flex min-h-screen bg-cal-fundo">
-        <AlunoSidebar />
-        <main className="flex-1 overflow-auto p-8">{children}</main>
-      </div>
+      <AppShell sidebar={<AlunoSidebar />}>{children}</AppShell>
     </CartProvider>
   )
 }
