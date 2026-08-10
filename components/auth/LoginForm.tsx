@@ -26,35 +26,43 @@ export function LoginForm({ next }: { next?: string }) {
     setLoading(true)
     setErro(null)
 
-    const supabase = createClient()
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: form.email,
-      password: form.password,
-    })
+    try {
+      // createClient() lança quando as NEXT_PUBLIC_* faltaram no build do
+      // deploy — fora do try isso travava o botão em "Entrando…" para sempre.
+      const supabase = createClient()
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: form.email,
+        password: form.password,
+      })
 
-    if (error) {
-      setErro('Email ou senha incorretos.')
-      toast.error('Email ou senha incorretos.')
+      if (error) {
+        setErro('Email ou senha incorretos.')
+        toast.error('Email ou senha incorretos.')
+        setLoading(false)
+        return
+      }
+
+      if (!data.user) {
+        // Sem isso o botão fica travado em "Entrando..." para sempre
+        setErro('Não foi possível abrir a sessão. Tente de novo.')
+        setLoading(false)
+        return
+      }
+
+      // O login emite um token novo, já com o role atual em app_metadata
+      // (sincronizado via trigger — ver 00005_role_jwt_sync.sql). Sem SELECT
+      // em profiles.
+      const role = data.user.app_metadata?.role as string | undefined
+
+      // `next` vem do middleware quando ele barra uma rota protegida — sem isso
+      // a pessoa cai sempre no dashboard, e não na página que tentou abrir.
+      router.push(next ?? DESTINOS[role ?? 'student'])
+      router.refresh()
+    } catch (err: any) {
+      setErro(err?.message ?? 'Não foi possível entrar. Tente de novo.')
+      toast.error(err?.message ?? 'Não foi possível entrar.')
       setLoading(false)
-      return
     }
-
-    if (!data.user) {
-      // Sem isso o botão fica travado em "Entrando..." para sempre
-      setErro('Não foi possível abrir a sessão. Tente de novo.')
-      setLoading(false)
-      return
-    }
-
-    // O login emite um token novo, já com o role atual em app_metadata
-    // (sincronizado via trigger — ver 00005_role_jwt_sync.sql). Sem SELECT
-    // em profiles.
-    const role = data.user.app_metadata?.role as string | undefined
-
-    // `next` vem do middleware quando ele barra uma rota protegida — sem isso
-    // a pessoa cai sempre no dashboard, e não na página que tentou abrir.
-    router.push(next ?? DESTINOS[role ?? 'student'])
-    router.refresh()
   }
 
   return (

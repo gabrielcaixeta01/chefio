@@ -33,21 +33,38 @@ export function PurchaseBox({ courseId, courseSlug, price }: PurchaseBoxProps) {
 
   useEffect(() => {
     let ativo = true
-    const supabase = createClient()
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!session) {
+    // createClient() lança quando as NEXT_PUBLIC_* faltaram no build. Sem o
+    // try, a exceção subia sem tratamento e o status ficava em 'checking'
+    // para sempre — a caixa de compra virava um retângulo pulsando eterno.
+    // Cair em 'anonymous' mostra o CTA de login, onde o erro aparece com
+    // mensagem de verdade em vez de silêncio.
+    let supabase: ReturnType<typeof createClient>
+    try {
+      supabase = createClient()
+    } catch {
+      setStatus('anonymous')
+      return
+    }
+
+    supabase.auth
+      .getSession()
+      .then(async ({ data: { session } }) => {
+        if (!session) {
+          if (ativo) setStatus('anonymous')
+          return
+        }
+        const { data: enrollment } = await supabase
+          .from('enrollments')
+          .select('id')
+          .eq('student_id', session.user.id)
+          .eq('course_id', courseId)
+          .maybeSingle()
+        if (ativo) setStatus(enrollment ? 'enrolled' : 'not_enrolled')
+      })
+      .catch(() => {
         if (ativo) setStatus('anonymous')
-        return
-      }
-      const { data: enrollment } = await supabase
-        .from('enrollments')
-        .select('id')
-        .eq('student_id', session.user.id)
-        .eq('course_id', courseId)
-        .maybeSingle()
-      if (ativo) setStatus(enrollment ? 'enrolled' : 'not_enrolled')
-    })
+      })
 
     return () => {
       ativo = false

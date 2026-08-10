@@ -43,24 +43,34 @@ export function RegisterForm({ papelInicial = 'student' }: { papelInicial?: Role
 
     setLoading(true)
 
-    const supabase = createClient()
-    const { error } = await supabase.auth.signUp({
-      email: form.email,
-      password: form.password,
-      options: {
-        data: { name: form.name, role },
-        emailRedirectTo: `${window.location.origin}/api/auth/callback`,
-      },
-    })
+    try {
+      // createClient() lança quando as NEXT_PUBLIC_* faltaram no build do
+      // deploy. Fora do try, essa exceção deixava o botão preso em
+      // "Criando conta…" para sempre: sem erro na tela e sem como tentar
+      // de novo, porque o setLoading(false) nunca chegava a rodar.
+      const supabase = createClient()
+      const { error } = await supabase.auth.signUp({
+        email: form.email,
+        password: form.password,
+        options: {
+          data: { name: form.name, role },
+          emailRedirectTo: `${window.location.origin}/api/auth/callback`,
+        },
+      })
 
-    if (error) {
-      toast.error(error.message)
-      setErros({ email: error.message })
+      if (error) {
+        toast.error(error.message)
+        setErros({ email: error.message })
+        setLoading(false)
+        return
+      }
+
+      setDone(true)
+    } catch (err: any) {
+      toast.error(err?.message ?? 'Não foi possível criar a conta.')
+      setErros({ email: err?.message ?? 'Não foi possível criar a conta.' })
       setLoading(false)
-      return
     }
-
-    setDone(true)
   }
 
   if (done) {
