@@ -3,6 +3,9 @@ import { createPublicClient } from '@/lib/supabase/public'
 import { ActionLink } from '@/components/ui/action-link'
 import { AzulejoWall } from '@/components/layout/AzulejoWall'
 import { CourseCard } from '@/components/curso/CourseCard'
+import { EmptyState } from '@/components/ui/empty-state'
+import { Notice } from '@/components/ui/notice'
+import { BookOpen } from 'lucide-react'
 
 export const revalidate = 300
 
@@ -29,6 +32,11 @@ const NUMEROS = [
 
 export default async function LandingPage() {
   let featuredCourses: any[] = []
+  // Ler o `error` não bastava: a home continuava caindo no mesmo bloco de
+  // "catálogo sendo montado", que é o estado normal de produto novo. Falha de
+  // permissão e catálogo vazio precisam ser telas diferentes — foi assim que
+  // o incidente de 10/08/2026 passou horas sem ninguém notar.
+  let falhou = false
   try {
     const supabase = createPublicClient()
     const { data, error } = await supabase
@@ -43,6 +51,7 @@ export default async function LandingPage() {
     if (error) throw error
     featuredCourses = data ?? []
   } catch (err) {
+    falhou = true
     console.error('[/] falha ao carregar cursos em destaque:', err)
   }
 
@@ -170,28 +179,38 @@ export default async function LandingPage() {
             </Link>
           </div>
 
-          {featuredCourses.length > 0 ? (
-            <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {featuredCourses.map((course) => (
-                <CourseCard key={course.id} course={course} />
-              ))}
-            </div>
-          ) : (
-            <div className="mt-12 flex flex-col items-start gap-6 rounded-md border border-dashed border-cobalto/30 p-10 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="font-display text-2xl font-bold tracking-tight text-tinta">
-                  O catálogo está sendo montado.
-                </p>
-                <p className="mt-2 max-w-md text-tinta-suave">
-                  Os primeiros cursos entram em breve. Se você cozinha para
-                  viver, esse espaço pode ser seu.
-                </p>
+          <div className="mt-12">
+            {featuredCourses.length > 0 ? (
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                {featuredCourses.map((course) => (
+                  <CourseCard key={course.id} course={course} />
+                ))}
               </div>
-              <ActionLink href="/para-chefs" variant="cobalto">
-                Ensinar na Chefio
-              </ActionLink>
-            </div>
-          )}
+            ) : falhou ? (
+              <Notice
+                tipo="erro"
+                titulo="Não foi possível carregar os cursos."
+                acao={
+                  <ActionLink href="/cursos" variant="cobalto">
+                    Ver o catálogo
+                  </ActionLink>
+                }
+              >
+                O problema é do nosso lado. Tente de novo em instantes.
+              </Notice>
+            ) : (
+              <EmptyState
+                icon={BookOpen}
+                titulo="O catálogo está sendo montado"
+                descricao="Os primeiros cursos entram em breve. Se você cozinha para viver, esse espaço pode ser seu."
+                acao={
+                  <ActionLink href="/para-chefs" variant="cobalto">
+                    Ensinar na Chefio
+                  </ActionLink>
+                }
+              />
+            )}
+          </div>
         </div>
       </section>
 

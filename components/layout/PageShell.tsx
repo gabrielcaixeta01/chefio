@@ -21,7 +21,7 @@ export function AppShell({
     <div className="min-h-screen bg-cal-fundo lg:flex">
       {sidebar}
       {/* pt-14 abre espaço pra barra fixa do mobile; no desktop o rail é lateral */}
-      <main className="min-w-0 flex-1 pt-14 lg:pt-0">{children}</main>
+      <main id="conteudo" className="min-w-0 flex-1 pt-14 lg:pt-0">{children}</main>
     </div>
   )
 }

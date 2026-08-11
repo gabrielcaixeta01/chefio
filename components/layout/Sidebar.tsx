@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
@@ -71,6 +71,8 @@ export function Sidebar({ title, items, userName }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [aberto, setAberto] = useState(false)
+  const painelRef = useRef<HTMLElement>(null)
+  const gatilhoRef = useRef<HTMLButtonElement>(null)
 
   // Fecha ao navegar — sem isso a gaveta fica por cima da página nova
   useEffect(() => {
@@ -80,15 +82,54 @@ export function Sidebar({ title, items, userName }: SidebarProps) {
   useEffect(() => {
     if (!aberto) return
 
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') setAberto(false)
+    const painel = painelRef.current
+    const gatilho = gatilhoRef.current
+
+    /** Só o que é focável de verdade: o rail existe no DOM em todo tamanho de
+        tela, então um `querySelectorAll` cru pegaria links do painel mesmo
+        quando ele está fora da viewport. */
+    function focaveis() {
+      return Array.from(
+        painel?.querySelectorAll<HTMLElement>('a[href], button:not([disabled])') ?? []
+      )
     }
+
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        setAberto(false)
+        return
+      }
+
+      // Prender o Tab dentro da gaveta: aberta, ela cobre a tela inteira, e
+      // sem isso o foco continuava andando pelo conteúdo escondido atrás —
+      // a pessoa tabulava "no nada" sem entender pra onde tinha ido.
+      if (e.key !== 'Tab') return
+      const itens = focaveis()
+      if (itens.length === 0) return
+
+      const primeiro = itens[0]
+      const ultimo = itens[itens.length - 1]
+      const ativo = document.activeElement
+
+      if (e.shiftKey && (ativo === primeiro || !painel?.contains(ativo))) {
+        e.preventDefault()
+        ultimo.focus()
+      } else if (!e.shiftKey && ativo === ultimo) {
+        e.preventDefault()
+        primeiro.focus()
+      }
+    }
+
     document.addEventListener('keydown', onKey)
     document.body.style.overflow = 'hidden'
+    focaveis()[0]?.focus()
 
     return () => {
       document.removeEventListener('keydown', onKey)
       document.body.style.overflow = ''
+      // O foco volta pro botão que abriu — largado no painel que sumiu, ele
+      // cairia no <body> e o próximo Tab recomeçaria do topo da página.
+      gatilho?.focus()
     }
   }, [aberto])
 
@@ -107,6 +148,7 @@ export function Sidebar({ title, items, userName }: SidebarProps) {
       {/* ---------- Barra mobile ---------- */}
       <header className="fixed inset-x-0 top-0 z-40 flex h-14 items-center gap-3 border-b border-cal/10 bg-cobalto-escuro px-3 lg:hidden">
         <button
+          ref={gatilhoRef}
           type="button"
           onClick={() => setAberto((v) => !v)}
           aria-expanded={aberto}
@@ -154,7 +196,13 @@ export function Sidebar({ title, items, userName }: SidebarProps) {
 
       {/* ---------- Rail ---------- */}
       <aside
+        ref={painelRef}
         id="menu-painel"
+        // Diálogo só enquanto é gaveta: a partir de lg vira rail permanente e
+        // anunciar "diálogo" ali seria mentira pro leitor de tela.
+        role={aberto ? 'dialog' : undefined}
+        aria-modal={aberto ? true : undefined}
+        aria-label={aberto ? `Menu — ${title}` : undefined}
         className={cn(
           'azulejo-escuro fixed inset-y-0 left-0 z-50 flex w-72 flex-col [--azulejo-tamanho:88px]',
           'transition-[transform,visibility] duration-300 ease-azulejo motion-reduce:transition-none',

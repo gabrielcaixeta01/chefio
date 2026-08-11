@@ -32,6 +32,15 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className={`${archivo.variable} ${bricolage.variable}`}>
       <body>
+        {/* Pular pro conteúdo: sem isso, quem navega por teclado atravessa a
+            navbar inteira (ou os sete itens do menu lateral) em toda página.
+            Só aparece quando recebe foco. */}
+        <a
+          href="#conteudo"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-100 focus:rounded-sm focus:bg-cobalto focus:px-4 focus:py-2.5 focus:text-sm focus:font-semibold focus:text-cal"
+        >
+          Pular para o conteúdo
+        </a>
         <RouteProgress />
         {children}
         <Toaster richColors position="top-right" />
