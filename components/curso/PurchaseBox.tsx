@@ -5,8 +5,9 @@ import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { AlertCircle } from 'lucide-react'
+import { Notice } from '@/components/ui/notice'
+import { Skeleton } from '@/components/ui/skeleton'
+import { CheckCircle } from 'lucide-react'
 
 const ERROS_CHECKOUT: Record<string, string> = {
   stripe_nao_configurado: 'Pagamentos estão temporariamente indisponíveis. Tente novamente em instantes.',
@@ -74,24 +75,25 @@ export function PurchaseBox({ courseId, courseSlug, price }: PurchaseBoxProps) {
   return (
     <>
       {erro && ERROS_CHECKOUT[erro] && (
-        <div className="mt-4 flex items-start gap-2 rounded-sm border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-          <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-          <p>{ERROS_CHECKOUT[erro]}</p>
-        </div>
+        <Notice tipo="erro" role="alert" className="mt-4">
+          {ERROS_CHECKOUT[erro]}
+        </Notice>
       )}
 
       <div className="mt-4">
-        {status === 'checking' && (
-          <div className="h-12 w-full rounded-md bg-cobalto/10 animate-pulse" aria-hidden="true" />
-        )}
+        {/* Skeleton da marca (cal apagada com o vidrado varrendo) em vez do
+            animate-pulse genérico — é o mesmo bloco que o resto do site usa
+            enquanto carrega. */}
+        {status === 'checking' && <Skeleton className="h-12 w-full" />}
 
         {status === 'enrolled' && (
-          <div className="space-y-3">
-            <Badge variant="success" className="w-full justify-center py-2">
-              ✓ Você já tem este curso
-            </Badge>
+          <div className="flex flex-col gap-3">
+            <p className="flex items-center gap-2 text-sm font-semibold text-emerald-700">
+              <CheckCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+              Você já tem este curso
+            </p>
             <Link href={`/aluno/cursos/${courseSlug}`} className="block">
-              <Button className="w-full">Continuar assistindo</Button>
+              <Button className="w-full" size="lg">Continuar assistindo</Button>
             </Link>
           </div>
         )}

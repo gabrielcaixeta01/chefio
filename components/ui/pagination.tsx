@@ -8,7 +8,8 @@ interface PaginationProps {
   buildHref: (page: number) => string
 }
 
-/** Paginação GET nativa (sem client component) pro visual de dashboard — admin e aluno. */
+/** Paginação GET nativa, sem client component — usada no catálogo público,
+    na loja e nas listas do admin. */
 export function Pagination({ page, totalPages, buildHref }: PaginationProps) {
   if (totalPages <= 1) return null
 

@@ -207,14 +207,17 @@ export function SkeletonForm({ fields = 5 }: { fields?: number }) {
   )
 }
 
-/** Barra de filtros do catálogo: busca + pílulas de categoria. */
+/** Barra de filtros do catálogo público: busca + pílulas de categoria. */
 export function SkeletonFilters({ pills = 6 }: { pills?: number }) {
   return (
-    <div className="mb-8 flex flex-col gap-4">
-      <Skeleton className="h-12 w-full max-w-md" />
+    <div className="flex flex-col gap-6">
+      <Skeleton className="h-12 w-full max-w-lg" />
       <div className="flex flex-wrap gap-2">
+        {/* Largura variada: as categorias vão de "Massas" a "Nutrição e
+            Alimentação Saudável", e pílulas todas iguais anunciavam um
+            layout que não é o que chega. */}
         {Array.from({ length: pills }, (_, i) => (
-          <Skeleton key={i} className="h-9 w-28 rounded-full" />
+          <Skeleton key={i} className="h-8" style={{ width: `${5 + ((i * 3) % 7)}rem` }} />
         ))}
       </div>
     </div>

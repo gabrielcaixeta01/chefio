@@ -1,10 +1,13 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { AlertCircle, ChevronLeft, ChevronRight, Search, X } from 'lucide-react'
+import { BookOpen, Search, X } from 'lucide-react'
 import { createPublicClient } from '@/lib/supabase/public'
 import { COURSE_CATEGORIES } from '@/lib/utils'
 import { CourseCard, type CourseCardData } from '@/components/curso/CourseCard'
 import { ActionLink } from '@/components/ui/action-link'
+import { EmptyState } from '@/components/ui/empty-state'
+import { Notice } from '@/components/ui/notice'
+import { Pagination } from '@/components/ui/pagination'
 import { cn } from '@/lib/utils'
 
 export const metadata: Metadata = { title: 'Explorar cursos' }
@@ -95,10 +98,9 @@ export default async function CourseCatalogPage({
       <section className="border-b border-cobalto/15 bg-cal-fundo">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
           {erro && ERROS_CHECKOUT[erro] && (
-            <div className="mb-6 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-              <p>{ERROS_CHECKOUT[erro]}</p>
-            </div>
+            <Notice tipo="erro" role="alert" className="mb-6">
+              {ERROS_CHECKOUT[erro]}
+            </Notice>
           )}
           {/* GET nativo: busca sem client component nem JS */}
           <form action="/cursos" method="get" className="flex max-w-lg gap-2">
@@ -125,15 +127,18 @@ export default async function CourseCatalogPage({
             </button>
           </form>
 
+          {/* Onze pílulas de contorno grosso viravam uma parede de seis linhas
+              no celular e competiam com os cards. Mesma gramática leve da
+              biblioteca do aluno: preenchimento fraco, contorno só no ativo. */}
           <div className="mt-6 flex flex-wrap items-center gap-2">
             <Link
               href={href({ q })}
               aria-current={!category ? 'true' : undefined}
               className={cn(
-                'rounded-sm border-2 px-3.5 py-1.5 text-sm font-semibold transition-colors',
+                'rounded-sm px-3.5 py-1.5 text-sm font-semibold transition-colors',
                 !category
-                  ? 'border-cobalto bg-cobalto text-cal'
-                  : 'border-cobalto/20 text-tinta hover:border-cobalto/50'
+                  ? 'bg-cobalto text-cal'
+                  : 'bg-cobalto/8 text-tinta-suave hover:bg-cobalto/15 hover:text-tinta'
               )}
             >
               Todas
@@ -146,10 +151,10 @@ export default async function CourseCatalogPage({
                   href={href({ category: ativa ? undefined : cat, q })}
                   aria-current={ativa ? 'true' : undefined}
                   className={cn(
-                    'rounded-sm border-2 px-3.5 py-1.5 text-sm font-semibold transition-colors',
+                    'rounded-sm px-3.5 py-1.5 text-sm font-semibold transition-colors',
                     ativa
-                      ? 'border-cobalto bg-cobalto text-cal'
-                      : 'border-cobalto/20 text-tinta hover:border-cobalto/50'
+                      ? 'bg-cobalto text-cal'
+                      : 'bg-cobalto/8 text-tinta-suave hover:bg-cobalto/15 hover:text-tinta'
                   )}
                 >
                   {cat}
@@ -181,92 +186,50 @@ export default async function CourseCatalogPage({
                 ))}
               </div>
 
-              {totalPages > 1 && (
-                <nav className="mt-10 flex items-center justify-center gap-3" aria-label="Paginação">
-                  <Link
-                    href={href({ category, q, page: page - 1 })}
-                    aria-disabled={page <= 1}
-                    tabIndex={page <= 1 ? -1 : undefined}
-                    className={cn(
-                      'flex items-center gap-1 rounded-sm border-2 px-3.5 py-1.5 text-sm font-semibold transition-colors',
-                      page <= 1
-                        ? 'pointer-events-none border-cobalto/10 text-tinta-suave/40'
-                        : 'border-cobalto/20 text-tinta hover:border-cobalto/50'
-                    )}
-                  >
-                    <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-                    Anterior
-                  </Link>
-                  <span className="text-sm text-tinta-suave">
-                    Página {page} de {totalPages}
-                  </span>
-                  <Link
-                    href={href({ category, q, page: page + 1 })}
-                    aria-disabled={page >= totalPages}
-                    tabIndex={page >= totalPages ? -1 : undefined}
-                    className={cn(
-                      'flex items-center gap-1 rounded-sm border-2 px-3.5 py-1.5 text-sm font-semibold transition-colors',
-                      page >= totalPages
-                        ? 'pointer-events-none border-cobalto/10 text-tinta-suave/40'
-                        : 'border-cobalto/20 text-tinta hover:border-cobalto/50'
-                    )}
-                  >
-                    Próxima
-                    <ChevronRight className="h-4 w-4" aria-hidden="true" />
-                  </Link>
-                </nav>
-              )}
+              <Pagination
+                page={page}
+                totalPages={totalPages}
+                buildHref={(p) => href({ category, q, page: p })}
+              />
             </>
           ) : falhou ? (
             /* Falha de carregamento — nunca se disfarça de catálogo vazio */
-            <div className="flex flex-col items-start gap-6 rounded-md border-2 border-red-200 bg-red-50 p-10 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="mt-1 h-5 w-5 shrink-0 text-red-700" aria-hidden="true" />
-                <div>
-                  <p className="font-display text-2xl font-bold tracking-tight text-red-900">
-                    Não foi possível carregar o catálogo.
-                  </p>
-                  <p className="mt-2 max-w-md text-red-800">
-                    O problema é do nosso lado, não da sua busca. Tente de novo
-                    em instantes.
-                  </p>
-                </div>
-              </div>
-              <ActionLink href="/cursos" variant="cobalto">
-                Tentar de novo
-              </ActionLink>
-            </div>
+            <Notice
+              tipo="erro"
+              role="alert"
+              titulo="Não foi possível carregar o catálogo."
+              acao={
+                <ActionLink href="/cursos" variant="cobalto">
+                  Tentar de novo
+                </ActionLink>
+              }
+            >
+              O problema é do nosso lado, não da sua busca. Tente de novo em instantes.
+            </Notice>
           ) : filtrando ? (
             /* Vazio por causa do filtro — o caminho de saída é limpar o filtro */
-            <div className="flex flex-col items-start gap-6 rounded-md border-2 border-dashed border-cobalto/30 p-10 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="font-display text-2xl font-bold tracking-tight text-tinta">
-                  Nada encontrado com esses filtros.
-                </p>
-                <p className="mt-2 text-tinta-suave">
-                  Tente outra categoria ou busque por outro termo.
-                </p>
-              </div>
-              <ActionLink href="/cursos" variant="cobalto">
-                Ver todos os cursos
-              </ActionLink>
-            </div>
+            <EmptyState
+              icon={Search}
+              titulo="Nada encontrado com esses filtros"
+              descricao="Tente outra categoria ou busque por outro termo."
+              acao={
+                <ActionLink href="/cursos" variant="cobalto">
+                  Ver todos os cursos
+                </ActionLink>
+              }
+            />
           ) : (
             /* Vazio de verdade — nada a limpar, então o convite é publicar */
-            <div className="flex flex-col items-start gap-6 rounded-md border-2 border-dashed border-cobalto/30 p-10 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="font-display text-2xl font-bold tracking-tight text-tinta">
-                  O catálogo está sendo montado.
-                </p>
-                <p className="mt-2 max-w-md text-tinta-suave">
-                  Os primeiros cursos entram em breve. Se você cozinha para
-                  viver, esse espaço pode ser seu.
-                </p>
-              </div>
-              <ActionLink href="/para-chefs" variant="cobalto">
-                Ensinar na Chefio
-              </ActionLink>
-            </div>
+            <EmptyState
+              icon={BookOpen}
+              titulo="O catálogo está sendo montado"
+              descricao="Os primeiros cursos entram em breve. Se você cozinha para viver, esse espaço pode ser seu."
+              acao={
+                <ActionLink href="/para-chefs" variant="cobalto">
+                  Ensinar na Chefio
+                </ActionLink>
+              }
+            />
           )}
         </div>
       </section>

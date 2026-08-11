@@ -4,6 +4,8 @@ import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import { createPublicClient } from '@/lib/supabase/public'
 import { Badge } from '@/components/ui/badge'
+import { Ladrilho } from '@/components/ui/ladrilho'
+import { Skeleton } from '@/components/ui/skeleton'
 import { PurchaseBox } from '@/components/curso/PurchaseBox'
 import { formatCurrency, formatDuration } from '@/lib/utils'
 import { Lock, Play, Clock, ChefHat, BookOpen } from 'lucide-react'
@@ -52,118 +54,151 @@ export default async function CourseDetailPage({
 
   const lessons = (course.lessons as any[]).sort((a, b) => a.order_index - b.order_index)
   const totalDuration = lessons.reduce((sum: number, l: any) => sum + (l.duration_seconds ?? 0), 0)
+  const previas = lessons.filter((l: any) => l.is_free_preview).length
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-        {/* Coluna principal */}
-        <div className="lg:col-span-2">
-          {/* Thumbnail */}
-          <div className="relative aspect-video rounded-md overflow-hidden bg-cobalto/10 mb-6">
-            {course.thumbnail_url ? (
-              <Image src={course.thumbnail_url} alt={course.title} fill className="object-cover" />
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <ChefHat className="h-16 w-16 text-cobalto/25" />
-              </div>
-            )}
-          </div>
-
-          {course.category && (
-            <Badge variant="secondary" className="mb-3">{course.category}</Badge>
-          )}
-          <h1 className="font-display text-3xl font-bold text-tinta mb-3 tracking-tight">{course.title}</h1>
-
-          <div className="flex items-center gap-4 text-sm text-tinta-suave mb-6">
-            <span className="flex items-center gap-1"><BookOpen className="h-4 w-4" />{lessons.length} aulas</span>
+    <>
+      {/* ---------- Cabeçalho ----------
+          Faixa de azulejo como no catálogo e na home. Antes a página abria
+          direto na miniatura: era a única tela pública que começava sem a
+          marca, e parecia ter caído de outro site. */}
+      <section className="azulejo-escuro">
+        <div className="relative mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8">
+          {course.category && <p className="olho text-brasa">{course.category}</p>}
+          <h1 className="mt-4 max-w-3xl font-display text-[clamp(2rem,4vw,3.25rem)] font-extrabold leading-[1.04] tracking-[-0.02em] text-cal">
+            {course.title}
+          </h1>
+          <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-cal/70">
+            <span>por {(course.teacher as any)?.name ?? 'Chefio'}</span>
+            <span className="flex items-center gap-1.5">
+              <BookOpen className="h-4 w-4" aria-hidden="true" />
+              {lessons.length} {lessons.length === 1 ? 'aula' : 'aulas'}
+            </span>
             {totalDuration > 0 && (
-              <span className="flex items-center gap-1"><Clock className="h-4 w-4" />{formatDuration(totalDuration)}</span>
+              <span className="flex items-center gap-1.5">
+                <Clock className="h-4 w-4" aria-hidden="true" />
+                {formatDuration(totalDuration)}
+              </span>
             )}
-          </div>
-
-          {/* Descrição */}
-          {course.description && (
-            <div className="mb-8">
-              <h2 className="font-display text-lg font-bold text-tinta mb-3 tracking-tight">Sobre o curso</h2>
-              <p className="text-tinta-suave leading-relaxed">{course.description}</p>
-            </div>
-          )}
-
-          {/* Professor */}
-          <div className="flex items-start gap-3 mb-8 p-4 bg-cal-fundo rounded-md">
-            <div className="w-12 h-12 rounded-full bg-brasa/15 flex items-center justify-center shrink-0">
-              <ChefHat className="h-6 w-6 text-brasa-escura" />
-            </div>
-            <div>
-              <p className="text-xs text-tinta-suave">Instrutor</p>
-              <p className="font-semibold text-tinta">{(course.teacher as any)?.name}</p>
-              {teacherPublic?.bio && (
-                <p className="text-sm text-tinta-suave mt-1 leading-relaxed">{teacherPublic.bio}</p>
-              )}
-            </div>
-          </div>
-
-          {/* Lista de aulas */}
-          <div>
-            <h2 className="font-display text-lg font-bold text-tinta mb-4 tracking-tight">Conteúdo do curso</h2>
-            <div className="space-y-2">
-              {lessons.map((lesson: any, index: number) => (
-                <div
-                  key={lesson.id}
-                  className="flex items-center justify-between p-3 rounded-sm border border-cobalto/10 bg-white"
-                >
-                  <div className="flex items-center gap-3">
-                    {lesson.is_free_preview ? (
-                      <Play className="h-4 w-4 text-brasa-escura shrink-0" />
-                    ) : (
-                      <Lock className="h-4 w-4 text-tinta-suave/70 shrink-0" />
-                    )}
-                    <span className="text-sm text-tinta">
-                      {index + 1}. {lesson.title}
-                      {lesson.is_free_preview && (
-                        <span className="ml-2 text-xs text-brasa-escura font-medium">Prévia grátis</span>
-                      )}
-                    </span>
-                  </div>
-                  {lesson.duration_seconds && (
-                    <span className="text-xs text-tinta-suave/70 shrink-0">{formatDuration(lesson.duration_seconds)}</span>
-                  )}
-                </div>
-              ))}
-            </div>
           </div>
         </div>
+      </section>
 
-        {/* Sidebar de compra */}
-        <div className="lg:col-span-1">
-          <div className="sticky top-24 bg-white rounded-md border border-cobalto/15 shadow-sm p-6">
-            <p className="text-3xl font-bold text-tinta mb-1">
-              {course.price === 0 ? 'Grátis' : formatCurrency(course.price)}
-            </p>
+      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
+        {/* A caixa de compra vem antes no DOM e volta pra direita a partir de
+            lg. No mobile ela ficava depois da lista inteira de aulas: o preço
+            e o botão só apareciam depois de uns três scrolls. */}
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-3">
+          <aside className="lg:order-2 lg:col-span-1">
+            <div className="sticky top-24 rounded-md border border-cobalto/15 bg-cal p-6">
+              <p className="font-display text-3xl font-extrabold tabular-nums tracking-tight text-tinta">
+                {course.price === 0 ? 'Grátis' : formatCurrency(course.price)}
+              </p>
 
-            <Suspense
-              fallback={<div className="mt-4 h-12 w-full rounded-md bg-cobalto/10 animate-pulse" aria-hidden="true" />}
-            >
-              <PurchaseBox courseId={course.id} courseSlug={course.slug} price={course.price} />
-            </Suspense>
+              <Suspense fallback={<Skeleton className="mt-4 h-12 w-full" />}>
+                <PurchaseBox courseId={course.id} courseSlug={course.slug} price={course.price} />
+              </Suspense>
 
-            <ul className="mt-6 space-y-2 text-sm text-tinta-suave">
-              <li className="flex items-center gap-2">
-                <BookOpen className="h-4 w-4 text-tinta-suave/70" />
-                {lessons.length} aulas em vídeo
-              </li>
-              <li className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-tinta-suave/70" />
-                Acesso vitalício
-              </li>
-              <li className="flex items-center gap-2">
-                <ChefHat className="h-4 w-4 text-tinta-suave/70" />
-                Produtos recomendados por aula
-              </li>
-            </ul>
+              <ul className="mt-6 flex flex-col gap-2.5 text-sm text-tinta-suave">
+                <li className="flex items-center gap-2.5">
+                  <BookOpen className="h-4 w-4 shrink-0 text-cobalto" aria-hidden="true" />
+                  {lessons.length} {lessons.length === 1 ? 'aula em vídeo' : 'aulas em vídeo'}
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <Clock className="h-4 w-4 shrink-0 text-cobalto" aria-hidden="true" />
+                  Acesso vitalício
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <ChefHat className="h-4 w-4 shrink-0 text-cobalto" aria-hidden="true" />
+                  Produtos recomendados por aula
+                </li>
+              </ul>
+            </div>
+          </aside>
+
+          <div className="lg:order-1 lg:col-span-2">
+            <div className="relative mb-8 aspect-video overflow-hidden rounded-md bg-cobalto/10">
+              {course.thumbnail_url ? (
+                <Image
+                  src={course.thumbnail_url}
+                  alt={course.title}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 66vw"
+                  priority
+                  className="object-cover"
+                />
+              ) : (
+                <div
+                  aria-hidden="true"
+                  className="azulejo-escuro h-full w-full [--azulejo-tamanho:56px]"
+                />
+              )}
+            </div>
+
+            {course.description && (
+              <section className="mb-10">
+                <h2 className="mb-3 font-display text-xl font-bold tracking-tight text-tinta">
+                  Sobre o curso
+                </h2>
+                <p className="max-w-2xl leading-relaxed text-tinta-suave">{course.description}</p>
+              </section>
+            )}
+
+            <section className="mb-10 flex items-start gap-4 rounded-md border border-cobalto/15 bg-cal-fundo p-5">
+              <Ladrilho tom="cobalto" tamanho="lg">
+                <ChefHat className="h-5 w-5" aria-hidden="true" />
+              </Ladrilho>
+              <div className="min-w-0">
+                <p className="olho text-brasa-escura">Quem ensina</p>
+                <p className="mt-1.5 font-display text-lg font-bold tracking-tight text-tinta">
+                  {(course.teacher as any)?.name ?? 'Chefio'}
+                </p>
+                {teacherPublic?.bio && (
+                  <p className="mt-1.5 leading-relaxed text-sm text-tinta-suave">{teacherPublic.bio}</p>
+                )}
+              </div>
+            </section>
+
+            <section>
+              <div className="mb-4 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                <h2 className="font-display text-xl font-bold tracking-tight text-tinta">
+                  Conteúdo do curso
+                </h2>
+                {previas > 0 && (
+                  <p className="text-sm text-tinta-suave">
+                    {previas} {previas === 1 ? 'aula liberada' : 'aulas liberadas'} como prévia
+                  </p>
+                )}
+              </div>
+
+              <ul className="overflow-hidden rounded-md border border-cobalto/15 bg-cal">
+                {lessons.map((lesson: any, index: number) => (
+                  <li
+                    key={lesson.id}
+                    className="flex items-center gap-3 border-b border-cobalto/10 px-4 py-3 last:border-b-0"
+                  >
+                    {lesson.is_free_preview ? (
+                      <Play className="h-4 w-4 shrink-0 text-brasa-escura" aria-hidden="true" />
+                    ) : (
+                      <Lock className="h-4 w-4 shrink-0 text-cobalto/30" aria-hidden="true" />
+                    )}
+                    <span className="min-w-0 flex-1 text-sm text-tinta">
+                      <span className="tabular-nums text-tinta-suave/70">{index + 1}.</span>{' '}
+                      {lesson.title}
+                    </span>
+                    {lesson.is_free_preview && <Badge variant="default">Prévia grátis</Badge>}
+                    {lesson.duration_seconds && (
+                      <span className="shrink-0 text-xs tabular-nums text-tinta-suave/70">
+                        {formatDuration(lesson.duration_seconds)}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </section>
           </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }
