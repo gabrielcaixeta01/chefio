@@ -1,10 +1,9 @@
-import { SkeletonPageHeader, SkeletonTable } from '@/components/ui/skeleton'
+import { SkeletonPage, SkeletonTable } from '@/components/ui/skeleton'
 
 export default function Loading() {
   return (
-    <div>
-      <SkeletonPageHeader action={false} />
-      <SkeletonTable rows={6} cols={4} />
-    </div>
+    <SkeletonPage action={false}>
+      <SkeletonTable rows={5} cols={3} />
+    </SkeletonPage>
   )
 }

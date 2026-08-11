@@ -1,15 +1,9 @@
-import {
-  SkeletonCardGrid,
-  SkeletonFilters,
-  SkeletonPageHeader,
-} from '@/components/ui/skeleton'
+import { SkeletonCardGrid, SkeletonPage } from '@/components/ui/skeleton'
 
 export default function Loading() {
   return (
-    <div>
-      <SkeletonPageHeader />
-      <SkeletonFilters pills={5} />
-      <SkeletonCardGrid count={8} columns={4} />
-    </div>
+    <SkeletonPage>
+      <SkeletonCardGrid count={6} columns={3} />
+    </SkeletonPage>
   )
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { CourseForm } from '@/components/courses/CourseForm'
+import { PageHeader, PageBody } from '@/components/layout/PageShell'
 
 export const metadata: Metadata = { title: 'Novo Curso' }
 
@@ -9,10 +10,16 @@ export default async function NewCoursePage() {
   const { data: { user } } = await supabase.auth.getUser()
 
   return (
-    <div>
-      <h1 className="font-display text-3xl font-extrabold text-tinta mb-2 tracking-tight">Novo Curso</h1>
-      <p className="text-tinta-suave mb-8">Preencha as informações básicas do seu curso.</p>
-      <CourseForm teacherId={user!.id} />
-    </div>
+    <>
+      <PageHeader
+        olho="Novo curso"
+        titulo="Comece pelo essencial"
+        descricao="Título, categoria e preço já bastam pra criar o curso. As aulas você adiciona depois, uma a uma."
+      />
+
+      <PageBody className="max-w-3xl">
+        <CourseForm teacherId={user!.id} />
+      </PageBody>
+    </>
   )
 }

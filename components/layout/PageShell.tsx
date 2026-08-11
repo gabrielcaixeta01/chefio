@@ -26,6 +26,19 @@ export function AppShell({
   )
 }
 
+/**
+ * A faixa em si, sem conteúdo. Existe separada pra que o esqueleto de
+ * carregamento possa vestir exatamente a mesma geometria — quando os dois
+ * divergiam, a página inteira saltava de lugar assim que o conteúdo chegava.
+ */
+export function PageHeaderBand({ children }: { children: React.ReactNode }) {
+  return (
+    <header className="border-b border-cobalto/15 bg-cal">
+      <div className="mx-auto max-w-6xl px-5 py-8 sm:px-8 lg:py-10">{children}</div>
+    </header>
+  )
+}
+
 export function PageHeader({
   olho,
   titulo,
@@ -43,8 +56,8 @@ export function PageHeader({
   children?: React.ReactNode
 }) {
   return (
-    <header className="border-b border-cobalto/15 bg-cal">
-      <div className="mx-auto max-w-6xl px-5 py-8 sm:px-8 lg:py-10">
+    <PageHeaderBand>
+      <>
         <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-5">
           <div className="min-w-0">
             <p className="olho text-brasa-escura">{olho}</p>
@@ -58,8 +71,8 @@ export function PageHeader({
           {acoes && <div className="flex shrink-0 flex-wrap items-center gap-3">{acoes}</div>}
         </div>
         {children && <div className="mt-7">{children}</div>}
-      </div>
-    </header>
+      </>
+    </PageHeaderBand>
   )
 }
 

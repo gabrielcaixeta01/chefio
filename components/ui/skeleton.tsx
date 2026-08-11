@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils'
+import { PageBody, PageHeaderBand } from '@/components/layout/PageShell'
 
 /* Esqueletos de conteúdo: o mesmo desenho da página, ainda sem vidrado.
    Todos herdam `.esqueleto` (cal apagada + brilho varrendo) do globals.css.
@@ -40,15 +41,55 @@ export function SkeletonText({
   )
 }
 
-/** Cabeçalho de página: título, subtítulo e o botão de ação da direita. */
-export function SkeletonPageHeader({ action = true }: { action?: boolean }) {
+/**
+ * Página logada inteira em esqueleto: a faixa de cal do cabeçalho, sangrada
+ * até a borda, e o corpo no mesmo `max-w-6xl` do conteúdo real.
+ *
+ * Os loading.tsx antes devolviam um `<div>` cru. Como PageHeader/PageBody
+ * carregam toda a margem da área logada, o esqueleto aparecia colado na borda
+ * da tela e sem faixa — e tudo saltava pro lugar certo quando o conteúdo
+ * chegava. Esqueleto que não ocupa o mesmo espaço é pior que esqueleto nenhum.
+ */
+export function SkeletonPage({
+  action = true,
+  toolbar,
+  children,
+}: {
+  action?: boolean
+  /** Altura da barra de busca/filtros que mora dentro da faixa */
+  toolbar?: React.ReactNode
+  children: React.ReactNode
+}) {
   return (
-    <div className="mb-8 flex items-start justify-between gap-6">
-      <div className="flex flex-col gap-3">
-        <Skeleton className="h-8 w-56" />
-        <Skeleton className="h-4 w-72" />
+    <>
+      <PageHeaderBand>
+        <>
+          <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-5">
+            <div className="flex min-w-0 flex-col gap-3">
+              <Skeleton className="h-3 w-24" />
+              <Skeleton className="h-9 w-64 max-w-full" />
+              <Skeleton className="h-4 w-80 max-w-full" />
+            </div>
+            {action && <Skeleton className="h-11 w-44 shrink-0" />}
+          </div>
+          {toolbar && <div className="mt-7">{toolbar}</div>}
+        </>
+      </PageHeaderBand>
+      <PageBody>{children}</PageBody>
+    </>
+  )
+}
+
+/** Busca + pílulas de filtro, pra passar no slot `toolbar` do SkeletonPage. */
+export function SkeletonToolbar({ pills = 4 }: { pills?: number }) {
+  return (
+    <div className="flex flex-col gap-4">
+      <Skeleton className="h-11 w-full max-w-lg" />
+      <div className="flex flex-wrap gap-2">
+        {Array.from({ length: pills }, (_, i) => (
+          <Skeleton key={i} className="h-8 w-28" />
+        ))}
       </div>
-      {action && <Skeleton className="h-11 w-44 shrink-0" />}
     </div>
   )
 }

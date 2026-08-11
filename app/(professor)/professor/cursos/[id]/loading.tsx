@@ -1,9 +1,8 @@
-import { Skeleton, SkeletonForm, SkeletonPageHeader } from '@/components/ui/skeleton'
+import { Skeleton, SkeletonForm, SkeletonPage } from '@/components/ui/skeleton'
 
 export default function Loading() {
   return (
-    <div>
-      <SkeletonPageHeader />
+    <SkeletonPage>
       <SkeletonForm fields={5} />
 
       {/* Lista de aulas, abaixo do formulário do curso */}
@@ -27,6 +26,6 @@ export default function Loading() {
           ))}
         </div>
       </div>
-    </div>
+    </SkeletonPage>
   )
 }

@@ -8,6 +8,7 @@ import { LessonProgressButton } from '@/components/player/LessonProgressButton'
 import { Notebook } from '@/components/player/Notebook'
 import { LessonProducts } from '@/components/player/LessonProducts'
 import { ExportNotebook } from '@/components/player/ExportNotebook'
+import { PageBody } from '@/components/layout/PageShell'
 import { ChevronLeft, ChevronRight, Lock } from 'lucide-react'
 
 export const metadata: Metadata = { title: 'Aula' }
@@ -88,13 +89,17 @@ export default async function LessonPlayerPage({
   const notebookDomId = `notebook-${course.id}`
 
   return (
-    <div className="max-w-5xl">
-      <div className="flex items-center gap-2 text-sm text-tinta-suave mb-4">
-        <Link href={`/aluno/cursos/${slug}`} className="hover:text-brasa-escura transition-colors">
+    // PageBody, e não um div solto: sem ele a aula era a única página logada
+    // sem margem nenhuma — o player e o texto encostavam na borda da tela.
+    // Sem PageHeader aqui de propósito: o vídeo é o assunto, e uma faixa de
+    // título antes dele empurraria o player pra baixo da dobra no celular.
+    <PageBody className="max-w-5xl">
+      <div className="mb-4 flex items-center gap-2 text-sm text-tinta-suave">
+        <Link href={`/aluno/cursos/${slug}`} className="truncate transition-colors hover:text-brasa-escura">
           {course.title}
         </Link>
-        <span>/</span>
-        <span className="text-tinta truncate">{lesson.title}</span>
+        <span aria-hidden="true">/</span>
+        <span className="truncate text-tinta">{lesson.title}</span>
       </div>
 
       <div className="mb-4">
@@ -110,11 +115,12 @@ export default async function LessonPlayerPage({
         )}
       </div>
 
-      <div className="flex items-start justify-between gap-4 mb-6">
-        <div>
-          <h1 className="font-display text-2xl font-bold text-tinta tracking-tight">{lesson.title}</h1>
+      {/* flex-wrap: num celular o botão de concluir descia por cima do título */}
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0 flex-1 basis-64">
+          <h1 className="font-display text-2xl font-bold tracking-tight text-tinta">{lesson.title}</h1>
           {lesson.description && (
-            <p className="text-sm text-tinta-suave mt-1">{lesson.description}</p>
+            <p className="mt-1 text-sm text-tinta-suave">{lesson.description}</p>
           )}
         </div>
         <LessonProgressButton
@@ -161,6 +167,6 @@ export default async function LessonPlayerPage({
           initialContent={notebook?.content}
         />
       </div>
-    </div>
+    </PageBody>
   )
 }

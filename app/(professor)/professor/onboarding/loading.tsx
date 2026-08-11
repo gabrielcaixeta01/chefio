@@ -1,10 +1,9 @@
-import { SkeletonForm, SkeletonPageHeader } from '@/components/ui/skeleton'
+import { SkeletonForm, SkeletonPage } from '@/components/ui/skeleton'
 
 export default function Loading() {
   return (
-    <div>
-      <SkeletonPageHeader action={false} />
+    <SkeletonPage action={false}>
       <SkeletonForm fields={4} />
-    </div>
+    </SkeletonPage>
   )
 }
