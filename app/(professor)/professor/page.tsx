@@ -1,12 +1,17 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency } from '@/lib/utils'
-import { BookOpen, Users, DollarSign, AlertCircle, Plus } from 'lucide-react'
+import { BookOpen, Users, DollarSign, Clock, CreditCard, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { PageHeader, PageBody } from '@/components/layout/PageShell'
 import { Panel, SectionHeading } from '@/components/ui/panel'
 import { StatTile } from '@/components/ui/stat-tile'
 import { EmptyState } from '@/components/ui/empty-state'
+import { Notice } from '@/components/ui/notice'
+import { StatusBadge } from '@/components/ui/status-badge'
+
+export const metadata: Metadata = { title: 'Painel do professor' }
 
 export default async function ProfessorDashboard() {
   const supabase = await createClient()
@@ -52,18 +57,28 @@ export default async function ProfessorDashboard() {
 
       <PageBody>
         {needsStripeOnboarding && (
-          <Panel className="mb-8 flex flex-wrap items-start justify-between gap-4 border-amber-200 bg-amber-50/80 p-4">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" />
-              <div>
-                <p className="text-sm font-medium text-amber-800">Configure sua conta de recebimento</p>
-                <p className="mt-1 text-xs text-amber-700">Para publicar cursos e receber pagamentos, conecte sua conta Stripe.</p>
-              </div>
-            </div>
-            <Link href="/professor/onboarding">
-              <Button size="sm" variant="secondary">Configurar agora</Button>
-            </Link>
-          </Panel>
+          <Notice
+            tipo="atencao"
+            icon={CreditCard}
+            titulo="Configure sua conta de recebimento"
+            className="mb-8"
+            acao={
+              <Link href="/professor/onboarding">
+                <Button size="sm">Configurar agora</Button>
+              </Link>
+            }
+          >
+            Sem uma conta Stripe conectada você não consegue publicar cursos pagos nem receber.
+          </Notice>
+        )}
+
+        {pendingCourses.length > 0 && (
+          <Notice tipo="info" icon={Clock} className="mb-8">
+            <strong className="font-semibold">
+              {pendingCourses.length} {pendingCourses.length === 1 ? 'curso' : 'cursos'}
+            </strong>{' '}
+            aguardando aprovação da plataforma. Você é avisado assim que a revisão sair.
+          </Notice>
         )}
 
         <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -71,14 +86,6 @@ export default async function ProfessorDashboard() {
           <StatTile icon={Users} label="Total de alunos" valor={enrollments?.length ?? 0} />
           <StatTile icon={DollarSign} label="Ganhos líquidos" valor={formatCurrency(netRevenue)} nota={`Após ${commissionRate}% de comissão`} />
         </div>
-
-        {pendingCourses.length > 0 && (
-          <Panel className="mb-6 border-brasa/30 bg-brasa/10 p-4">
-            <p className="text-sm text-brasa-escura">
-              <strong>{pendingCourses.length} curso(s)</strong> aguardando aprovação da plataforma.
-            </p>
-          </Panel>
-        )}
 
         <Panel>
           <SectionHeading
@@ -100,31 +107,22 @@ export default async function ProfessorDashboard() {
               />
             </div>
           ) : (
-            <div className="divide-y divide-cobalto/10">
+            <ul className="divide-y divide-cobalto/10">
               {courses?.map((course) => (
-                <div key={course.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
-                  <div className="min-w-0">
+                <li key={course.id} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-5 py-4">
+                  <div className="min-w-0 flex-1 basis-48">
                     <p className="truncate text-sm font-medium text-tinta">{course.title}</p>
                     <p className="mt-1 text-xs text-tinta-suave/70">{course.price === 0 ? 'Grátis' : formatCurrency(course.price)}</p>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className={`rounded-sm px-2.5 py-1 text-[0.6875rem] font-semibold uppercase tracking-[0.08em] ${
-                      course.status === 'approved' ? 'bg-emerald-50 text-emerald-700' :
-                      course.status === 'pending_review' ? 'bg-amber-50 text-amber-800' :
-                      course.status === 'rejected' ? 'bg-red-50 text-red-700' :
-                      'bg-cobalto/10 text-tinta-suave'
-                    }`}>
-                      {course.status === 'approved' ? 'Publicado' :
-                       course.status === 'pending_review' ? 'Em revisão' :
-                       course.status === 'rejected' ? 'Rejeitado' : 'Rascunho'}
-                    </span>
-                    <Link href={`/professor/cursos/${course.id}`} className="text-xs font-semibold text-brasa-escura hover:underline">
+                  <div className="flex shrink-0 items-center gap-3">
+                    <StatusBadge tipo="curso" status={course.status} />
+                    <Link href={`/professor/cursos/${course.id}`} className="text-xs font-semibold text-brasa-escura underline-offset-4 hover:underline">
                       Editar
                     </Link>
                   </div>
-                </div>
+                </li>
               ))}
-            </div>
+            </ul>
           )}
         </Panel>
       </PageBody>

@@ -9,6 +9,8 @@ import { PageHeader, PageBody } from '@/components/layout/PageShell'
 import { Panel, SectionHeading } from '@/components/ui/panel'
 import { StatTile } from '@/components/ui/stat-tile'
 import { EmptyState } from '@/components/ui/empty-state'
+import { Notice } from '@/components/ui/notice'
+import { StatusBadge } from '@/components/ui/status-badge'
 
 export const metadata: Metadata = { title: 'Faturamento' }
 
@@ -75,18 +77,23 @@ export default async function BillingPage({
 
       <PageBody>
         {erro && ERROS[erro] && (
-          <Panel className="mb-8 border-red-200 bg-red-50/80 p-4">
-            <p className="text-sm text-red-800">{ERROS[erro]}</p>
-          </Panel>
+          <Notice tipo="erro" className="mb-8">
+            {ERROS[erro]}
+          </Notice>
         )}
 
         {!teacherProfile?.stripe_account_id && (
-          <Panel className="mb-8 flex flex-wrap items-center justify-between gap-4 border-amber-200 bg-amber-50/80 p-4">
-            <p className="text-sm text-amber-800">Configure sua conta Stripe para receber pagamentos.</p>
-            <Link href="/professor/onboarding">
-              <Button size="sm">Configurar agora</Button>
-            </Link>
-          </Panel>
+          <Notice
+            tipo="atencao"
+            className="mb-8"
+            acao={
+              <Link href="/professor/onboarding">
+                <Button size="sm">Configurar agora</Button>
+              </Link>
+            }
+          >
+            Configure sua conta Stripe para receber pagamentos.
+          </Notice>
         )}
 
         <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -129,13 +136,7 @@ export default async function BillingPage({
                     <p className="text-sm text-tinta">{formatCurrency(payout.amount)}</p>
                     <p className="text-xs text-tinta-suave/70">{new Date(payout.created_at).toLocaleDateString('pt-BR')}</p>
                   </div>
-                  <span className={`rounded-sm px-2 py-1 text-[0.6875rem] font-semibold uppercase tracking-[0.08em] ${
-                    payout.status === 'paid' ? 'bg-emerald-50 text-emerald-700' :
-                    payout.status === 'failed' ? 'bg-red-50 text-red-700' :
-                    'bg-amber-50 text-amber-800'
-                  }`}>
-                    {payout.status === 'paid' ? 'Pago' : payout.status === 'failed' ? 'Falhou' : 'Pendente'}
-                  </span>
+                  <StatusBadge tipo="repasse" status={payout.status} className="shrink-0" />
                 </div>
               ))}
             </div>

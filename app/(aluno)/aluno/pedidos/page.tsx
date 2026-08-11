@@ -6,7 +6,9 @@ import { ClearCartOnSuccess } from '@/components/store/ClearCartOnSuccess'
 import { PageHeader, PageBody } from '@/components/layout/PageShell'
 import { Panel } from '@/components/ui/panel'
 import { EmptyState } from '@/components/ui/empty-state'
-import { Package, CheckCircle } from 'lucide-react'
+import { Notice } from '@/components/ui/notice'
+import { StatusBadge } from '@/components/ui/status-badge'
+import { Package } from 'lucide-react'
 
 export const metadata: Metadata = { title: 'Meus Pedidos' }
 
@@ -39,13 +41,6 @@ export default async function OrdersPage({
     itemsByOrder[item.order_id].push(item)
   }
 
-  const STATUS_LABELS: Record<string, { label: string; className: string }> = {
-    pending: { label: 'Aguardando pagamento', className: 'bg-amber-50 text-amber-800' },
-    paid: { label: 'Pago', className: 'bg-cobalto/15 text-cobalto' },
-    shipped: { label: 'Enviado', className: 'bg-cobalto/15 text-cobalto' },
-    delivered: { label: 'Entregue', className: 'bg-emerald-50 text-emerald-700' },
-  }
-
   return (
     <>
       {params.success && <ClearCartOnSuccess />}
@@ -58,12 +53,9 @@ export default async function OrdersPage({
 
       <PageBody>
         {params.success && (
-          <Panel className="mb-6 flex items-center gap-3 border-emerald-200 bg-emerald-50/80 p-4">
-            <CheckCircle className="h-5 w-5 shrink-0 text-emerald-600" />
-            <p className="text-sm font-medium text-emerald-800">
-              Pedido realizado com sucesso! Você receberá um e-mail de confirmação.
-            </p>
-          </Panel>
+          <Notice tipo="sucesso" className="mb-6">
+            Pedido realizado com sucesso! Você receberá um e-mail de confirmação.
+          </Notice>
         )}
 
         {!orders || orders.length === 0 ? (
@@ -79,28 +71,30 @@ export default async function OrdersPage({
         ) : (
           <div className="space-y-4">
             {orders.map((order) => {
-              const s = STATUS_LABELS[order.status] ?? STATUS_LABELS.pending
               return (
                 <Panel key={order.id} className="p-5">
-                  <div className="mb-3 flex items-center justify-between gap-3">
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
                     <div>
-                      <p className="text-xs uppercase tracking-[0.08em] text-tinta-suave/70">
+                      <p className="olho text-tinta-suave/70">
                         Pedido · {new Date(order.created_at).toLocaleDateString('pt-BR')}
                       </p>
-                      <p className="mt-0.5 font-semibold text-tinta">{formatCurrency(order.total)}</p>
+                      <p className="mt-1 font-display text-lg font-extrabold tabular-nums tracking-tight text-tinta">
+                        {formatCurrency(order.total)}
+                      </p>
                     </div>
-                    <span className={`rounded-sm px-2.5 py-1 text-[0.6875rem] font-semibold uppercase tracking-[0.08em] ${s.className}`}>
-                      {s.label}
-                    </span>
+                    <StatusBadge tipo="pedido" status={order.status} className="shrink-0" />
                   </div>
                   <div className="space-y-2">
                     {(itemsByOrder[order.id] ?? []).map((item: any, i: number) => (
                       <div key={i} className="flex items-center gap-3 rounded-sm border border-cobalto/10 bg-cal-fundo/60 px-3 py-2">
-                        <div className="h-8 w-8 shrink-0 overflow-hidden rounded bg-cobalto/10">
+                        {/* flex+center em vez do `m-auto mt-2` de antes, que
+                            centralizava o ícone só por coincidência de pixel */}
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-sm bg-cobalto/10">
                           {item.product?.image_url ? (
-                            <img src={item.product.image_url} alt={item.product.name} className="h-full w-full object-cover" />
+                            // eslint-disable-next-line @next/next/no-img-element -- imagem de produto pode vir de host arbitrário
+                            <img src={item.product.image_url} alt="" className="h-full w-full object-cover" />
                           ) : (
-                            <Package className="m-auto mt-2 h-4 w-4 text-cobalto/25" />
+                            <Package className="h-4 w-4 text-cobalto/25" aria-hidden="true" />
                           )}
                         </div>
                         <p className="flex-1 text-sm text-tinta">{item.product?.name ?? 'Produto'}</p>

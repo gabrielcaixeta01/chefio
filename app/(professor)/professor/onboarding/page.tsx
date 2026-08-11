@@ -3,7 +3,9 @@ import { createClient } from '@/lib/supabase/server'
 import { StripeOnboardingButton } from '@/components/stripe/StripeOnboardingButton'
 import { PageHeader, PageBody } from '@/components/layout/PageShell'
 import { Panel } from '@/components/ui/panel'
-import { CheckCircle, AlertCircle } from 'lucide-react'
+import { Notice } from '@/components/ui/notice'
+import { Badge } from '@/components/ui/badge'
+import { CheckCircle } from 'lucide-react'
 
 export const metadata: Metadata = { title: 'Configurar Recebimentos' }
 
@@ -35,25 +37,19 @@ export default async function OnboardingPage({
 
       <PageBody className="max-w-2xl">
         {params.success && (
-          <Panel className="mb-6 flex items-center gap-3 border-emerald-200 bg-emerald-50/80 p-4">
-            <CheckCircle className="h-5 w-5 shrink-0 text-emerald-600" />
-            <p className="text-sm text-emerald-800">
-              {isActive
-                ? 'Conta conectada com sucesso! Você já pode publicar cursos pagos.'
-                : 'Conta vinculada. Complete o cadastro no Stripe para ativar os pagamentos.'}
-            </p>
-          </Panel>
+          <Notice tipo="sucesso" className="mb-6">
+            {isActive
+              ? 'Conta conectada com sucesso! Você já pode publicar cursos pagos.'
+              : 'Conta vinculada. Complete o cadastro no Stripe para ativar os pagamentos.'}
+          </Notice>
         )}
 
         {params.error && (
-          <Panel className="mb-6 flex items-center gap-3 border-red-200 bg-red-50/80 p-4">
-            <AlertCircle className="h-5 w-5 shrink-0 text-red-600" />
-            <p className="text-sm text-red-800">
-              {params.error === 'stripe_not_configured'
-                ? 'Stripe não está configurado neste ambiente.'
-                : 'Ocorreu um erro. Tente novamente.'}
-            </p>
-          </Panel>
+          <Notice tipo="erro" className="mb-6">
+            {params.error === 'stripe_not_configured'
+              ? 'Stripe não está configurado neste ambiente.'
+              : 'Ocorreu um erro. Tente novamente.'}
+          </Notice>
         )}
 
         <Panel className="p-6">
@@ -64,13 +60,9 @@ export default async function OnboardingPage({
                 Receba pagamentos diretamente na sua conta bancária via Stripe.
               </p>
             </div>
-            <span className={`rounded-sm px-2.5 py-1 text-[0.6875rem] font-semibold uppercase tracking-[0.08em] ${
-              isActive ? 'bg-emerald-50 text-emerald-700' :
-              isConnected ? 'bg-amber-50 text-amber-800' :
-              'bg-cobalto/10 text-tinta-suave'
-            }`}>
+            <Badge variant={isActive ? 'success' : isConnected ? 'warning' : 'neutral'}>
               {isActive ? 'Ativo' : isConnected ? 'Pendente' : 'Não conectado'}
-            </span>
+            </Badge>
           </div>
 
           <ul className="mt-4 space-y-2 text-sm text-tinta-suave">
@@ -91,12 +83,12 @@ export default async function OnboardingPage({
           </div>
         </Panel>
 
-        <Panel className="mt-6 border-amber-200 bg-amber-50/80 p-4">
-          <p className="text-sm font-medium text-amber-800">Sobre as comissões</p>
-          <p className="mt-1 text-xs leading-relaxed text-amber-700">
-            A plataforma retém uma comissão por cada venda (padrão 20%). Você define o preço dos seus cursos livremente e recebe o valor líquido automaticamente após cada compra.
-          </p>
-        </Panel>
+        {/* Informação de contrato, não alerta: âmbar aqui competia com os
+            avisos de erro logo acima e treinava o olho a ignorar amarelo. */}
+        <Notice tipo="info" titulo="Sobre as comissões" className="mt-6">
+          A plataforma retém uma comissão por cada venda (padrão 20%). Você define o preço dos seus
+          cursos livremente e recebe o valor líquido automaticamente após cada compra.
+        </Notice>
       </PageBody>
     </>
   )

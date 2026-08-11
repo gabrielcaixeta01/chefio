@@ -12,17 +12,11 @@ import { StatTile } from '@/components/ui/stat-tile'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Notice } from '@/components/ui/notice'
 import { Ladrilho } from '@/components/ui/ladrilho'
+import { statusLabel } from '@/components/ui/status-badge'
 import { formatCurrency } from '@/lib/utils'
 import { BookOpen, ChefHat, CheckCircle, GraduationCap, Package, PlayCircle } from 'lucide-react'
 
 export const metadata: Metadata = { title: 'Minha área' }
-
-const STATUS_PEDIDO: Record<string, string> = {
-  pending: 'Aguardando pagamento',
-  paid: 'Pago',
-  shipped: 'Enviado',
-  delivered: 'Entregue',
-}
 
 export default async function AlunoDashboard() {
   const supabase = await createClient()
@@ -221,7 +215,7 @@ export default async function AlunoDashboard() {
                           </p>
                         </div>
                         <span className="shrink-0 text-xs text-tinta-suave">
-                          {STATUS_PEDIDO[order.status] ?? order.status}
+                          {statusLabel('pedido', order.status)}
                         </span>
                       </li>
                     ))}
