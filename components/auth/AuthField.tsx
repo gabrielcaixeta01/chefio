@@ -15,8 +15,11 @@ interface AuthFieldProps
 }
 
 /**
- * Campo das telas públicas de autenticação. Separado de <Input> porque os
- * dashboards continuam no visual antigo (cinza) e não devem mudar junto.
+ * Campo das telas de autenticação. Nasceu separado de <Input> porque os
+ * dashboards estavam num visual antigo — hoje os dois já usam a mesma borda
+ * de cobalto, e o que sobra de diferente é só o alvo maior (h-12 contra h-11)
+ * e o pacote de rótulo + dica + erro amarrados por aria-describedby, que só
+ * esta tela precisa.
  */
 export function AuthField({
   label,

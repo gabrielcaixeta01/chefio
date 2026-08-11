@@ -13,7 +13,9 @@ interface AuthLayoutProps {
  * à direita. Abaixo de lg a parede vira uma faixa fina no topo — a parede
  * inteira no celular empurraria o formulário para fora da primeira dobra.
  *
- * A altura desconta os 4rem da Navbar, que continua presente nessas telas.
+ * A altura desconta os 4rem da Navbar, que continua presente nessas telas —
+ * em dvh, não vh: no celular a barra de endereço entra na conta do vh e a
+ * tela ficava mais alta que a janela, criando rolagem numa página que cabe.
  */
 export function AuthLayout({
   olho,
@@ -22,7 +24,7 @@ export function AuthLayout({
   children,
 }: AuthLayoutProps) {
   return (
-    <div className="grid min-h-[calc(100vh-4rem)] lg:grid-cols-2">
+    <div className="grid min-h-[calc(100dvh-4rem)] lg:grid-cols-2">
       {/* Painel — só a partir de lg */}
       <div className="relative hidden overflow-hidden lg:flex lg:flex-col lg:justify-end">
         <AzulejoWall className="absolute inset-0" />

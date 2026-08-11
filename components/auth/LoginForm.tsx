@@ -6,8 +6,8 @@ import Link from 'next/link'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { AuthField } from './AuthField'
-import { actionLinkVariants } from '@/components/ui/action-link'
-import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
+import { Notice } from '@/components/ui/notice'
 
 const DESTINOS: Record<string, string> = {
   admin: '/admin',
@@ -99,24 +99,17 @@ export function LoginForm({ next }: { next?: string }) {
         />
 
         {erro && (
-          <p
-            role="alert"
-            className="rounded-sm border-2 border-red-600/30 bg-red-50 px-4 py-3 text-sm font-medium text-red-800"
-          >
+          <Notice tipo="erro" role="alert">
             {erro}
-          </p>
+          </Notice>
         )}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className={cn(
-            actionLinkVariants({ size: 'lg' }),
-            'w-full disabled:pointer-events-none disabled:opacity-60'
-          )}
-        >
-          {loading ? 'Entrando…' : 'Entrar'}
-        </button>
+        {/* Button, e não um <button> vestido de link: o spinner é o que separa
+            "enviando" de "travou" numa conexão ruim — trocar só o rótulo deixa
+            a tela parecendo morta. */}
+        <Button type="submit" size="lg" className="w-full" loading={loading} loadingText="Entrando…">
+          Entrar
+        </Button>
       </div>
 
       <p className="mt-7 text-center text-sm text-tinta-suave">

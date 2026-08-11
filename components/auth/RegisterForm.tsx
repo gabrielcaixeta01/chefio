@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import { ChefHat, GraduationCap, MailCheck } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { AuthField } from './AuthField'
-import { actionLinkVariants } from '@/components/ui/action-link'
+import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
 type Role = 'student' | 'teacher'
@@ -207,16 +207,9 @@ export function RegisterForm({ papelInicial = 'student' }: { papelInicial?: Role
           required
         />
 
-        <button
-          type="submit"
-          disabled={loading}
-          className={cn(
-            actionLinkVariants({ size: 'lg' }),
-            'w-full disabled:pointer-events-none disabled:opacity-60'
-          )}
-        >
-          {loading ? 'Criando conta…' : 'Criar conta'}
-        </button>
+        <Button type="submit" size="lg" className="w-full" loading={loading} loadingText="Criando conta…">
+          Criar conta
+        </Button>
       </div>
 
       <p className="mt-7 text-center text-sm text-tinta-suave">

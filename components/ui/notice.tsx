@@ -48,6 +48,7 @@ export function Notice({
   children,
   acao,
   className,
+  role,
 }: {
   tipo?: Tipo
   icon?: LucideIcon
@@ -55,12 +56,16 @@ export function Notice({
   children?: React.ReactNode
   acao?: React.ReactNode
   className?: string
+  /** `role="alert"` pros erros que aparecem depois de um envio: sem isso o
+      leitor de tela não anuncia nada e a pessoa fica esperando resposta. */
+  role?: 'alert' | 'status'
 }) {
   const estilo = ESTILOS[tipo]
   const Icon = icon ?? estilo.padrao
 
   return (
     <div
+      role={role}
       className={cn(
         'flex flex-col gap-4 rounded-md border p-4 sm:flex-row sm:items-center',
         estilo.caixa,

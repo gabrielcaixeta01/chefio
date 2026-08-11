@@ -3,11 +3,15 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
 /**
- * CTA das páginas públicas. Separado de <Button> de propósito: os dashboards
- * seguem no visual antigo (laranja com texto branco) e não devem mudar junto.
+ * CTA das páginas públicas — sempre um <Link>, nunca um <button>.
  *
- * O primário é brasa com texto tinta — branco sobre #E85D04 dá 3.3:1 e reprova
- * em contraste; tinta sobre brasa dá 6.4:1.
+ * A separação de <Button> não é mais de cor (os dois convergiram no brasa com
+ * texto tinta — branco sobre #E85D04 dá 3.3:1 e reprova em contraste; tinta
+ * sobre brasa dá 6.4:1). É de papel: aqui existe o `-translate-y-0.5` no hover,
+ * que faz sentido num CTA de página de venda e não num botão de formulário.
+ *
+ * Se precisar de um botão que envia formulário, use <Button loading> — ele tem
+ * spinner e trava o duplo clique, que este aqui não tem.
  */
 const actionLinkVariants = cva(
   'inline-flex items-center justify-center gap-2 font-semibold transition-all duration-200 rounded-sm whitespace-nowrap',
