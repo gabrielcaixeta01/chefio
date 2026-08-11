@@ -6,7 +6,9 @@ import { CourseForm } from '@/components/courses/CourseForm'
 import { LessonList } from '@/components/courses/LessonList'
 import { CourseSubmitButton } from '@/components/courses/CourseSubmitButton'
 import { PageHeader, PageBody } from '@/components/layout/PageShell'
-import { Panel, SectionHeading } from '@/components/ui/panel'
+import { SectionHeading } from '@/components/ui/panel'
+import { Notice } from '@/components/ui/notice'
+import { StatusBadge } from '@/components/ui/status-badge'
 import { ChevronLeft } from 'lucide-react'
 
 export const metadata: Metadata = { title: 'Gerenciar Curso' }
@@ -55,30 +57,20 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
           </Link>
         </div>
 
-        <div className="mb-6 flex items-center gap-3">
-          <span className={`rounded-sm px-2.5 py-1 text-[0.6875rem] font-semibold uppercase tracking-[0.08em] ${
-            course.status === 'approved' ? 'bg-emerald-50 text-emerald-700' :
-            course.status === 'pending_review' ? 'bg-amber-50 text-amber-800' :
-            course.status === 'rejected' ? 'bg-red-50 text-red-700' :
-            'bg-cobalto/10 text-tinta-suave'
-          }`}>
-            {course.status === 'approved' ? 'Publicado' :
-             course.status === 'pending_review' ? 'Em revisão' :
-             course.status === 'rejected' ? 'Rejeitado' : 'Rascunho'}
-          </span>
+        <div className="mb-6">
+          <StatusBadge tipo="curso" status={course.status} />
         </div>
 
         {course.status === 'rejected' && (
-          <Panel className="mb-8 border-red-200 bg-red-50/80 p-4">
-            <p className="text-sm font-medium text-red-800">Curso rejeitado</p>
-            <p className="mt-1 text-xs text-red-700">Corrija os problemas indicados pelo admin e envie novamente para revisão.</p>
-          </Panel>
+          <Notice tipo="erro" titulo="Curso rejeitado" className="mb-8">
+            Corrija os problemas indicados pelo admin e envie novamente para revisão.
+          </Notice>
         )}
 
         {canSubmit && lessonCount === 0 && (
-          <Panel className="mb-8 border-amber-200 bg-amber-50/80 p-4">
-            <p className="text-sm text-amber-800">Adicione pelo menos uma aula para poder enviar o curso para revisão.</p>
-          </Panel>
+          <Notice tipo="atencao" className="mb-8">
+            Adicione pelo menos uma aula para poder enviar o curso para revisão.
+          </Notice>
         )}
 
         <section className="mb-10">

@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { BookOpen, CheckCircle, PlayCircle } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 import type { StudentCourse } from '@/lib/data/student-courses'
 
 /** Cartão de curso matriculado com progresso. Usado no painel e na biblioteca. */
@@ -20,14 +21,16 @@ export function StudentCourseCard({ course }: { course: StudentCourse }) {
             <BookOpen className="h-10 w-10 text-cobalto/25" />
           </div>
         )}
-        <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
-          <PlayCircle className="h-12 w-12 text-white" />
+        {/* Véu em cobalto, não preto: é o azul da marca escurecendo a capa,
+            como o resto dos overlays do site. */}
+        <div className="absolute inset-0 flex items-center justify-center bg-cobalto-escuro/55 opacity-0 transition-opacity group-hover:opacity-100">
+          <PlayCircle className="h-12 w-12 text-cal" aria-hidden="true" />
         </div>
         {concluido && (
-          <span className="absolute left-2 top-2 flex items-center gap-1 rounded-sm bg-emerald-600 px-2 py-1 text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-white">
-            <CheckCircle className="h-3 w-3" />
+          <Badge variant="success" className="absolute left-2 top-2 gap-1 border-emerald-600/20">
+            <CheckCircle className="h-3 w-3" aria-hidden="true" />
             Concluído
-          </span>
+          </Badge>
         )}
       </div>
 
