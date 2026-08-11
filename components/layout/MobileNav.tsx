@@ -63,21 +63,29 @@ export function MobileNav({ links, children }: MobileNavProps) {
       )}
     >
       <nav className="flex flex-col gap-1">
-        {links.map((link, i) => (
-          <Link
-            key={link.href}
-            href={link.href}
-            tabIndex={aberto ? undefined : -1}
-            style={{ transitionDelay: aberto ? `${60 + i * PASSO_MS}ms` : '0ms' }}
-            className={cn(
-              'border-b border-cobalto/10 py-4 font-display text-2xl font-bold tracking-tight text-tinta',
-              'transition-[opacity,transform,color] duration-300 ease-azulejo hover:text-brasa-escura motion-reduce:transition-none',
-              aberto ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'
-            )}
-          >
-            {link.label}
-          </Link>
-        ))}
+        {links.map((link, i) => {
+          const ativo = pathname === link.href || pathname.startsWith(`${link.href}/`)
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              tabIndex={aberto ? undefined : -1}
+              aria-current={ativo ? 'page' : undefined}
+              style={{ transitionDelay: aberto ? `${60 + i * PASSO_MS}ms` : '0ms' }}
+              className={cn(
+                'flex items-center gap-3 border-b border-cobalto/10 py-4 font-display text-2xl font-bold tracking-tight',
+                'transition-[opacity,transform,color] duration-300 ease-azulejo motion-reduce:transition-none',
+                // Ladrilho de brasa marcando a página atual — o mesmo gesto do
+                // menu lateral, que já dizia "você está aqui"
+                ativo ? 'text-brasa-escura' : 'text-tinta hover:text-brasa-escura',
+                aberto ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'
+              )}
+            >
+              {ativo && <span aria-hidden="true" className="h-2.5 w-2.5 shrink-0 rounded-xs bg-brasa" />}
+              {link.label}
+            </Link>
+          )
+        })}
       </nav>
 
       <div

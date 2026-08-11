@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { NavbarAuth } from './NavbarAuth'
 import { MobileNav } from './MobileNav'
+import { NavLink } from './NavLink'
 
 const LINKS = [
   { href: '/cursos', label: 'Cursos' },
@@ -35,13 +36,7 @@ export function Navbar() {
 
           <nav className="hidden items-center gap-8 md:flex">
             {LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="relative py-1 text-sm font-semibold text-tinta-suave transition-colors hover:text-tinta after:absolute after:inset-x-0 after:-bottom-0.5 after:h-0.5 after:origin-left after:scale-x-0 after:bg-brasa after:transition-transform after:duration-200 hover:after:scale-x-100"
-              >
-                {link.label}
-              </Link>
+              <NavLink key={link.href} href={link.href} label={link.label} />
             ))}
           </nav>
 

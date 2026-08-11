@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Video, CreditCard, ShoppingBag, Users } from 'lucide-react'
 import { AzulejoWall } from '@/components/layout/AzulejoWall'
+import { PassosNumerados } from '@/components/layout/PassosNumerados'
 import { ActionLink } from '@/components/ui/action-link'
 
 export const metadata: Metadata = {
@@ -147,27 +148,7 @@ export default function ParaChefsPage() {
             </h2>
           </div>
 
-          <ol className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-3">
-            {PASSOS.map((passo, i) => (
-              <li
-                key={passo.titulo}
-                className="flex flex-col rounded-md border border-cobalto/15 bg-cal p-8 transition-colors hover:border-cobalto/40"
-              >
-                <span
-                  aria-hidden="true"
-                  className="azulejo-escuro flex h-12 w-12 items-center justify-center rounded-sm font-display text-lg font-extrabold text-cal [--azulejo-tamanho:48px]"
-                >
-                  {String(i + 1).padStart(2, '0')}
-                </span>
-                <h3 className="mt-6 font-display text-2xl font-bold tracking-tight text-tinta">
-                  {passo.titulo}
-                </h3>
-                <p className="mt-3 leading-relaxed text-tinta-suave">
-                  {passo.desc}
-                </p>
-              </li>
-            ))}
-          </ol>
+          <PassosNumerados passos={PASSOS} />
         </div>
       </section>
 
