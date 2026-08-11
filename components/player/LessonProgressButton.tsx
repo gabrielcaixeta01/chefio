@@ -1,15 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
+import { marcarAulaConcluida } from '@/lib/actions/progress'
 import { Button } from '@/components/ui/button'
 import { CheckCircle, Circle } from 'lucide-react'
 
 interface LessonProgressButtonProps {
   lessonId: string
-  studentId: string
   isCompleted: boolean
   nextLessonId?: string
   courseSlug: string
@@ -17,62 +16,58 @@ interface LessonProgressButtonProps {
 
 export function LessonProgressButton({
   lessonId,
-  studentId,
   isCompleted: initialCompleted,
   nextLessonId,
   courseSlug,
 }: LessonProgressButtonProps) {
   const [completed, setCompleted] = useState(initialCompleted)
-  const [loading, setLoading] = useState(false)
+  const [pendente, startTransition] = useTransition()
   const router = useRouter()
 
-  async function markComplete() {
+  function irParaProxima() {
+    if (nextLessonId) router.push(`/aluno/cursos/${courseSlug}/aulas/${nextLessonId}`)
+  }
+
+  function marcar() {
     if (completed) {
-      if (nextLessonId) router.push(`/aluno/cursos/${courseSlug}/aulas/${nextLessonId}`)
+      irParaProxima()
       return
     }
 
-    setLoading(true)
-    const supabase = createClient()
-    const { error } = await supabase.from('lesson_progress').upsert(
-      {
-        student_id: studentId,
-        lesson_id: lessonId,
-        completed_at: new Date().toISOString(),
-      },
-      { onConflict: 'student_id,lesson_id' }
-    )
+    startTransition(async () => {
+      const { erro } = await marcarAulaConcluida(lessonId)
 
-    if (error) {
-      toast.error('Erro ao salvar progresso.')
-    } else {
+      if (erro) {
+        toast.error(erro)
+        return
+      }
+
       setCompleted(true)
       toast.success('Aula concluída!')
-      if (nextLessonId) {
-        setTimeout(() => router.push(`/aluno/cursos/${courseSlug}/aulas/${nextLessonId}`), 800)
-      } else {
-        router.refresh()
-      }
-    }
-    setLoading(false)
+      // Navega direto. O setTimeout de 800ms que existia aqui era uma pausa
+      // pra dar tempo de ler o toast, mas quem clica em "marcar como
+      // concluída" já quer seguir — e o toast sobrevive à navegação.
+      irParaProxima()
+    })
   }
 
   return (
     <Button
-      onClick={markComplete}
-      disabled={loading}
+      onClick={marcar}
       variant={completed ? 'outline' : 'default'}
       className="gap-2"
+      loading={pendente}
+      loadingText="Salvando…"
     >
       {completed ? (
         <>
-          <CheckCircle className="h-4 w-4 text-emerald-600" />
+          <CheckCircle className="h-4 w-4 text-emerald-700" aria-hidden="true" />
           {nextLessonId ? 'Próxima aula' : 'Concluída'}
         </>
       ) : (
         <>
-          <Circle className="h-4 w-4" />
-          {loading ? 'Salvando...' : 'Marcar como concluída'}
+          <Circle className="h-4 w-4" aria-hidden="true" />
+          Marcar como concluída
         </>
       )}
     </Button>

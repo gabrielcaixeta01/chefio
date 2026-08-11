@@ -125,7 +125,6 @@ export default async function LessonPlayerPage({
         </div>
         <LessonProgressButton
           lessonId={lessonId}
-          studentId={user!.id}
           isCompleted={isCompleted}
           nextLessonId={nextLesson?.id}
           courseSlug={slug}
