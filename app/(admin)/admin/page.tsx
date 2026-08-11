@@ -1,6 +1,14 @@
+import type { Metadata } from 'next'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency } from '@/lib/utils'
-import { BookOpen, Users, DollarSign, Clock } from 'lucide-react'
+import { PageHeader, PageBody } from '@/components/layout/PageShell'
+import { StatTile } from '@/components/ui/stat-tile'
+import { Notice } from '@/components/ui/notice'
+import { Button } from '@/components/ui/button'
+import { BookOpen, Users, DollarSign, Clock, GraduationCap } from 'lucide-react'
+
+export const metadata: Metadata = { title: 'Admin — Dashboard' }
 
 export default async function AdminDashboard() {
   const supabase = await createClient()
@@ -16,49 +24,45 @@ export default async function AdminDashboard() {
   const totalStudents = s?.total_students ?? 0
   const totalRevenue = s?.total_revenue ?? 0
 
-  const stats = [
-    { label: 'Receita Total', value: formatCurrency(totalRevenue), icon: DollarSign, color: 'text-emerald-600 bg-emerald-50' },
-    { label: 'Cursos Aprovados', value: totalCourses ?? 0, icon: BookOpen, color: 'text-cobalto bg-cobalto/10' },
-    { label: 'Professores', value: totalTeachers ?? 0, icon: Users, color: 'text-cobalto-claro bg-cobalto/10' },
-    { label: 'Revisões Pendentes', value: pendingCourses ?? 0, icon: Clock, color: 'text-brasa-escura bg-brasa/10' },
-  ]
-
   return (
-    <div>
-      <h1 className="font-display text-3xl font-extrabold text-tinta mb-2 tracking-tight">Dashboard</h1>
-      <p className="text-tinta-suave mb-8">Visão geral da plataforma Chefio</p>
+    <>
+      <PageHeader
+        olho="Administração"
+        titulo="Visão geral"
+        descricao="O estado da plataforma num relance: o que entrou, quem publica e o que está esperando você."
+        acoes={
+          <Link href="/admin/cursos?status=pending_review">
+            <Button variant="outline">Fila de revisão</Button>
+          </Link>
+        }
+      />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {stats.map((stat) => {
-          const Icon = stat.icon
-          return (
-            <div key={stat.label} className="bg-cal rounded-md border border-cobalto/15 p-6">
-              <div className="flex items-center justify-between mb-4">
-                <p className="text-sm text-tinta-suave">{stat.label}</p>
-                <span className={`p-2 rounded-sm ${stat.color}`}>
-                  <Icon className="h-4 w-4" />
-                </span>
-              </div>
-              <p className="font-display text-3xl font-extrabold tabular-nums tracking-tight text-tinta">{stat.value}</p>
-            </div>
-          )
-        })}
-      </div>
+      <PageBody>
+        {/* A revisão pendente é a única coisa nesta página que exige ação —
+            sobe pro topo em vez de virar o quarto número de uma fileira. */}
+        {pendingCourses > 0 && (
+          <Notice
+            tipo="atencao"
+            icon={Clock}
+            titulo={`${pendingCourses} curso${pendingCourses === 1 ? '' : 's'} aguardando revisão`}
+            className="mb-8"
+            acao={
+              <Link href="/admin/cursos?status=pending_review">
+                <Button size="sm">Revisar agora</Button>
+              </Link>
+            }
+          >
+            Nenhum deles aparece no catálogo até você aprovar.
+          </Notice>
+        )}
 
-      {pendingCourses ? (
-        <div className="bg-brasa/10 border border-brasa/30 rounded-md p-4 flex items-center justify-between">
-          <p className="text-brasa-escura text-sm font-medium">
-            {pendingCourses} curso(s) aguardando revisão
-          </p>
-          <a href="/admin/cursos" className="text-brasa-escura text-sm font-semibold hover:underline">
-            Revisar agora →
-          </a>
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <StatTile icon={DollarSign} label="Receita total" valor={formatCurrency(totalRevenue)} destaque />
+          <StatTile icon={BookOpen} label="Cursos aprovados" valor={totalCourses} />
+          <StatTile icon={Users} label="Professores" valor={totalTeachers} />
+          <StatTile icon={GraduationCap} label="Alunos" valor={totalStudents} />
         </div>
-      ) : null}
-
-      <div className="mt-8 text-center text-tinta-suave/70 text-sm">
-        Alunos cadastrados: <span className="font-semibold text-tinta-suave">{totalStudents ?? 0}</span>
-      </div>
-    </div>
+      </PageBody>
+    </>
   )
 }

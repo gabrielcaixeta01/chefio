@@ -13,6 +13,12 @@ const badgeVariants = cva(
         outline: 'border-cobalto/25 text-tinta-suave',
         success: 'border-emerald-200 bg-emerald-50 text-emerald-700',
         warning: 'border-amber-200 bg-amber-50 text-amber-800',
+        // Estado morno — rascunho, "não conectado". Preenchido, mas sem cor
+        // própria: não é bom nem ruim, só ainda não é nada.
+        neutral: 'border-transparent bg-cobalto/10 text-tinta-suave',
+        // Estado em trânsito — pago, enviado. Cobalto porque é informação de
+        // sistema, não julgamento.
+        info: 'border-transparent bg-cobalto/15 text-cobalto',
       },
     },
     defaultVariants: {

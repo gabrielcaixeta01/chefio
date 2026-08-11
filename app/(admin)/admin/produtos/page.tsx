@@ -2,8 +2,12 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency } from '@/lib/utils'
 import { ProductForm } from '@/components/admin/ProductForm'
+import { PageHeader, PageBody } from '@/components/layout/PageShell'
+import { Panel } from '@/components/ui/panel'
+import { EmptyState } from '@/components/ui/empty-state'
+import { Badge } from '@/components/ui/badge'
 import { Pagination } from '@/components/ui/pagination'
-import { Package, Plus } from 'lucide-react'
+import { Package } from 'lucide-react'
 
 export const metadata: Metadata = { title: 'Admin — Produtos' }
 
@@ -28,70 +32,79 @@ export default async function AdminProductsPage({
     .range(from, to)
 
   const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE))
+  const semEstoque = (products ?? []).filter((p) => p.stock <= 0).length
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="font-display text-3xl font-extrabold text-tinta tracking-tight">Produtos</h1>
-          <p className="text-tinta-suave mt-1">{count ?? 0} produto(s) cadastrado(s)</p>
-        </div>
-      </div>
+    <>
+      <PageHeader
+        olho="Administração"
+        titulo="Produtos"
+        descricao={
+          semEstoque > 0
+            ? `${count ?? 0} cadastrados · ${semEstoque} sem estoque`
+            : `${count ?? 0} ${count === 1 ? 'produto cadastrado' : 'produtos cadastrados'}`
+        }
+      />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Lista */}
-        <div className="lg:col-span-2">
-          {!products || products.length === 0 ? (
-            <div className="bg-cal rounded-md border border-cobalto/15 p-16 text-center">
-              <Package className="h-10 w-10 text-cobalto/25 mx-auto mb-3" />
-              <p className="text-tinta-suave/70 text-sm">Nenhum produto cadastrado.</p>
-              <p className="text-tinta-suave/70 text-xs mt-1">Adicione produtos usando o formulário ao lado.</p>
-            </div>
-          ) : (
-            <div className="bg-cal rounded-md border border-cobalto/15 divide-y divide-cobalto/10">
-              {products.map((product) => (
-                <div key={product.id} className="flex items-center gap-4 p-4">
-                  <div className="w-12 h-12 rounded-sm bg-cobalto/10 shrink-0 overflow-hidden">
-                    {product.image_url ? (
-                      <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Package className="h-5 w-5 text-cobalto/25" />
+      <PageBody>
+        {/* O formulário sobe pro topo no celular: cadastrar é a ação principal
+            desta tela, e ficava enterrado abaixo de vinte linhas de lista. */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="lg:order-2 lg:col-span-1">
+            <ProductForm />
+          </div>
+
+          <div className="lg:order-1 lg:col-span-2">
+            {!products || products.length === 0 ? (
+              <EmptyState
+                icon={Package}
+                titulo="Nenhum produto cadastrado"
+                descricao="Use o formulário ao lado pra colocar o primeiro item na prateleira da loja."
+              />
+            ) : (
+              <Panel>
+                <ul className="divide-y divide-cobalto/10">
+                  {products.map((product) => (
+                    <li key={product.id} className="flex flex-wrap items-center gap-x-4 gap-y-3 p-4">
+                      <div className="h-12 w-12 shrink-0 overflow-hidden rounded-sm bg-cobalto/10">
+                        {product.image_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element -- URL arbitrária cadastrada pelo admin, fora dos remotePatterns
+                          <img src={product.image_url} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center">
+                            <Package className="h-5 w-5 text-cobalto/25" aria-hidden="true" />
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-tinta truncate">{product.name}</p>
-                    {product.description && (
-                      <p className="text-xs text-tinta-suave/70 truncate mt-0.5">{product.description}</p>
-                    )}
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className="font-semibold text-brasa-escura text-sm">{formatCurrency(product.price)}</p>
-                    {/* Estoque zerado bloqueia a compra no checkout, então
-                        precisa ser visível na lista, não só no formulário. */}
-                    <p className={`text-xs mt-0.5 ${
-                      product.stock > 0 ? 'text-tinta-suave/70' : 'font-semibold text-red-700'
-                    }`}>
-                      {product.stock > 0 ? `${product.stock} em estoque` : 'Sem estoque'}
-                    </p>
-                    {!product.is_active && (
-                      <span className="text-xs text-tinta-suave/70">Inativo</span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+                      <div className="min-w-0 flex-1 basis-48">
+                        <p className="truncate font-medium text-tinta">{product.name}</p>
+                        {product.description && (
+                          <p className="mt-0.5 truncate text-xs text-tinta-suave/70">{product.description}</p>
+                        )}
+                      </div>
+                      <div className="flex shrink-0 flex-col items-end gap-1">
+                        <p className="text-sm font-semibold tabular-nums text-tinta">
+                          {formatCurrency(product.price)}
+                        </p>
+                        {/* Estoque zerado bloqueia a compra no checkout, então
+                            precisa ser visível na lista, não só no formulário. */}
+                        {product.stock > 0 ? (
+                          <p className="text-xs tabular-nums text-tinta-suave/70">{product.stock} em estoque</p>
+                        ) : (
+                          <Badge variant="destructive">Sem estoque</Badge>
+                        )}
+                        {!product.is_active && <Badge variant="neutral">Inativo</Badge>}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </Panel>
+            )}
 
-          <Pagination page={page} totalPages={totalPages} buildHref={(p) => `/admin/produtos?page=${p}`} />
+            <Pagination page={page} totalPages={totalPages} buildHref={(p) => `/admin/produtos?page=${p}`} />
+          </div>
         </div>
-
-        {/* Formulário */}
-        <div className="lg:col-span-1">
-          <ProductForm />
-        </div>
-      </div>
-    </div>
+      </PageBody>
+    </>
   )
 }

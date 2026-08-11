@@ -1,6 +1,9 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency } from '@/lib/utils'
+import { PageHeader, PageBody } from '@/components/layout/PageShell'
+import { Panel } from '@/components/ui/panel'
+import { EmptyState } from '@/components/ui/empty-state'
 import { Pagination } from '@/components/ui/pagination'
 import { ClipboardList } from 'lucide-react'
 
@@ -29,37 +32,45 @@ export default async function AdminEnrollmentsPage({
   const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE))
 
   return (
-    <div>
-      <h1 className="font-display text-3xl font-extrabold text-tinta mb-2 tracking-tight">Matrículas</h1>
-      <p className="text-tinta-suave mb-6">{count ?? 0} matrícula(s)</p>
+    <>
+      <PageHeader
+        olho="Administração"
+        titulo="Matrículas"
+        descricao={`${count ?? 0} ${count === 1 ? 'matrícula registrada' : 'matrículas registradas'}`}
+      />
 
-      {!enrollments || enrollments.length === 0 ? (
-        <div className="bg-cal rounded-md border border-cobalto/15 p-16 text-center">
-          <ClipboardList className="h-10 w-10 text-cobalto/25 mx-auto mb-3" />
-          <p className="text-tinta-suave/70 text-sm">Nenhuma matrícula ainda.</p>
-        </div>
-      ) : (
-        <div className="bg-cal rounded-md border border-cobalto/15 divide-y divide-cobalto/10">
-          {enrollments.map((e) => (
-            <div key={e.id} className="flex items-center gap-4 p-4">
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-tinta text-sm truncate">
-                  {(e.course as any)?.title ?? '—'}
-                </p>
-                <p className="text-xs text-tinta-suave/70 mt-0.5">
-                  Aluno: {(e.student as any)?.name ?? '—'} ·{' '}
-                  {new Date(e.created_at).toLocaleDateString('pt-BR')}
-                </p>
-              </div>
-              <span className="text-sm font-semibold text-tinta shrink-0">
-                {e.amount_paid === 0 ? 'Grátis' : formatCurrency(e.amount_paid ?? 0)}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
+      <PageBody>
+        {!enrollments || enrollments.length === 0 ? (
+          <EmptyState
+            icon={ClipboardList}
+            titulo="Nenhuma matrícula ainda"
+            descricao="Cada aluno que entra num curso — grátis ou pago — vira uma linha aqui."
+          />
+        ) : (
+          <Panel>
+            <ul className="divide-y divide-cobalto/10">
+              {enrollments.map((e) => (
+                <li key={e.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 p-4">
+                  <div className="min-w-0 flex-1 basis-56">
+                    <p className="truncate text-sm font-medium text-tinta">
+                      {(e.course as any)?.title ?? '—'}
+                    </p>
+                    <p className="mt-0.5 truncate text-xs text-tinta-suave/70">
+                      {(e.student as any)?.name ?? '—'} ·{' '}
+                      {new Date(e.created_at).toLocaleDateString('pt-BR')}
+                    </p>
+                  </div>
+                  <span className="shrink-0 text-sm font-semibold tabular-nums text-tinta">
+                    {e.amount_paid === 0 ? 'Grátis' : formatCurrency(e.amount_paid ?? 0)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </Panel>
+        )}
 
-      <Pagination page={page} totalPages={totalPages} buildHref={(p) => `/admin/matriculas?page=${p}`} />
-    </div>
+        <Pagination page={page} totalPages={totalPages} buildHref={(p) => `/admin/matriculas?page=${p}`} />
+      </PageBody>
+    </>
   )
 }

@@ -1,20 +1,20 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency } from '@/lib/utils'
 import { CourseReviewActions } from '@/components/admin/CourseReviewActions'
+import { PageHeader, PageBody } from '@/components/layout/PageShell'
+import { Panel } from '@/components/ui/panel'
+import { EmptyState } from '@/components/ui/empty-state'
+import { StatusBadge } from '@/components/ui/status-badge'
+import { Ladrilho } from '@/components/ui/ladrilho'
 import { Pagination } from '@/components/ui/pagination'
+import { cn } from '@/lib/utils'
 import { BookOpen, ChefHat } from 'lucide-react'
 
 export const metadata: Metadata = { title: 'Admin — Cursos' }
 
 const PAGE_SIZE = 20
-
-const STATUS_LABELS: Record<string, { label: string; className: string }> = {
-  draft: { label: 'Rascunho', className: 'bg-cobalto/10 text-tinta-suave' },
-  pending_review: { label: 'Em revisão', className: 'bg-amber-50 text-amber-800' },
-  approved: { label: 'Aprovado', className: 'bg-emerald-50 text-emerald-700' },
-  rejected: { label: 'Rejeitado', className: 'bg-red-50 text-red-700' },
-}
 
 export default async function AdminCoursesPage({
   searchParams,
@@ -40,7 +40,7 @@ export default async function AdminCoursesPage({
 
   const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE))
 
-  const tabs = [
+  const filtros = [
     { label: 'Todos', value: '' },
     { label: 'Em revisão', value: 'pending_review' },
     { label: 'Aprovados', value: 'approved' },
@@ -49,68 +49,80 @@ export default async function AdminCoursesPage({
   ]
 
   return (
-    <div>
-      <h1 className="font-display text-3xl font-extrabold text-tinta mb-2 tracking-tight">Cursos</h1>
-      <p className="text-tinta-suave mb-6">{count ?? 0} curso(s) encontrado(s)</p>
-
-      {/* Filtros */}
-      <div className="flex flex-wrap gap-2 mb-6">
-        {tabs.map((tab) => (
-          <a
-            key={tab.value}
-            href={tab.value ? `/admin/cursos?status=${tab.value}` : '/admin/cursos'}
-            aria-current={(status ?? '') === tab.value ? 'true' : undefined}
-            className={`rounded-sm border-2 px-3.5 py-1.5 text-sm font-semibold transition-colors ${
-              (status ?? '') === tab.value
-                ? 'border-cobalto bg-cobalto text-cal'
-                : 'border-cobalto/20 text-tinta hover:border-cobalto/50'
-            }`}
-          >
-            {tab.label}
-          </a>
-        ))}
-      </div>
-
-      {!courses || courses.length === 0 ? (
-        <div className="bg-cal rounded-md border border-cobalto/15 p-16 text-center">
-          <BookOpen className="h-10 w-10 text-cobalto/25 mx-auto mb-3" />
-          <p className="text-tinta-suave/70 text-sm">Nenhum curso encontrado.</p>
-        </div>
-      ) : (
-        <div className="bg-cal rounded-md border border-cobalto/15 divide-y divide-cobalto/10">
-          {courses.map((course) => {
-            const s = STATUS_LABELS[course.status ?? 'draft'] ?? STATUS_LABELS.draft
+    <>
+      <PageHeader
+        olho="Administração"
+        titulo="Cursos"
+        descricao={`${count ?? 0} ${count === 1 ? 'curso' : 'cursos'} ${status ? 'neste filtro' : 'na plataforma'}`}
+      >
+        <div className="flex flex-wrap items-center gap-2">
+          {filtros.map((filtro) => {
+            const ativo = (status ?? '') === filtro.value
             return (
-              <div key={course.id} className="flex items-center gap-4 p-4">
-                <div className="w-10 h-10 rounded-sm bg-brasa/10 flex items-center justify-center shrink-0">
-                  <ChefHat className="h-5 w-5 text-brasa-escura" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-tinta truncate">{course.title}</p>
-                  <p className="text-xs text-tinta-suave/70 mt-0.5">
-                    por {(course.teacher as any)?.name ?? '—'}
-                    {course.category && ` · ${course.category}`}
-                    {' · '}{formatCurrency(course.price ?? 0)}
-                  </p>
-                </div>
-                <span className={`rounded-sm px-2.5 py-1 text-[0.6875rem] font-semibold uppercase tracking-[0.08em] shrink-0 ${s.className}`}>
-                  {s.label}
-                </span>
-                <CourseReviewActions
-                  courseId={course.id}
-                  currentStatus={course.status ?? 'draft'}
-                />
-              </div>
+              <Link
+                key={filtro.value}
+                href={filtro.value ? `/admin/cursos?status=${filtro.value}` : '/admin/cursos'}
+                aria-current={ativo ? 'true' : undefined}
+                className={cn(
+                  'rounded-sm px-3.5 py-1.5 text-sm font-semibold transition-colors',
+                  ativo
+                    ? 'bg-cobalto text-cal'
+                    : 'bg-cobalto/8 text-tinta-suave hover:bg-cobalto/15 hover:text-tinta'
+                )}
+              >
+                {filtro.label}
+              </Link>
             )
           })}
         </div>
-      )}
+      </PageHeader>
 
-      <Pagination
-        page={page}
-        totalPages={totalPages}
-        buildHref={(p) => `/admin/cursos?${status ? `status=${status}&` : ''}page=${p}`}
-      />
-    </div>
+      <PageBody>
+        {!courses || courses.length === 0 ? (
+          <EmptyState
+            icon={BookOpen}
+            titulo="Nenhum curso neste filtro"
+            descricao="Troque o filtro acima ou espere um professor enviar o primeiro curso pra revisão."
+          />
+        ) : (
+          <Panel>
+            <ul className="divide-y divide-cobalto/10">
+              {courses.map((course) => (
+                // gap-y junto com flex-wrap: no celular o badge e os botões de
+                // revisão descem pra segunda linha em vez de espremer o título
+                // até ele sumir.
+                <li key={course.id} className="flex flex-wrap items-center gap-x-4 gap-y-3 p-4">
+                  <Ladrilho tom="cobalto" tamanho="md">
+                    <ChefHat className="h-4 w-4" aria-hidden="true" />
+                  </Ladrilho>
+                  <div className="min-w-0 flex-1 basis-56">
+                    <p className="truncate font-medium text-tinta">{course.title}</p>
+                    <p className="mt-0.5 truncate text-xs text-tinta-suave/70">
+                      por {(course.teacher as any)?.name ?? '—'}
+                      {course.category && ` · ${course.category}`}
+                      {' · '}
+                      {course.price === 0 ? 'Grátis' : formatCurrency(course.price ?? 0)}
+                    </p>
+                  </div>
+                  <StatusBadge
+                    tipo="curso"
+                    status={course.status}
+                    label={course.status === 'approved' ? 'Aprovado' : undefined}
+                    className="shrink-0"
+                  />
+                  <CourseReviewActions courseId={course.id} currentStatus={course.status ?? 'draft'} />
+                </li>
+              ))}
+            </ul>
+          </Panel>
+        )}
+
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          buildHref={(p) => `/admin/cursos?${status ? `status=${status}&` : ''}page=${p}`}
+        />
+      </PageBody>
+    </>
   )
 }

@@ -33,37 +33,35 @@ export function CourseReviewActions({ courseId, currentStatus }: CourseReviewAct
     setLoading(null)
   }
 
-  if (currentStatus === 'approved') {
-    return (
-      <span className="text-xs text-emerald-600 flex items-center gap-1 shrink-0">
-        <CheckCircle className="h-3.5 w-3.5" /> Aprovado
-      </span>
-    )
-  }
-
+  // Quem já foi aprovado não precisa de nada aqui: a pílula de status ao lado
+  // na lista já diz "Aprovado", e o texto duplicado só competia com ela.
   if (currentStatus !== 'pending_review') return null
 
   return (
-    <div className="flex items-center gap-2 shrink-0">
+    <div className="flex shrink-0 items-center gap-2">
       <Button
         size="sm"
         variant="outline"
-        className="gap-1 text-emerald-600 border-emerald-200 hover:bg-emerald-50"
+        className="gap-1 border-emerald-200 text-emerald-700 hover:bg-emerald-50"
         disabled={!!loading}
+        loading={loading === 'approve'}
+        loadingText="Aprovando…"
         onClick={() => updateStatus('approved')}
       >
         <CheckCircle className="h-3.5 w-3.5" />
-        {loading === 'approve' ? 'Aprovando...' : 'Aprovar'}
+        Aprovar
       </Button>
       <Button
         size="sm"
         variant="outline"
-        className="gap-1 text-red-600 border-red-200 hover:bg-red-50"
+        className="gap-1 border-red-200 text-red-700 hover:bg-red-50"
         disabled={!!loading}
+        loading={loading === 'reject'}
+        loadingText="Rejeitando…"
         onClick={() => updateStatus('rejected')}
       >
         <XCircle className="h-3.5 w-3.5" />
-        {loading === 'reject' ? 'Rejeitando...' : 'Rejeitar'}
+        Rejeitar
       </Button>
     </div>
   )

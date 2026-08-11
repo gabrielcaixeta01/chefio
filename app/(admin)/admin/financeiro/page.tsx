@@ -1,9 +1,26 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency } from '@/lib/utils'
+import { PageHeader, PageBody } from '@/components/layout/PageShell'
+import { Panel, SectionHeading } from '@/components/ui/panel'
+import { StatTile } from '@/components/ui/stat-tile'
+import { EmptyState } from '@/components/ui/empty-state'
+import { StatusBadge } from '@/components/ui/status-badge'
 import { DollarSign, TrendingUp, Users } from 'lucide-react'
 
 export const metadata: Metadata = { title: 'Admin — Financeiro' }
+
+const MESES: Record<string, string> = {
+  '01': 'Jan', '02': 'Fev', '03': 'Mar', '04': 'Abr',
+  '05': 'Mai', '06': 'Jun', '07': 'Jul', '08': 'Ago',
+  '09': 'Set', '10': 'Out', '11': 'Nov', '12': 'Dez',
+}
+
+/** "R$ 12,4 mil" — o valor cheio não cabe em seis colunas num celular. */
+function valorCurto(v: number) {
+  if (v >= 1000) return `${(v / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} mil`
+  return v.toLocaleString('pt-BR', { maximumFractionDigits: 0 })
+}
 
 export default async function AdminFinancialPage() {
   const supabase = await createClient()
@@ -32,126 +49,125 @@ export default async function AdminFinancialPage() {
   const totalSales = totals?.total_sales ?? 0
   const platformRevenue = totalGross - totalPayouts
 
-  const sortedMonths: [string, number][] = (monthlyRows ?? []).map((r) => [r.month, r.total])
-  const maxMonthly = Math.max(...sortedMonths.map(([, v]) => v), 1)
-
-  const MONTH_NAMES: Record<string, string> = {
-    '01': 'Jan', '02': 'Fev', '03': 'Mar', '04': 'Abr',
-    '05': 'Mai', '06': 'Jun', '07': 'Jul', '08': 'Ago',
-    '09': 'Set', '10': 'Out', '11': 'Nov', '12': 'Dez',
-  }
+  const meses: [string, number][] = (monthlyRows ?? []).map((r) => [r.month, r.total])
+  const maxMensal = Math.max(...meses.map(([, v]) => v), 1)
 
   return (
-    <div>
-      <h1 className="font-display text-3xl font-extrabold text-tinta mb-2 tracking-tight">Financeiro</h1>
-      <p className="text-tinta-suave mb-8">Receitas e repasses da plataforma</p>
+    <>
+      <PageHeader
+        olho="Administração"
+        titulo="Financeiro"
+        descricao="Quanto entrou, quanto ficou com a plataforma e quanto foi repassado aos chefs."
+      />
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-        <div className="bg-cal rounded-md border border-cobalto/15 p-6">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-sm text-tinta-suave">Receita bruta total</p>
-            <TrendingUp className="h-4 w-4 text-tinta-suave/70" />
-          </div>
-          <p className="font-display text-3xl font-extrabold tabular-nums tracking-tight text-tinta">{formatCurrency(totalGross)}</p>
-          <p className="text-xs text-tinta-suave/70 mt-1">{totalSales} vendas</p>
+      <PageBody>
+        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <StatTile
+            icon={TrendingUp}
+            label="Receita bruta"
+            valor={formatCurrency(totalGross)}
+            nota={`${totalSales} ${totalSales === 1 ? 'venda' : 'vendas'}`}
+            destaque
+          />
+          <StatTile
+            icon={DollarSign}
+            label="Comissão da plataforma"
+            valor={formatCurrency(platformRevenue)}
+            nota={totalGross > 0 ? `${Math.round((platformRevenue / totalGross) * 100)}% do bruto` : undefined}
+          />
+          <StatTile icon={Users} label="Repasses a professores" valor={formatCurrency(totalPayouts)} />
         </div>
-        <div className="bg-cal rounded-md border border-cobalto/15 p-6">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-sm text-tinta-suave">Comissão da plataforma</p>
-            <DollarSign className="h-4 w-4 text-emerald-600" />
-          </div>
-          <p className="font-display text-3xl font-extrabold tabular-nums tracking-tight text-emerald-700">{formatCurrency(platformRevenue)}</p>
-        </div>
-        <div className="bg-cal rounded-md border border-cobalto/15 p-6">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-sm text-tinta-suave">Repasses a professores</p>
-            <Users className="h-4 w-4 text-tinta-suave/70" />
-          </div>
-          <p className="font-display text-3xl font-extrabold tabular-nums tracking-tight text-tinta">{formatCurrency(totalPayouts)}</p>
-        </div>
-      </div>
 
-      {/* Gráfico de barras mensal */}
-      {sortedMonths.length > 0 && (
-        <div className="bg-cal rounded-md border border-cobalto/15 p-6 mb-6">
-          <h2 className="font-display font-bold text-tinta mb-6 tracking-tight">Receita mensal</h2>
-          <div className="flex items-end gap-3 h-40">
-            {sortedMonths.map(([month, value]) => {
-              const pct = (value / maxMonthly) * 100
-              const [year, mm] = month.split('-')
-              return (
-                <div key={month} className="flex-1 flex flex-col items-center gap-1">
-                  <span className="text-xs text-tinta-suave">{formatCurrency(value)}</span>
-                  <div className="w-full flex items-end justify-center" style={{ height: '100px' }}>
-                    <div
-                      className="w-full bg-brasa-clara rounded-t-md transition-all"
-                      style={{ height: `${Math.max(pct, 4)}%` }}
-                    />
+        {meses.length > 0 && (
+          <Panel className="mb-6 p-5 sm:p-6">
+            <SectionHeading titulo="Receita mensal" />
+            {/* Colunas de largura igual com min-w-0: sem isso o rótulo de valor
+                empurrava a barra e o gráfico estourava a largura no celular. */}
+            <div className="flex h-44 items-end gap-2 sm:gap-3">
+              {meses.map(([mes, valor]) => {
+                const pct = (valor / maxMensal) * 100
+                const [, mm] = mes.split('-')
+                return (
+                  <div key={mes} className="flex min-w-0 flex-1 flex-col items-center gap-1.5">
+                    <span
+                      className="w-full truncate text-center text-[0.625rem] tabular-nums text-tinta-suave sm:text-xs"
+                      title={formatCurrency(valor)}
+                    >
+                      {valorCurto(valor)}
+                    </span>
+                    <div className="flex h-full w-full items-end">
+                      <div
+                        className="w-full rounded-t-sm bg-brasa"
+                        style={{ height: `${Math.max(pct, 3)}%` }}
+                      />
+                    </div>
+                    <span className="olho text-[0.625rem] text-tinta-suave/70">{MESES[mm] ?? mm}</span>
                   </div>
-                  <span className="text-xs text-tinta-suave/70">{MONTH_NAMES[mm]}</span>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Últimas vendas */}
-      <div className="bg-cal rounded-md border border-cobalto/15 p-6 mb-6">
-        <h2 className="font-display font-bold text-tinta mb-4 tracking-tight">Últimas vendas</h2>
-        {!recentSales || recentSales.length === 0 ? (
-          <p className="text-sm text-tinta-suave/70 text-center py-6">Nenhuma venda ainda.</p>
-        ) : (
-          <div className="space-y-2">
-            {recentSales.map((e, i) => {
-              const course = e.course as any
-              return (
-                <div key={i} className="flex items-center justify-between py-2 border-b border-cobalto/10 last:border-0">
-                  <div>
-                    <p className="text-sm font-medium text-tinta">{course?.title ?? '—'}</p>
-                    <p className="text-xs text-tinta-suave/70">
-                      {course?.teacher?.name ?? '—'} ·{' '}
-                      {new Date(e.created_at).toLocaleDateString('pt-BR')}
-                    </p>
-                  </div>
-                  <span className="text-sm font-semibold text-tinta">
-                    {e.amount_paid === 0 ? 'Grátis' : formatCurrency(e.amount_paid ?? 0)}
-                  </span>
-                </div>
-              )
-            })}
-          </div>
+                )
+              })}
+            </div>
+          </Panel>
         )}
-      </div>
 
-      {/* Repasses pendentes */}
-      <div className="bg-cal rounded-md border border-cobalto/15 p-6">
-        <h2 className="font-display font-bold text-tinta mb-4 tracking-tight">Repasses recentes</h2>
-        {!payouts || payouts.length === 0 ? (
-          <p className="text-sm text-tinta-suave/70 text-center py-6">Nenhum repasse registrado.</p>
-        ) : (
-          <div className="space-y-2">
-            {payouts.map((p) => (
-              <div key={p.id} className="flex items-center justify-between py-2 border-b border-cobalto/10 last:border-0">
-                <div>
-                  <p className="text-sm font-medium text-tinta">{(p.teacher as any)?.name ?? '—'}</p>
-                  <p className="text-xs text-tinta-suave/70">{new Date(p.created_at).toLocaleDateString('pt-BR')}</p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-semibold">{formatCurrency(p.amount)}</span>
-                  <span className={`rounded-sm px-2 py-0.5 text-[0.6875rem] font-semibold uppercase tracking-[0.08em] ${
-                    p.status === 'paid' ? 'bg-emerald-50 text-emerald-700' :
-                    p.status === 'failed' ? 'bg-red-50 text-red-700' :
-                    'bg-amber-50 text-amber-800'
-                  }`}>
-                    {p.status === 'paid' ? 'Pago' : p.status === 'failed' ? 'Falhou' : 'Pendente'}
-                  </span>
-                </div>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <Panel>
+            <SectionHeading titulo="Últimas vendas" className="border-b border-cobalto/10 px-5 py-4" />
+            {!recentSales || recentSales.length === 0 ? (
+              <p className="px-5 py-8 text-center text-sm text-tinta-suave/70">Nenhuma venda ainda.</p>
+            ) : (
+              <ul className="divide-y divide-cobalto/10">
+                {recentSales.map((e, i) => {
+                  const course = e.course as any
+                  return (
+                    <li key={i} className="flex items-center gap-4 px-5 py-3.5">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-tinta">{course?.title ?? '—'}</p>
+                        <p className="truncate text-xs text-tinta-suave/70">
+                          {course?.teacher?.name ?? '—'} ·{' '}
+                          {new Date(e.created_at).toLocaleDateString('pt-BR')}
+                        </p>
+                      </div>
+                      <span className="shrink-0 text-sm font-semibold tabular-nums text-tinta">
+                        {e.amount_paid === 0 ? 'Grátis' : formatCurrency(e.amount_paid ?? 0)}
+                      </span>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </Panel>
+
+          <Panel>
+            <SectionHeading titulo="Repasses recentes" className="border-b border-cobalto/10 px-5 py-4" />
+            {!payouts || payouts.length === 0 ? (
+              <div className="p-5">
+                <EmptyState
+                  icon={DollarSign}
+                  titulo="Nenhum repasse registrado"
+                  descricao="Os pagamentos aos chefs aparecem aqui com status e data."
+                />
               </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
+            ) : (
+              <ul className="divide-y divide-cobalto/10">
+                {payouts.map((p) => (
+                  <li key={p.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-3.5">
+                    <div className="min-w-0 flex-1 basis-40">
+                      <p className="truncate text-sm font-medium text-tinta">{(p.teacher as any)?.name ?? '—'}</p>
+                      <p className="text-xs text-tinta-suave/70">
+                        {new Date(p.created_at).toLocaleDateString('pt-BR')}
+                      </p>
+                    </div>
+                    <span className="shrink-0 text-sm font-semibold tabular-nums text-tinta">
+                      {formatCurrency(p.amount)}
+                    </span>
+                    <StatusBadge tipo="repasse" status={p.status} className="shrink-0" />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Panel>
+        </div>
+      </PageBody>
+    </>
   )
 }
