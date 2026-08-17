@@ -25,14 +25,56 @@ const PASSOS = [
   },
 ]
 
-const NUMEROS = [
-  { valor: '500+', rotulo: 'Aulas disponíveis' },
-  { valor: '50+', rotulo: 'Chefs instrutores' },
-  { valor: '10k+', rotulo: 'Alunos formados' },
-]
+type Numero = { valor: string; rotulo: string }
+
+function plural(n: number, um: string, muitos: string) {
+  return n === 1 ? um : muitos
+}
+
+/**
+ * Números da home a partir do catálogo real.
+ *
+ * Os três anteriores eram fixos ("500+ aulas, 50+ chefs, 10k+ alunos
+ * formados") e apareciam logo acima de um grid com quatro cursos de um chef
+ * só — número redondo é fácil de desmentir rolando a própria página.
+ *
+ * "Aulas" ficou de fora de propósito: a policy `lessons_free_preview_read`
+ * (00002) só deixa `anon` ver aula com `is_free_preview = true`, então o
+ * client público contaria uma aula por curso e o número sairia errado —
+ * pior que não ter. As três métricas abaixo saem todas de `courses`, que o
+ * visitante deslogado lê por inteiro via `courses_public_approved_read`.
+ */
+function montarNumeros(
+  cursos: { category: string | null; teacher_id: string }[],
+): Numero[] {
+  // Catálogo vazio (ou query que falhou) esconde a seção: melhor sumir do
+  // que estampar "0 cursos" em display de 5xl.
+  if (cursos.length === 0) return []
+
+  const chefs = new Set(cursos.map((c) => c.teacher_id)).size
+  const categorias = new Set(
+    cursos.map((c) => c.category).filter(Boolean),
+  ).size
+
+  return [
+    {
+      valor: String(cursos.length),
+      rotulo: plural(cursos.length, 'Curso publicado', 'Cursos publicados'),
+    },
+    {
+      valor: String(chefs),
+      rotulo: plural(chefs, 'Chef instrutor', 'Chefs instrutores'),
+    },
+    {
+      valor: String(categorias),
+      rotulo: plural(categorias, 'Categoria', 'Categorias'),
+    },
+  ]
+}
 
 export default async function LandingPage() {
   let featuredCourses: any[] = []
+  let numeros: Numero[] = []
   // Ler o `error` não bastava: a home continuava caindo no mesmo bloco de
   // "catálogo sendo montado", que é o estado normal de produto novo. Falha de
   // permissão e catálogo vazio precisam ser telas diferentes — foi assim que
@@ -40,17 +82,26 @@ export default async function LandingPage() {
   let falhou = false
   try {
     const supabase = createPublicClient()
-    const { data, error } = await supabase
-      .from('courses')
-      .select('id, title, slug, thumbnail_url, price, teacher:profiles(name)')
-      .eq('status', 'approved')
-      .order('created_at', { ascending: false })
-      .limit(4)
+    // As duas em paralelo: uma alimenta o grid de destaques, a outra os
+    // números. Só duas colunas na segunda, e a página revalida a cada 5min,
+    // então varrer o catálogo aprovado sai barato — mas é agregação em JS:
+    // se o catálogo crescer muito, vira RPC com count no banco.
+    const [destaques, catalogo] = await Promise.all([
+      supabase
+        .from('courses')
+        .select('id, title, slug, thumbnail_url, price, teacher:profiles(name)')
+        .eq('status', 'approved')
+        .order('created_at', { ascending: false })
+        .limit(4),
+      supabase.from('courses').select('category, teacher_id').eq('status', 'approved'),
+    ])
     // supabase-js não lança em erro HTTP — sem ler `error`, um 401 de RLS
     // vira "nenhum curso" e a home anuncia catálogo em construção enquanto
     // o problema é permissão. Aconteceu de verdade em 10/08/2026.
-    if (error) throw error
-    featuredCourses = data ?? []
+    if (destaques.error) throw destaques.error
+    if (catalogo.error) throw catalogo.error
+    featuredCourses = destaques.data ?? []
+    numeros = montarNumeros(catalogo.data ?? [])
   } catch (err) {
     falhou = true
     console.error('[/] falha ao carregar cursos em destaque:', err)
@@ -107,24 +158,26 @@ export default async function LandingPage() {
       </section>
 
       {/* ---------- Números ---------- */}
-      <section className="bg-cobalto-escuro">
-        <div className="mx-auto max-w-5xl px-4 py-14 sm:px-6 lg:px-8">
-          <dl className="grid grid-cols-1 gap-10 sm:grid-cols-3">
-            {NUMEROS.map((n) => (
-              <div
-                key={n.rotulo}
-                className="flex flex-col items-center sm:items-start"
-              >
-                {/* order inverte a ordem visual sem quebrar a semântica dt→dd */}
-                <dt className="olho order-2 mt-3 text-cal/55">{n.rotulo}</dt>
-                <dd className="order-1 font-display text-5xl font-extrabold tracking-tight text-brasa">
-                  {n.valor}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </div>
-      </section>
+      {numeros.length > 0 && (
+        <section className="bg-cobalto-escuro">
+          <div className="mx-auto max-w-5xl px-4 py-14 sm:px-6 lg:px-8">
+            <dl className="grid grid-cols-1 gap-10 sm:grid-cols-3">
+              {numeros.map((n) => (
+                <div
+                  key={n.rotulo}
+                  className="flex flex-col items-center sm:items-start"
+                >
+                  {/* order inverte a ordem visual sem quebrar a semântica dt→dd */}
+                  <dt className="olho order-2 mt-3 text-cal/55">{n.rotulo}</dt>
+                  <dd className="order-1 font-display text-5xl font-extrabold tracking-tight text-brasa">
+                    {n.valor}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        </section>
+      )}
 
       <div className="azulejo-claro faixa-azulejo" />
 

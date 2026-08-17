@@ -110,7 +110,7 @@ Os itens de 06/08 e os 4 achados de 10/08 foram resolvidos. Ressalva histórica:
 
 - [ ] **`BUNNY_WEBHOOK_SECRET` falta no `.env.local`** — está no `.env.example`, mas não no ambiente local. Sem ela `isAuthorized()` devolve `false` sempre (`app/api/bunny/webhook/route.ts:7`), o webhook responde 401 e `bunny_video_url`/`duration_seconds` nunca são preenchidos depois do encode.
 
-- [ ] **Números fictícios na home** — `app/(public)/page.tsx:24-28`: "500+ aulas, 50+ chefs, 10k+ alunos formados" numa plataforma com 1 curso e 1 usuário. Decisão de produto, não bug — mas é risco de credibilidade no lançamento.
+- [x] ~~**Números fictícios na home**~~ — resolvido em 17/08/2026. `app/(public)/page.tsx`: os três valores fixos ("500+ aulas, 50+ chefs, 10k+ alunos formados") saíram; agora vêm de uma segunda query em `courses` aprovados — cursos publicados, chefs distintos e categorias distintas — em paralelo com a dos destaques. **"Aulas" ficou de fora de propósito:** `lessons_free_preview_read` (00002) só deixa `anon` ler aula com `is_free_preview = true`, então o client público contaria uma aula por curso; número errado é pior que número ausente. Catálogo vazio ou query com erro esconde a seção inteira em vez de estampar "0". Rótulos flexionam no singular. Verificado: `tsc --noEmit` limpo e `/` continua `○ Static` no build — a query extra não derrubou o prerender.
 
 - [ ] **Deletar aula não remove o vídeo no Bunny** — `components/courses/LessonList.tsx:139` apaga a linha e deixa o arquivo lá, cobrando storage pra sempre.
 
