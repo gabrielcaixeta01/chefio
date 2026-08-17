@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Archivo, Bricolage_Grotesque } from 'next/font/google'
+import { Analytics } from '@vercel/analytics/next'
 import { Toaster } from 'sonner'
 import { RouteProgress } from '@/components/layout/RouteProgress'
 import './globals.css'
@@ -44,6 +45,10 @@ export default function RootLayout({
         <RouteProgress />
         {children}
         <Toaster richColors position="top-right" />
+        {/* Contagem de visitas: registra pageview a cada troca de rota, sem
+            cookie e sem identificar ninguém — por isso não pede banner de
+            consentimento. Só envia dado em produção. */}
+        <Analytics />
       </body>
     </html>
   )
