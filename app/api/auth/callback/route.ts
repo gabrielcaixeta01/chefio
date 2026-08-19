@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
   // `${origin}https://exemplo.com` — URL inválida, e o redirect estoura 500.
   // Mesma regra já aplicada em app/(public)/login/page.tsx.
   const nextParam = searchParams.get('next')
-  const next = nextParam?.startsWith('/') && !nextParam.startsWith('//') ? nextParam : '/'
+  const next = nextParam?.startsWith('/') && !nextParam.startsWith('//') ? nextParam : null
 
   if (code) {
     const supabase = await createClient()
@@ -31,8 +31,12 @@ export async function GET(request: NextRequest) {
           .eq('id', user.id)
           .maybeSingle()
 
+        // `next` explícito ganha do dashboard do papel. Sem isso a
+        // redefinição de senha (7.3) caía em /aluno com a sessão aberta e a
+        // senha antiga intacta — e o `next` que o middleware anexa ao barrar
+        // uma rota protegida também era ignorado.
         const destination =
-          (profile?.role ? DASHBOARD_BY_ROLE[profile.role] : undefined) ?? next
+          next ?? (profile?.role ? DASHBOARD_BY_ROLE[profile.role] : undefined) ?? '/'
 
         return NextResponse.redirect(`${origin}${destination}`)
       }

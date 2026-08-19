@@ -93,16 +93,28 @@ export function LoginForm({ next, aviso }: { next?: string; aviso?: string }) {
           required
         />
 
-        <AuthField
-          label="Senha"
-          type="password"
-          autoComplete="current-password"
-          placeholder="Sua senha"
-          revelavel
-          value={form.password}
-          onChange={(e) => setForm({ ...form, password: e.target.value })}
-          required
-        />
+        <div>
+          <AuthField
+            label="Senha"
+            type="password"
+            autoComplete="current-password"
+            placeholder="Sua senha"
+            revelavel
+            value={form.password}
+            onChange={(e) => setForm({ ...form, password: e.target.value })}
+            required
+          />
+          {/* Decisão 7.3: o link mora colado no campo porque é onde a pessoa
+              descobre que esqueceu — não no rodapé, depois de errar. */}
+          <p className="mt-2 text-right text-sm">
+            <Link
+              href="/esqueci-senha"
+              className="font-semibold text-cobalto underline-offset-4 hover:underline"
+            >
+              Esqueci minha senha
+            </Link>
+          </p>
+        </div>
 
         {erro && (
           <Notice tipo="erro" role="alert">

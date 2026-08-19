@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { BotaoCookies } from './CookieConsent'
 
 const PLATAFORMA = [
   { href: '/cursos', label: 'Explorar cursos' },
@@ -6,8 +7,10 @@ const PLATAFORMA = [
   { href: '/para-chefs', label: 'Ensinar na Chefio' },
 ]
 
+const SUPORTE = [{ href: '/politica-de-conteudo', label: 'Política de conteúdo' }]
+
 /* Sem página ainda — ficam como texto, não como link morto. */
-const SUPORTE = ['Central de ajuda', 'Termos de uso', 'Privacidade']
+const SUPORTE_EM_BREVE = ['Central de ajuda', 'Termos de uso', 'Privacidade']
 
 export function Footer() {
   return (
@@ -56,7 +59,19 @@ export function Footer() {
             <div>
               <h2 className="olho text-cal">Suporte</h2>
               <ul className="mt-5 space-y-3 text-sm text-cal/65">
-                {SUPORTE.map((label) => (
+                {SUPORTE.map((item) => (
+                  <li key={item.label}>
+                    <Link href={item.href} className="transition-colors hover:text-brasa">
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
+                {/* Decisão 9.5: é por aqui que a pessoa volta atrás na
+                    escolha — consentimento que não se retira não vale. */}
+                <li>
+                  <BotaoCookies className="transition-colors hover:text-brasa" />
+                </li>
+                {SUPORTE_EM_BREVE.map((label) => (
                   <li key={label}>{label}</li>
                 ))}
               </ul>

@@ -5,9 +5,13 @@ export type TeacherStatus = 'pending' | 'active' | 'suspended'
 export type OrderStatus = 'pending' | 'paid' | 'shipped' | 'delivered'
 export type PayoutStatus = 'pending' | 'paid' | 'failed'
 /** `refund_clawback` é a linha negativa que desconta um reembolso do próximo repasse (regra 2.2). */
-export type PayoutType = 'sale' | 'refund_clawback'
+export type PayoutType = 'sale' | 'refund_clawback' | 'product_sale' | 'product_clawback'
 /** `chargeback` é contestação no cartão: tira o acesso, mas quem arca é a plataforma (regra 2.4). */
 export type RefundStatus = 'none' | 'requested' | 'refunded' | 'rejected' | 'chargeback'
+/** Devolução de produto físico: 7 dias contados do recebimento (regra 8.6). */
+export type ReturnStatus = 'none' | 'requested' | 'approved' | 'rejected' | 'refunded'
+/** Produto externo que o professor pediu pra cadastrar (regra 8.5). */
+export type ProductRequestStatus = 'pending' | 'approved' | 'rejected'
 /** Mudança em aula de curso já vendido: só entra com aval do admin (regra 3.4). */
 export type LessonChangeType = 'remove' | 'replace_video'
 export type LessonChangeStatus = 'pending' | 'approved' | 'rejected'
@@ -28,6 +32,7 @@ export type OrderItem = Database['public']['Tables']['order_items']['Row']
 export type TeacherPayout = Database['public']['Tables']['teacher_payouts']['Row']
 export type Coupon = Database['public']['Tables']['coupons']['Row']
 export type LessonChangeRequest = Database['public']['Tables']['lesson_change_requests']['Row']
+export type ProductRequest = Database['public']['Tables']['product_requests']['Row']
 export type ActiveSession = Database['public']['Tables']['active_sessions']['Row']
 export type Document = Database['public']['Tables']['documents']['Row']
 
@@ -50,6 +55,9 @@ export type Database = {
           role: string
           avatar_url: string | null
           created_at: string
+          marketing_opt_in: boolean
+          marketing_opt_in_changed_at: string | null
+          deleted_at: string | null
         }
         Insert: {
           id: string
@@ -57,6 +65,9 @@ export type Database = {
           role?: string
           avatar_url?: string | null
           created_at?: string
+          marketing_opt_in?: boolean
+          marketing_opt_in_changed_at?: string | null
+          deleted_at?: string | null
         }
         Update: {
           id?: string
@@ -64,6 +75,9 @@ export type Database = {
           role?: string
           avatar_url?: string | null
           created_at?: string
+          marketing_opt_in?: boolean
+          marketing_opt_in_changed_at?: string | null
+          deleted_at?: string | null
         }
         Relationships: []
       }
@@ -137,6 +151,9 @@ export type Database = {
           status: string
           rejection_reason: string | null
           archived_at: string | null
+          submitted_at: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
           created_at: string
           updated_at: string
         }
@@ -152,6 +169,9 @@ export type Database = {
           status?: string
           rejection_reason?: string | null
           archived_at?: string | null
+          submitted_at?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -167,6 +187,9 @@ export type Database = {
           status?: string
           rejection_reason?: string | null
           archived_at?: string | null
+          submitted_at?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -248,21 +271,21 @@ export type Database = {
         Relationships: []
       }
       orders: {
-        Row: { id: string; student_id: string; status: string; total: number; stripe_payment_intent_id: string | null; created_at: string }
-        Insert: { id?: string; student_id: string; status?: string; total: number; stripe_payment_intent_id?: string | null; created_at?: string }
-        Update: { id?: string; student_id?: string; status?: string; total?: number; stripe_payment_intent_id?: string | null; created_at?: string }
+        Row: { id: string; student_id: string; status: OrderStatus; total: number; stripe_payment_intent_id: string | null; created_at: string; shipping_name: string | null; shipping_line1: string | null; shipping_line2: string | null; shipping_city: string | null; shipping_state: string | null; shipping_postal_code: string | null; shipping_country: string; quoted_postal_code: string | null; shipping_cost: number; shipping_days: number | null; tracking_code: string | null; shipped_at: string | null; delivered_at: string | null; return_status: ReturnStatus; return_requested_at: string | null; return_reason: string | null; return_reviewed_at: string | null; return_review_note: string | null; return_reviewed_by: string | null; refunded_at: string | null; refund_amount: number | null }
+        Insert: { id?: string; student_id: string; status?: OrderStatus; total: number; stripe_payment_intent_id?: string | null; created_at?: string; shipping_name?: string | null; shipping_line1?: string | null; shipping_line2?: string | null; shipping_city?: string | null; shipping_state?: string | null; shipping_postal_code?: string | null; shipping_country?: string; quoted_postal_code?: string | null; shipping_cost?: number; shipping_days?: number | null; tracking_code?: string | null; shipped_at?: string | null; delivered_at?: string | null; return_status?: ReturnStatus; return_requested_at?: string | null; return_reason?: string | null; return_reviewed_at?: string | null; return_review_note?: string | null; return_reviewed_by?: string | null; refunded_at?: string | null; refund_amount?: number | null }
+        Update: { id?: string; student_id?: string; status?: OrderStatus; total?: number; stripe_payment_intent_id?: string | null; created_at?: string; shipping_name?: string | null; shipping_line1?: string | null; shipping_line2?: string | null; shipping_city?: string | null; shipping_state?: string | null; shipping_postal_code?: string | null; shipping_country?: string; quoted_postal_code?: string | null; shipping_cost?: number; shipping_days?: number | null; tracking_code?: string | null; shipped_at?: string | null; delivered_at?: string | null; return_status?: ReturnStatus; return_requested_at?: string | null; return_reason?: string | null; return_reviewed_at?: string | null; return_review_note?: string | null; return_reviewed_by?: string | null; refunded_at?: string | null; refund_amount?: number | null }
         Relationships: []
       }
       order_items: {
-        Row: { id: string; order_id: string; product_id: string; quantity: number; unit_price: number }
-        Insert: { id?: string; order_id: string; product_id: string; quantity: number; unit_price: number }
-        Update: { id?: string; order_id?: string; product_id?: string; quantity?: number; unit_price?: number }
+        Row: { id: string; order_id: string; product_id: string; quantity: number; unit_price: number; lesson_id: string | null; teacher_id: string | null; teacher_commission_rate: number }
+        Insert: { id?: string; order_id: string; product_id: string; quantity: number; unit_price: number; lesson_id?: string | null; teacher_id?: string | null; teacher_commission_rate?: number }
+        Update: { id?: string; order_id?: string; product_id?: string; quantity?: number; unit_price?: number; lesson_id?: string | null; teacher_id?: string | null; teacher_commission_rate?: number }
         Relationships: []
       }
       teacher_payouts: {
-        Row: { id: string; teacher_id: string; amount: number; status: string; stripe_transfer_id: string | null; period_start: string | null; period_end: string | null; created_at: string; type: PayoutType; enrollment_id: string | null }
-        Insert: { id?: string; teacher_id: string; amount: number; status?: string; stripe_transfer_id?: string | null; period_start?: string | null; period_end?: string | null; created_at?: string; type?: PayoutType; enrollment_id?: string | null }
-        Update: { id?: string; teacher_id?: string; amount?: number; status?: string; stripe_transfer_id?: string | null; period_start?: string | null; period_end?: string | null; created_at?: string; type?: PayoutType; enrollment_id?: string | null }
+        Row: { id: string; teacher_id: string; amount: number; status: string; stripe_transfer_id: string | null; period_start: string | null; period_end: string | null; created_at: string; type: PayoutType; enrollment_id: string | null; order_id: string | null }
+        Insert: { id?: string; teacher_id: string; amount: number; status?: string; stripe_transfer_id?: string | null; period_start?: string | null; period_end?: string | null; created_at?: string; type?: PayoutType; enrollment_id?: string | null; order_id?: string | null }
+        Update: { id?: string; teacher_id?: string; amount?: number; status?: string; stripe_transfer_id?: string | null; period_start?: string | null; period_end?: string | null; created_at?: string; type?: PayoutType; enrollment_id?: string | null; order_id?: string | null }
         Relationships: []
       }
       coupons: {
@@ -275,6 +298,12 @@ export type Database = {
         Row: { id: string; lesson_id: string | null; lesson_title: string; course_id: string; teacher_id: string; type: LessonChangeType; new_bunny_video_id: string | null; reason: string | null; status: LessonChangeStatus; review_note: string | null; reviewed_by: string | null; reviewed_at: string | null; created_at: string }
         Insert: { id?: string; lesson_id?: string | null; lesson_title: string; course_id: string; teacher_id: string; type: LessonChangeType; new_bunny_video_id?: string | null; reason?: string | null; status?: LessonChangeStatus; review_note?: string | null; reviewed_by?: string | null; reviewed_at?: string | null; created_at?: string }
         Update: { id?: string; lesson_id?: string | null; lesson_title?: string; course_id?: string; teacher_id?: string; type?: LessonChangeType; new_bunny_video_id?: string | null; reason?: string | null; status?: LessonChangeStatus; review_note?: string | null; reviewed_by?: string | null; reviewed_at?: string | null; created_at?: string }
+        Relationships: []
+      }
+      product_requests: {
+        Row: { id: string; teacher_id: string; name: string; description: string | null; reference_url: string | null; suggested_price: number | null; lesson_id: string | null; status: ProductRequestStatus; review_note: string | null; reviewed_by: string | null; reviewed_at: string | null; product_id: string | null; created_at: string }
+        Insert: { id?: string; teacher_id: string; name: string; description?: string | null; reference_url?: string | null; suggested_price?: number | null; lesson_id?: string | null; status?: ProductRequestStatus; review_note?: string | null; reviewed_by?: string | null; reviewed_at?: string | null; product_id?: string | null; created_at?: string }
+        Update: { id?: string; teacher_id?: string; name?: string; description?: string | null; reference_url?: string | null; suggested_price?: number | null; lesson_id?: string | null; status?: ProductRequestStatus; review_note?: string | null; reviewed_by?: string | null; reviewed_at?: string | null; product_id?: string | null; created_at?: string }
         Relationships: []
       }
       active_sessions: {
@@ -299,14 +328,6 @@ export type Database = {
     Functions: {
       get_my_role: {
         Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      create_product_order: {
-        Args: {
-          p_student_id: string
-          p_stripe_payment_intent_id: string | null
-          p_items: { product_id: string; quantity: number }[]
-        }
         Returns: string
       }
       get_admin_dashboard_stats: {
@@ -350,6 +371,32 @@ export type Database = {
       touch_session: {
         Args: { p_session_id: string; p_user_agent?: string | null }
         Returns: boolean
+      }
+      create_pending_order: {
+        Args: {
+          p_student_id: string
+          p_items: { product_id: string; quantity: number; lesson_id: string | null }[]
+          p_postal_code: string
+          p_shipping_cost: number
+          p_shipping_days: number
+        }
+        Returns: { order_id: string; subtotal: number }[]
+      }
+      confirm_product_order: {
+        Args: { p_order_id: string; p_payment_intent_id: string | null; p_shipping?: Record<string, string | null> }
+        Returns: undefined
+      }
+      anonymize_account: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
+      request_product_return: {
+        Args: { p_order_id: string; p_reason: string }
+        Returns: undefined
+      }
+      resolve_product_return: {
+        Args: { p_order_id: string; p_aprovar: boolean; p_amount?: number | null; p_note?: string | null }
+        Returns: undefined
       }
     }
     Enums: Record<string, never>

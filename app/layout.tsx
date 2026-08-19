@@ -3,6 +3,8 @@ import { Archivo, Bricolage_Grotesque } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { Toaster } from 'sonner'
 import { RouteProgress } from '@/components/layout/RouteProgress'
+import { CookieConsent } from '@/components/layout/CookieConsent'
+import { ScriptsDeMedicao } from '@/components/layout/ScriptsDeMedicao'
 import './globals.css'
 
 const archivo = Archivo({
@@ -46,9 +48,13 @@ export default function RootLayout({
         {children}
         <Toaster richColors position="top-right" />
         {/* Contagem de visitas: registra pageview a cada troca de rota, sem
-            cookie e sem identificar ninguém — por isso não pede banner de
+            cookie e sem identificar ninguém — por isso fica fora do portão de
             consentimento. Só envia dado em produção. */}
         <Analytics />
+        {/* Decisão 9.5: banner enquanto não houver escolha, e o portão onde
+            entram GA, Pixel e afins quando existirem. */}
+        <ScriptsDeMedicao />
+        <CookieConsent />
       </body>
     </html>
   )

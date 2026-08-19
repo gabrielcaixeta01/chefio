@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
-import { formatCurrency, COMISSAO_PADRAO } from '@/lib/utils'
+import { formatCurrency, COMISSAO_PADRAO, PRAZO_REVISAO_DIAS_UTEIS } from '@/lib/utils'
 import { BookOpen, Users, DollarSign, Clock, CreditCard, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -68,7 +68,8 @@ export default async function ProfessorDashboard() {
               </Link>
             }
           >
-            Sem uma conta Stripe conectada você não consegue publicar cursos pagos nem receber.
+            Você pode publicar e vender cursos pagos desde já — a plataforma segura o valor das
+            vendas e repassa assim que a conta estiver conectada.
           </Notice>
         )}
 
@@ -77,7 +78,8 @@ export default async function ProfessorDashboard() {
             <strong className="font-semibold">
               {pendingCourses.length} {pendingCourses.length === 1 ? 'curso' : 'cursos'}
             </strong>{' '}
-            aguardando aprovação da plataforma. Você é avisado assim que a revisão sair.
+            aguardando aprovação da plataforma. A resposta sai em até {PRAZO_REVISAO_DIAS_UTEIS} dias
+            úteis, e você é avisado assim que a revisão sair.
           </Notice>
         )}
 

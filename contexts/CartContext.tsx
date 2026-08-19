@@ -8,13 +8,24 @@ export interface CartItem {
   price: number
   image_url: string | null
   quantity: number
+  /**
+   * Aula de onde o produto foi adicionado (decisão 8.4). Nulo quando veio da
+   * aba Loja — e é essa diferença que decide se o professor ganha comissão,
+   * então o mesmo produto pode ocupar duas linhas do carrinho.
+   */
+  lessonId?: string | null
+}
+
+/** Produto + origem. É a identidade real de uma linha do carrinho. */
+export function chaveItem(item: { id: string; lessonId?: string | null }): string {
+  return `${item.id}:${item.lessonId ?? ''}`
 }
 
 interface CartContextValue {
   items: CartItem[]
   add: (item: Omit<CartItem, 'quantity'>) => void
-  remove: (id: string) => void
-  updateQty: (id: string, qty: number) => void
+  remove: (chave: string) => void
+  updateQty: (chave: string, qty: number) => void
   clear: () => void
   total: number
   count: number
@@ -40,20 +51,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [items, hydrated])
 
   function add(item: Omit<CartItem, 'quantity'>) {
+    const chave = chaveItem(item)
     setItems((prev) => {
-      const existing = prev.find((i) => i.id === item.id)
-      if (existing) return prev.map((i) => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i)
-      return [...prev, { ...item, quantity: 1 }]
+      const existing = prev.find((i) => chaveItem(i) === chave)
+      if (existing) {
+        return prev.map((i) => (chaveItem(i) === chave ? { ...i, quantity: i.quantity + 1 } : i))
+      }
+      return [...prev, { ...item, lessonId: item.lessonId ?? null, quantity: 1 }]
     })
   }
 
-  function remove(id: string) {
-    setItems((prev) => prev.filter((i) => i.id !== id))
+  function remove(chave: string) {
+    setItems((prev) => prev.filter((i) => chaveItem(i) !== chave))
   }
 
-  function updateQty(id: string, qty: number) {
-    if (qty <= 0) return remove(id)
-    setItems((prev) => prev.map((i) => i.id === id ? { ...i, quantity: qty } : i))
+  function updateQty(chave: string, qty: number) {
+    if (qty <= 0) return remove(chave)
+    setItems((prev) => prev.map((i) => (chaveItem(i) === chave ? { ...i, quantity: qty } : i)))
   }
 
   function clear() {

@@ -24,6 +24,7 @@ import {
   RotateCcw,
   ShoppingBag,
   Ticket,
+  User,
   Users,
   X,
 } from 'lucide-react'
@@ -31,7 +32,7 @@ import {
 export interface NavItem {
   label: string
   href: string
-  icon: 'LayoutDashboard' | 'Users' | 'BookOpen' | 'DollarSign' | 'Package' | 'ShoppingBag' | 'ClipboardList' | 'FileText' | 'FileEdit' | 'CreditCard' | 'RotateCcw' | 'Ticket' | 'ChefHat' | 'GraduationCap'
+  icon: 'LayoutDashboard' | 'Users' | 'BookOpen' | 'DollarSign' | 'Package' | 'ShoppingBag' | 'ClipboardList' | 'FileText' | 'FileEdit' | 'CreditCard' | 'RotateCcw' | 'Ticket' | 'ChefHat' | 'GraduationCap' | 'User'
 }
 
 const iconMap = {
@@ -49,6 +50,7 @@ const iconMap = {
   Ticket,
   ChefHat,
   GraduationCap,
+  User,
 } satisfies Record<NavItem['icon'], typeof LayoutDashboard>
 
 interface SidebarProps {

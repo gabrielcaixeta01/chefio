@@ -221,6 +221,15 @@ export function RegisterForm({ papelInicial = 'student' }: { papelInicial?: Role
         <Button type="submit" size="lg" className="w-full" loading={loading} loadingText="Criando conta…">
           Criar conta
         </Button>
+
+        {/* Decisão 7.5: pode mandar novidades, com descadastro. Avisar aqui é
+            o que separa "comunicação combinada" de spam — e o link leva pro
+            lugar onde se desmarca, não pra uma promessa vaga. */}
+        <p className="text-center text-xs leading-relaxed text-tinta-suave/70">
+          Ao criar a conta você passa a receber novidades da Chefio por e-mail. Dá pra desmarcar
+          quando quiser em <strong className="font-semibold">Minha conta</strong>, sem perder os
+          e-mails de compra e recuperação de senha.
+        </p>
       </div>
 
       <p className="mt-7 text-center text-sm text-tinta-suave">

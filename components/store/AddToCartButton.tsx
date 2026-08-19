@@ -12,12 +12,29 @@ interface Product {
   image_url: string | null
 }
 
-export function AddToCartButton({ product }: { product: Product }) {
+/**
+ * `lessonId` marca de onde a pessoa clicou (decisão 8.4): produto adicionado
+ * pela página de uma aula gera comissão pro professor daquele curso; o mesmo
+ * produto adicionado pela aba Loja, não.
+ */
+export function AddToCartButton({
+  product,
+  lessonId,
+}: {
+  product: Product
+  lessonId?: string | null
+}) {
   const { add } = useCart()
   const [added, setAdded] = useState(false)
 
   function handleAdd() {
-    add({ id: product.id, name: product.name, price: product.price, image_url: product.image_url })
+    add({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image_url: product.image_url,
+      lessonId: lessonId ?? null,
+    })
     setAdded(true)
     setTimeout(() => setAdded(false), 1500)
   }

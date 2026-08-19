@@ -38,7 +38,7 @@ export default async function StorePagePage({
       <PageHeader
         olho="Loja"
         titulo="Do vídeo para a bancada"
-        descricao="Os utensílios e ingredientes que os chefs usam nas aulas, prontos pra ir pra sua cozinha."
+        descricao="Os utensílios e ingredientes que os chefs usam nas aulas. Entregamos em todo o Brasil — o frete é calculado pelo seu CEP no carrinho."
         acoes={<CartButton />}
       />
 

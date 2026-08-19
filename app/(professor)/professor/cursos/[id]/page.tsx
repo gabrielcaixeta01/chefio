@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { PRAZO_REVISAO_DIAS_UTEIS, prazoDeRevisao } from '@/lib/utils'
 import { CourseForm } from '@/components/courses/CourseForm'
 import { LessonList } from '@/components/courses/LessonList'
 import { CourseSubmitButton } from '@/components/courses/CourseSubmitButton'
@@ -98,10 +99,48 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
           </Notice>
         )}
 
+        {/* Decisão 5.1: o motivo é escrito pelo admin e é isto aqui que o
+            professor lê. Antes a tela mandava "corrija os problemas
+            indicados" sem indicar problema nenhum. */}
         {course.status === 'rejected' && (
           <Notice tipo="erro" titulo="Curso rejeitado" className="mb-8">
-            Corrija os problemas indicados pelo admin e envie novamente para revisão.
+            {course.rejection_reason ? (
+              <>
+                <span className="block whitespace-pre-line">{course.rejection_reason}</span>
+                <span className="mt-2 block">
+                  Corrija os pontos acima e envie de novo — a revisão recomeça do zero.
+                </span>
+              </>
+            ) : (
+              'Envie novamente para revisão depois de corrigir o curso.'
+            )}
           </Notice>
+        )}
+
+        {/* Decisão 5.5: o prazo prometido, com data, no lugar onde ele
+            importa — a tela que o professor abre pra saber "e aí?". */}
+        {course.status === 'pending_review' && (
+          <Notice tipo="info" titulo="Em revisão" className="mb-8">
+            {course.submitted_at
+              ? `Enviado em ${new Date(course.submitted_at).toLocaleDateString('pt-BR')}. A resposta sai até ${prazoDeRevisao(course.submitted_at).toLocaleDateString('pt-BR')} (${PRAZO_REVISAO_DIAS_UTEIS} dias úteis).`
+              : `A resposta sai em até ${PRAZO_REVISAO_DIAS_UTEIS} dias úteis.`}{' '}
+            Enquanto isso o curso continua editável.
+          </Notice>
+        )}
+
+        {/* Decisão 6.4: o envio é o momento em que o professor afirma que o
+            conteúdo segue a política — é ela que o motivo da rejeição cita. */}
+        {canSubmit && (
+          <p className="mb-8 text-xs text-tinta-suave/70">
+            Ao enviar para revisão você declara que o curso segue a{' '}
+            <Link
+              href="/politica-de-conteudo"
+              className="font-semibold text-cobalto underline-offset-4 hover:underline"
+            >
+              Política de conteúdo
+            </Link>
+            .
+          </p>
         )}
 
         {canSubmit && lessonCount === 0 && (

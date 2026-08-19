@@ -3,7 +3,7 @@ import { Video, CreditCard, ShoppingBag, Users } from 'lucide-react'
 import { AzulejoWall } from '@/components/layout/AzulejoWall'
 import { PassosNumerados } from '@/components/layout/PassosNumerados'
 import { ActionLink } from '@/components/ui/action-link'
-import { COMISSAO_PADRAO } from '@/lib/utils'
+import { COMISSAO_PADRAO, COMISSAO_PRODUTO_PROFESSOR, PRAZO_REVISAO_DIAS_UTEIS } from '@/lib/utils'
 
 export const metadata: Metadata = {
   title: 'Ensinar na Chefio',
@@ -41,7 +41,7 @@ const CUIDADOS = [
   {
     icone: ShoppingBag,
     titulo: 'Loja de ingredientes',
-    desc: 'Os utensílios e ingredientes da sua aula aparecem para o aluno na hora certa, dentro da plataforma.',
+    desc: `Os utensílios da sua aula aparecem para o aluno na hora certa, com ${COMISSAO_PRODUTO_PROFESSOR}% de comissão pra você. Estoque e entrega são nossos.`,
   },
   {
     icone: Users,
@@ -59,19 +59,34 @@ const DUVIDAS = [
     p: 'Quem define o preço do curso?',
     r: 'Você. O preço é definido por curso no momento da publicação e pode ser alterado depois. Cursos gratuitos também são permitidos.',
   },
+  // Decisões 5.5 e 5.1: o prazo prometido e o que acontece quando o curso
+  // volta — as duas perguntas que aparecem logo depois do primeiro envio.
   {
     p: 'Meu curso vai ao ar na hora?',
-    r: 'Não. Todo curso passa por uma revisão da equipe antes de entrar no catálogo. Se algo precisar de ajuste, você recebe o motivo e pode reenviar.',
+    r: `Não. Todo curso passa por uma revisão da equipe antes de entrar no catálogo, e a resposta sai em até ${PRAZO_REVISAO_DIAS_UTEIS} dias úteis. Se algo precisar de ajuste, você recebe por escrito o que corrigir e pode reenviar quantas vezes precisar.`,
   },
+  // Decisão 5.2: vender não depende da conta conectada.
   {
     p: 'Como eu recebo o dinheiro?',
-    r: 'Você conecta uma conta de recebimento no onboarding. Os repasses das matrículas caem nessa conta, e o extrato fica no seu painel de faturamento.',
+    r: 'Você conecta uma conta de recebimento no onboarding. Os repasses das matrículas caem nessa conta, e o extrato fica no seu painel de faturamento. Se ainda não conectou, tudo bem: seu curso pode ser publicado e vendido do mesmo jeito, e a Chefio guarda o valor até você conectar.',
   },
   // Decisões 4.2 e 4.5: as duas condições de entrada que valem dizer antes do
   // cadastro, não depois.
   {
     p: 'Qualquer pessoa pode dar aula aqui?',
     r: 'Não automaticamente. Você se cadastra, envia uma candidatura com documento, contato e um resumo da sua experiência, e um admin analisa. Enquanto isso sua conta funciona normalmente como aluno.',
+  },
+  // Decisões 6.1 e 6.2: a dúvida de propriedade aparece antes do cadastro,
+  // não depois do primeiro upload.
+  {
+    p: 'De quem é o curso que eu publico?',
+    r: 'Seu. A Chefio recebe uma licença para hospedar e exibir o curso aos alunos — e essa licença é permanente para quem já comprou, mesmo que você saia da plataforma. Podemos usar trechos curtos das aulas para divulgar o curso e a Chefio, sempre identificando você e avisando antes. Os detalhes estão na Política de conteúdo.',
+  },
+  // Decisões 8.4 e 8.5: a loja aparece dentro da aula do professor, então a
+  // pergunta "e eu ganho alguma coisa com isso?" nasce junto.
+  {
+    p: 'Ganho algo com os produtos que aparecem na minha aula?',
+    r: `Sim. Você escolhe, no seu painel, quais produtos do catálogo aparecem em cada aula, e recebe ${COMISSAO_PRODUTO_PROFESSOR}% do que o aluno comprar por ali. O mesmo produto comprado pela aba Loja é uma venda da plataforma, sem comissão. Estoque, entrega e troca ficam com a Chefio — se faltar algo no catálogo, você pede o cadastro pelo painel.`,
   },
   {
     p: 'Posso vender o mesmo curso em outra plataforma?',

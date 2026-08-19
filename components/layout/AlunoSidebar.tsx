@@ -28,6 +28,8 @@ export async function AlunoSidebar() {
     { label: 'Meus cursos', href: '/aluno/cursos', icon: 'BookOpen' },
     { label: 'Loja', href: '/aluno/loja', icon: 'ShoppingBag' },
     { label: 'Pedidos', href: '/aluno/pedidos', icon: 'Package' },
+    // Decisão 7.4: nome, foto, e-mail, senha e o descadastro de marketing.
+    { label: 'Minha conta', href: '/aluno/perfil', icon: 'User' },
   ]
 
   if (role === 'teacher') {

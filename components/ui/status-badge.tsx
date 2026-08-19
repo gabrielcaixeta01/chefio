@@ -53,12 +53,23 @@ const REEMBOLSO = {
   chargeback: { label: 'Chargeback', tom: 'destructive' },
 } satisfies Record<string, Entrada>
 
+// Devolução de produto físico (regra 8.6). Separado do reembolso de curso:
+// aqui existe um passo físico no meio — o produto precisa voltar.
+const DEVOLUCAO = {
+  none: { label: 'Normal', tom: 'neutral' },
+  requested: { label: 'Devolução em análise', tom: 'warning' },
+  approved: { label: 'Coleta combinada', tom: 'info' },
+  rejected: { label: 'Devolução recusada', tom: 'destructive' },
+  refunded: { label: 'Devolvido', tom: 'info' },
+} satisfies Record<string, Entrada>
+
 const MAPAS = {
   curso: CURSO,
   pedido: PEDIDO,
   repasse: REPASSE,
   professor: PROFESSOR,
   reembolso: REEMBOLSO,
+  devolucao: DEVOLUCAO,
 } satisfies Record<string, Record<string, Entrada>>
 
 type Tipo = keyof typeof MAPAS

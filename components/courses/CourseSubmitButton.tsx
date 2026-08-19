@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
+import { PRAZO_REVISAO_DIAS_UTEIS } from '@/lib/utils'
 import { Send } from 'lucide-react'
 
 export function CourseSubmitButton({ courseId }: { courseId: string }) {
@@ -22,7 +23,9 @@ export function CourseSubmitButton({ courseId }: { courseId: string }) {
     if (error) {
       toast.error('Erro ao enviar para revisão.')
     } else {
-      toast.success('Curso enviado para revisão!')
+      // Decisão 5.5: o prazo é prometido no momento do envio, que é quando
+      // a pergunta "quanto tempo isso demora?" aparece.
+      toast.success(`Curso enviado! A resposta sai em até ${PRAZO_REVISAO_DIAS_UTEIS} dias úteis.`)
       router.refresh()
     }
     setLoading(false)

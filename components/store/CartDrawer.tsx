@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { useCart } from '@/contexts/CartContext'
+import { useCart, chaveItem } from '@/contexts/CartContext'
 import { formatCurrency, cn } from '@/lib/utils'
-import { ShoppingCart, X, Plus, Minus, Trash2 } from 'lucide-react'
+import { cotarFrete, formatarCep, normalizarCep } from '@/lib/frete'
+import { ShoppingCart, X, Plus, Minus, Trash2, Truck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 
@@ -48,9 +49,15 @@ function CartDrawer({
   onClose: () => void
   gatilhoRef: React.RefObject<HTMLButtonElement>
 }) {
-  const { items, remove, updateQty, total, clear } = useCart()
+  const { items, remove, updateQty, total, clear, count } = useCart()
   const [loading, setLoading] = useState(false)
+  const [cep, setCep] = useState('')
   const painelRef = useRef<HTMLDivElement>(null)
+
+  // Decisão 8.2: o frete é cotado pelo CEP antes do checkout e congelado no
+  // pedido. A rota recalcula com a mesma tabela — isto aqui é só pra pessoa
+  // ver o total antes de decidir, não é o valor em que o servidor confia.
+  const frete = cotarFrete(cep, count)
 
   // Mesmo tratamento da gaveta do menu: Escape fecha, o Tab não escapa pro
   // conteúdo atrás, a página não rola por baixo e o foco volta pro carrinho.
@@ -106,7 +113,7 @@ function CartDrawer({
       const res = await fetch('/api/stripe/checkout-products', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items }),
+        body: JSON.stringify({ items, cep: normalizarCep(cep) }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
@@ -162,7 +169,7 @@ function CartDrawer({
           <>
             <ul className="flex-1 divide-y divide-cobalto/10 overflow-y-auto">
               {items.map((item) => (
-                <li key={item.id} className="flex items-center gap-3 px-4 py-3.5">
+                <li key={chaveItem(item)} className="flex items-center gap-3 px-4 py-3.5">
                   <div className="h-12 w-12 shrink-0 overflow-hidden rounded-sm bg-cobalto/10">
                     {item.image_url ? (
                       // eslint-disable-next-line @next/next/no-img-element -- imagem de produto pode vir de host arbitrário
@@ -177,7 +184,7 @@ function CartDrawer({
                   </div>
                   <div className="flex shrink-0 items-center gap-0.5">
                     <BotaoQtd
-                      onClick={() => updateQty(item.id, item.quantity - 1)}
+                      onClick={() => updateQty(chaveItem(item), item.quantity - 1)}
                       label={`Diminuir quantidade de ${item.name}`}
                     >
                       <Minus className="h-3.5 w-3.5" aria-hidden="true" />
@@ -186,13 +193,13 @@ function CartDrawer({
                       {item.quantity}
                     </span>
                     <BotaoQtd
-                      onClick={() => updateQty(item.id, item.quantity + 1)}
+                      onClick={() => updateQty(chaveItem(item), item.quantity + 1)}
                       label={`Aumentar quantidade de ${item.name}`}
                     >
                       <Plus className="h-3.5 w-3.5" aria-hidden="true" />
                     </BotaoQtd>
                     <BotaoQtd
-                      onClick={() => remove(item.id)}
+                      onClick={() => remove(chaveItem(item))}
                       label={`Remover ${item.name} do carrinho`}
                       className="ml-1 hover:bg-red-50 hover:text-red-700"
                     >
@@ -204,20 +211,59 @@ function CartDrawer({
             </ul>
 
             <div className="flex flex-col gap-3 border-t border-cobalto/10 p-4">
-              <div className="flex items-center justify-between">
-                <span className="olho text-tinta-suave">Total</span>
-                <span className="font-display text-xl font-extrabold tabular-nums tracking-tight text-tinta">
-                  {formatCurrency(total)}
-                </span>
+              {/* Frete antes do botão: descobrir o valor da entrega só na tela
+                  do Stripe é o jeito mais rápido de perder a venda. */}
+              <div className="flex flex-col gap-2">
+                <label htmlFor="carrinho-cep" className="olho text-tinta-suave">
+                  CEP de entrega
+                </label>
+                <div className="flex items-center gap-2">
+                  <Truck className="h-4 w-4 shrink-0 text-cobalto" aria-hidden="true" />
+                  <input
+                    id="carrinho-cep"
+                    inputMode="numeric"
+                    autoComplete="postal-code"
+                    placeholder="00000-000"
+                    value={formatarCep(cep)}
+                    onChange={(e) => setCep(normalizarCep(e.target.value))}
+                    className="h-10 w-32 rounded-sm border-2 border-cobalto/20 bg-white px-2.5 text-sm tabular-nums text-tinta transition-colors placeholder:text-tinta-suave/60 hover:border-cobalto/40 focus:border-cobalto focus:outline-none"
+                  />
+                  {frete ? (
+                    <span className="text-xs text-tinta-suave">
+                      {formatCurrency(frete.valor)} · até {frete.dias} dias úteis
+                    </span>
+                  ) : (
+                    <span className="text-xs text-tinta-suave/70">Entregamos em todo o Brasil.</span>
+                  )}
+                </div>
               </div>
+
+              <div className="flex flex-col gap-1 border-t border-cobalto/10 pt-3">
+                <div className="flex items-center justify-between text-sm text-tinta-suave">
+                  <span>Produtos</span>
+                  <span className="tabular-nums">{formatCurrency(total)}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm text-tinta-suave">
+                  <span>Frete</span>
+                  <span className="tabular-nums">{frete ? formatCurrency(frete.valor) : '—'}</span>
+                </div>
+                <div className="mt-1 flex items-center justify-between">
+                  <span className="olho text-tinta-suave">Total</span>
+                  <span className="font-display text-xl font-extrabold tabular-nums tracking-tight text-tinta">
+                    {formatCurrency(total + (frete?.valor ?? 0))}
+                  </span>
+                </div>
+              </div>
+
               <Button
                 className="w-full"
                 size="lg"
                 onClick={handleCheckout}
                 loading={loading}
                 loadingText="Redirecionando…"
+                disabled={!frete}
               >
-                Finalizar pedido
+                {frete ? 'Finalizar pedido' : 'Informe o CEP para continuar'}
               </Button>
               <button
                 type="button"

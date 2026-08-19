@@ -1,14 +1,16 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, diasRestantesDevolucao, DEVOLUCAO_PRAZO_DIAS } from '@/lib/utils'
+import { formatarCep } from '@/lib/frete'
 import { ClearCartOnSuccess } from '@/components/store/ClearCartOnSuccess'
+import { ReturnRequestButton } from '@/components/aluno/ReturnRequestButton'
 import { PageHeader, PageBody } from '@/components/layout/PageShell'
 import { Panel } from '@/components/ui/panel'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Notice } from '@/components/ui/notice'
 import { StatusBadge } from '@/components/ui/status-badge'
-import { Package } from 'lucide-react'
+import { Package, MapPin, Truck } from 'lucide-react'
 
 export const metadata: Metadata = { title: 'Meus Pedidos' }
 
@@ -71,6 +73,14 @@ export default async function OrdersPage({
         ) : (
           <div className="space-y-4">
             {orders.map((order) => {
+              // Decisão 8.6: a janela de 7 dias conta do recebimento. Enquanto
+              // o pedido não foi entregue, `null` — o prazo nem começou.
+              const diasDevolucao = diasRestantesDevolucao(order.delivered_at)
+              const podeDevolver =
+                order.status !== 'pending' &&
+                order.return_status === 'none' &&
+                (diasDevolucao === null || diasDevolucao > 0)
+
               return (
                 <Panel key={order.id} className="p-5">
                   <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
@@ -81,8 +91,18 @@ export default async function OrdersPage({
                       <p className="mt-1 font-display text-lg font-extrabold tabular-nums tracking-tight text-tinta">
                         {formatCurrency(order.total)}
                       </p>
+                      {order.shipping_cost > 0 && (
+                        <p className="text-xs text-tinta-suave/70">
+                          Inclui {formatCurrency(order.shipping_cost)} de frete
+                        </p>
+                      )}
                     </div>
-                    <StatusBadge tipo="pedido" status={order.status} className="shrink-0" />
+                    <div className="flex shrink-0 flex-wrap items-center gap-2">
+                      {order.return_status !== 'none' && (
+                        <StatusBadge tipo="devolucao" status={order.return_status} />
+                      )}
+                      <StatusBadge tipo="pedido" status={order.status} />
+                    </div>
                   </div>
                   <div className="space-y-2">
                     {(itemsByOrder[order.id] ?? []).map((item: any, i: number) => (
@@ -103,6 +123,65 @@ export default async function OrdersPage({
                       </div>
                     ))}
                   </div>
+
+                  {/* Decisão 8.1: o endereço vem do checkout do Stripe — antes
+                      nem o aluno nem o admin sabiam pra onde o pedido ia. */}
+                  {order.shipping_line1 && (
+                    <p className="mt-4 flex items-start gap-2 text-xs leading-relaxed text-tinta-suave">
+                      <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-cobalto" aria-hidden="true" />
+                      <span>
+                        {order.shipping_line1}
+                        {order.shipping_line2 ? `, ${order.shipping_line2}` : ''} —{' '}
+                        {order.shipping_city}/{order.shipping_state}
+                        {order.shipping_postal_code ? ` · ${formatarCep(order.shipping_postal_code)}` : ''}
+                      </span>
+                    </p>
+                  )}
+
+                  {/* Decisão 8.3: quem despacha é fornecedor terceirizado, então
+                      o código é a única forma de acompanhar. */}
+                  {order.tracking_code && (
+                    <p className="mt-2 flex items-start gap-2 text-xs leading-relaxed text-tinta-suave">
+                      <Truck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-cobalto" aria-hidden="true" />
+                      <span>
+                        Rastreio:{' '}
+                        <strong className="font-semibold tabular-nums text-tinta">
+                          {order.tracking_code}
+                        </strong>
+                        {order.shipped_at
+                          ? ` · enviado em ${new Date(order.shipped_at).toLocaleDateString('pt-BR')}`
+                          : ''}
+                      </span>
+                    </p>
+                  )}
+
+                  {order.return_status === 'rejected' && order.return_review_note && (
+                    <Notice tipo="atencao" className="mt-4" titulo="Devolução recusada">
+                      {order.return_review_note}
+                    </Notice>
+                  )}
+
+                  {order.return_status === 'refunded' && (
+                    <p className="mt-3 text-xs text-tinta-suave">
+                      Devolução concluída
+                      {order.refund_amount ? ` — ${formatCurrency(order.refund_amount)} estornados` : ''}. O
+                      valor volta pelo mesmo pagamento em até 10 dias.
+                    </p>
+                  )}
+
+                  {podeDevolver && (
+                    <div className="mt-4 border-t border-cobalto/10 pt-3">
+                      <ReturnRequestButton orderId={order.id} diasRestantes={diasDevolucao} />
+                    </div>
+                  )}
+
+                  {order.status === 'delivered' &&
+                    order.return_status === 'none' &&
+                    diasDevolucao === 0 && (
+                      <p className="mt-4 border-t border-cobalto/10 pt-3 text-xs text-tinta-suave/70">
+                        O prazo de {DEVOLUCAO_PRAZO_DIAS} dias para troca ou devolução já passou.
+                      </p>
+                    )}
                 </Panel>
               )
             })}

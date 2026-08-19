@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { getAuthedUser } from '@/lib/auth/session'
-import { formatCurrency, COMISSAO_PADRAO } from '@/lib/utils'
-import { DollarSign, TrendingUp, Users, ExternalLink } from 'lucide-react'
+import { formatCurrency, COMISSAO_PADRAO, COMISSAO_PRODUTO_PROFESSOR } from '@/lib/utils'
+import { DollarSign, TrendingUp, Users, ExternalLink, ShoppingBag } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { PageHeader, PageBody } from '@/components/layout/PageShell'
@@ -29,7 +29,13 @@ export default async function BillingPage({
   const supabase = await createClient()
   const user = await getAuthedUser()
 
-  const [{ data: teacherProfile }, { data: payouts }, { data: revenueByCourse }] = await Promise.all([
+  const [
+    { data: teacherProfile },
+    { data: payouts },
+    { data: pendentes },
+    { data: repassesDeProduto },
+    { data: revenueByCourse },
+  ] = await Promise.all([
     supabase
       .from('teacher_profiles')
       .select('stripe_account_id, commission_rate, status')
@@ -41,9 +47,25 @@ export default async function BillingPage({
       .eq('teacher_id', user!.id)
       .order('created_at', { ascending: false })
       .limit(10),
+    // O histórico acima mostra só os 10 últimos; o retido precisa da soma
+    // inteira (decisão 5.2).
+    supabase
+      .from('teacher_payouts')
+      .select('amount')
+      .eq('teacher_id', user!.id)
+      .eq('status', 'pending'),
+    // Comissão de produto (decisão 8.4) não entra em
+    // `get_my_teacher_revenue_by_course`, que só olha matrícula. Vem daqui.
+    supabase
+      .from('teacher_payouts')
+      .select('amount')
+      .eq('teacher_id', user!.id)
+      .in('type', ['product_sale', 'product_clawback']),
     supabase.rpc('get_my_teacher_revenue_by_course'),
   ])
 
+  const retido = (pendentes ?? []).reduce((soma, p) => soma + (p.amount ?? 0), 0)
+  const comissaoProdutos = (repassesDeProduto ?? []).reduce((soma, p) => soma + (p.amount ?? 0), 0)
   const commissionRate = teacherProfile?.commission_rate ?? COMISSAO_PADRAO
   const platformRate = commissionRate / 100
 
@@ -82,9 +104,13 @@ export default async function BillingPage({
           </Notice>
         )}
 
+        {/* Decisão 5.2: vender sem conta conectada é permitido — o dinheiro
+            fica com a plataforma até ele conectar. Dizer "configure para
+            receber" fazia parecer que a venda não vale. */}
         {!teacherProfile?.stripe_account_id && (
           <Notice
             tipo="atencao"
+            titulo={retido > 0 ? `${formatCurrency(retido)} esperando você` : 'Conta de recebimento pendente'}
             className="mb-8"
             acao={
               <Link href="/professor/onboarding">
@@ -92,7 +118,9 @@ export default async function BillingPage({
               </Link>
             }
           >
-            Configure sua conta Stripe para receber pagamentos.
+            {retido > 0
+              ? 'Suas vendas continuam acontecendo normalmente e o valor fica guardado com a plataforma. Conecte sua conta Stripe para receber.'
+              : 'Você já pode vender: a plataforma guarda o valor das vendas e repassa assim que sua conta Stripe estiver conectada.'}
           </Notice>
         )}
 
@@ -101,6 +129,26 @@ export default async function BillingPage({
           <StatTile icon={DollarSign} label="Ganhos líquidos" valor={formatCurrency(totalNet)} nota={`Após ${commissionRate}% de comissão`} />
           <StatTile icon={Users} label="Total de vendas" valor={totalSales} />
         </div>
+
+        {/* Decisão 8.4: a comissão de produto não é receita de curso e não
+            pode ser somada nos blocos acima — quem vê "receita bruta" espera
+            o preço dos cursos vendidos. */}
+        {comissaoProdutos !== 0 && (
+          <Panel className="mb-8 flex flex-wrap items-center justify-between gap-3 p-5">
+            <div className="flex items-center gap-3">
+              <ShoppingBag className="h-5 w-5 shrink-0 text-brasa-escura" aria-hidden="true" />
+              <div>
+                <p className="text-sm font-semibold text-tinta">Comissão de produtos</p>
+                <p className="text-xs text-tinta-suave/70">
+                  {COMISSAO_PRODUTO_PROFESSOR}% do que os alunos compram pela página das suas aulas.
+                </p>
+              </div>
+            </div>
+            <p className="font-display text-lg font-extrabold tabular-nums tracking-tight text-tinta">
+              {formatCurrency(comissaoProdutos)}
+            </p>
+          </Panel>
+        )}
 
         {Object.keys(courseRevenue).length > 0 && (
           <Panel className="mb-6 p-0">
@@ -139,6 +187,8 @@ export default async function BillingPage({
                       {/* Valor negativo sem rótulo assusta: é o desconto de um
                           curso que o aluno devolveu (decisão 2.2). */}
                       {payout.type === 'refund_clawback' && ' · estorno de reembolso'}
+                      {payout.type === 'product_sale' && ' · comissão de produto'}
+                      {payout.type === 'product_clawback' && ' · estorno de devolução de produto'}
                     </p>
                   </div>
                   <StatusBadge tipo="repasse" status={payout.status} className="shrink-0" />

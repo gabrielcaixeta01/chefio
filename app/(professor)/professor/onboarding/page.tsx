@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
+import { COMISSAO_PADRAO } from '@/lib/utils'
 import { StripeOnboardingButton } from '@/components/stripe/StripeOnboardingButton'
 import { PageHeader, PageBody } from '@/components/layout/PageShell'
 import { Panel } from '@/components/ui/panel'
@@ -32,14 +33,14 @@ export default async function OnboardingPage({
       <PageHeader
         olho="Recebimentos"
         titulo="Configurar recebimentos"
-        descricao="Para publicar cursos pagos e receber pagamentos, conecte sua conta Stripe."
+        descricao="Conecte sua conta Stripe para receber o valor das suas vendas."
       />
 
       <PageBody className="max-w-2xl">
         {params.success && (
           <Notice tipo="sucesso" className="mb-6">
             {isActive
-              ? 'Conta conectada com sucesso! Você já pode publicar cursos pagos.'
+              ? 'Conta conectada com sucesso! Os próximos repasses caem direto pra você.'
               : 'Conta vinculada. Complete o cadastro no Stripe para ativar os pagamentos.'}
           </Notice>
         )}
@@ -86,8 +87,10 @@ export default async function OnboardingPage({
         {/* Informação de contrato, não alerta: âmbar aqui competia com os
             avisos de erro logo acima e treinava o olho a ignorar amarelo. */}
         <Notice tipo="info" titulo="Sobre as comissões" className="mt-6">
-          A plataforma retém uma comissão por cada venda (padrão 20%). Você define o preço dos seus
-          cursos livremente e recebe o valor líquido automaticamente após cada compra.
+          A plataforma retém uma comissão por cada venda (padrão {COMISSAO_PADRAO}%). Você define o
+          preço dos seus cursos livremente e recebe o valor líquido automaticamente após cada
+          compra. Enquanto a conta não estiver conectada você continua vendendo normalmente — a
+          plataforma guarda o valor e repassa depois.
         </Notice>
       </PageBody>
     </>

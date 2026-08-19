@@ -155,7 +155,9 @@ async function handleDispute(supabase: SupabaseAdmin, dispute: Stripe.Dispute) {
     .maybeSingle()
 
   if (!enrollment) {
-    // Pode ser disputa de pedido da loja — tratado na seção 8, ainda não aqui.
+    // Pode ser disputa de pedido da loja. O questionário não decidiu o que
+    // fazer nesse caso (a 8.6 cobre devolução, não contestação no cartão),
+    // então fica só o registro em log até essa regra existir.
     console.warn('charge.dispute.created sem matrícula correspondente:', paymentIntentId)
     return NextResponse.json({ ok: true })
   }
@@ -171,39 +173,61 @@ async function handleDispute(supabase: SupabaseAdmin, dispute: Stripe.Dispute) {
   return NextResponse.json({ ok: true })
 }
 
+/**
+ * Pedido da loja pago (decisões 8.1 e 8.4).
+ *
+ * O pedido já existe em 'pending' desde o checkout — aqui só entram o
+ * endereço que o Stripe coletou, a baixa de estoque e o repasse do professor
+ * pelos itens que vieram da página de uma aula. Tudo dentro de
+ * `confirm_product_order`, numa transação só e idempotente.
+ */
 async function handleProductOrder(
   supabase: SupabaseAdmin,
   session: Stripe.Checkout.Session
 ) {
-  const { studentId, itemsSummary } = session.metadata ?? {}
+  const orderId = session.metadata?.orderId
 
-  if (!studentId || !itemsSummary) {
-    console.error('checkout.session.completed (products) sem studentId/itemsSummary:', session.id)
-    return NextResponse.json({ ok: true })
-  }
-
-  const items = itemsSummary
-    .split(',')
-    .map((pair) => {
-      const [productId, quantityRaw] = pair.split(':')
-      return { productId, quantity: parseInt(quantityRaw, 10) }
-    })
-    .filter((item) => item.productId && Number.isFinite(item.quantity) && item.quantity > 0)
-
-  if (items.length === 0) {
+  if (!orderId) {
+    console.error('checkout.session.completed (products) sem orderId:', session.id)
     return NextResponse.json({ ok: true })
   }
 
   const paymentIntentId = typeof session.payment_intent === 'string' ? session.payment_intent : null
 
-  // Insert de orders/order_items + baixa de estoque rodam numa transação só
-  // dentro da função (00009_atomic_product_order.sql) — preço e estoque são
-  // lidos com a linha travada, então dois webhooks concorrentes pro mesmo
-  // produto não perdem baixa um do outro.
-  const { error: orderError } = await supabase.rpc('create_product_order', {
-    p_student_id: studentId,
-    p_stripe_payment_intent_id: paymentIntentId,
-    p_items: items.map((i) => ({ product_id: i.productId, quantity: i.quantity })),
+  // `collected_information.shipping_details` é onde o endereço passou a ficar
+  // nas versões recentes da API; `shipping_details` no topo é o campo antigo.
+  // Ler os dois evita que uma troca de versão no painel do Stripe zere o
+  // endereço sem ninguém perceber — e sem endereço o pedido não é despachável.
+  type Entrega = {
+    name?: string | null
+    address?: {
+      line1?: string | null
+      line2?: string | null
+      city?: string | null
+      state?: string | null
+      postal_code?: string | null
+      country?: string | null
+    } | null
+  }
+  const sessionAny = session as unknown as {
+    collected_information?: { shipping_details?: Entrega | null }
+    shipping_details?: Entrega | null
+  }
+  const entrega = sessionAny.collected_information?.shipping_details ?? sessionAny.shipping_details
+  const endereco = entrega?.address
+
+  const { error: orderError } = await supabase.rpc('confirm_product_order', {
+    p_order_id: orderId,
+    p_payment_intent_id: paymentIntentId,
+    p_shipping: {
+      name: entrega?.name ?? null,
+      line1: endereco?.line1 ?? null,
+      line2: endereco?.line2 ?? null,
+      city: endereco?.city ?? null,
+      state: endereco?.state ?? null,
+      postal_code: endereco?.postal_code ?? null,
+      country: endereco?.country ?? null,
+    },
   })
 
   if (orderError) {

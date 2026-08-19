@@ -133,8 +133,9 @@ export default async function LessonPlayerPage({
         />
       </div>
 
-      {/* Produtos recomendados da aula */}
-      <LessonProducts products={lessonProducts} />
+      {/* Produtos recomendados da aula. `lessonId` viaja junto porque é ele
+          que credita a comissão ao professor do curso (decisão 8.4). */}
+      <LessonProducts products={lessonProducts} lessonId={lessonId} />
 
       <div className="flex items-center justify-between my-8">
         {prevLesson ? (

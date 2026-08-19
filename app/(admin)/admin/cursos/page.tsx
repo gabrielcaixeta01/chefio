@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, prazoDeRevisao, revisaoAtrasada, PRAZO_REVISAO_DIAS_UTEIS } from '@/lib/utils'
 import { CourseReviewActions } from '@/components/admin/CourseReviewActions'
 import { PageHeader, PageBody } from '@/components/layout/PageShell'
 import { Panel } from '@/components/ui/panel'
@@ -30,7 +30,7 @@ export default async function AdminCoursesPage({
 
   let query = supabase
     .from('courses')
-    .select('id, title, slug, status, price, category, created_at, teacher:profiles(name)', { count: 'exact' })
+    .select('id, title, slug, status, price, category, created_at, submitted_at, rejection_reason, teacher:profiles(name)', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(from, to)
 
@@ -53,7 +53,7 @@ export default async function AdminCoursesPage({
       <PageHeader
         olho="Administração"
         titulo="Cursos"
-        descricao={`${count ?? 0} ${count === 1 ? 'curso' : 'cursos'} ${status ? 'neste filtro' : 'na plataforma'}`}
+        descricao={`${count ?? 0} ${count === 1 ? 'curso' : 'cursos'} ${status ? 'neste filtro' : 'na plataforma'} · prazo de revisão: ${PRAZO_REVISAO_DIAS_UTEIS} dias úteis`}
       >
         <div className="flex flex-wrap items-center gap-2">
           {filtros.map((filtro) => {
@@ -103,6 +103,30 @@ export default async function AdminCoursesPage({
                       {' · '}
                       {course.price === 0 ? 'Grátis' : formatCurrency(course.price ?? 0)}
                     </p>
+                    {/* Decisão 5.5: o professor foi avisado de que a resposta
+                        sai em até 2 dias úteis. Quem tem que enxergar o
+                        relógio correndo é quem revisa. */}
+                    {course.status === 'pending_review' && course.submitted_at && (
+                      <p
+                        className={cn(
+                          'mt-0.5 truncate text-xs',
+                          revisaoAtrasada(course.submitted_at)
+                            ? 'font-semibold text-red-600'
+                            : 'text-tinta-suave/70'
+                        )}
+                      >
+                        Enviado em {new Date(course.submitted_at).toLocaleDateString('pt-BR')}
+                        {' · '}
+                        {revisaoAtrasada(course.submitted_at)
+                          ? `prazo vencido em ${prazoDeRevisao(course.submitted_at).toLocaleDateString('pt-BR')}`
+                          : `responder até ${prazoDeRevisao(course.submitted_at).toLocaleDateString('pt-BR')}`}
+                      </p>
+                    )}
+                    {course.status === 'rejected' && course.rejection_reason && (
+                      <p className="mt-0.5 line-clamp-2 text-xs text-tinta-suave/70">
+                        Motivo: {course.rejection_reason}
+                      </p>
+                    )}
                   </div>
                   <StatusBadge
                     tipo="curso"

@@ -15,6 +15,9 @@ export async function ProfessorSidebar() {
     { label: 'Dashboard', href: '/professor', icon: 'LayoutDashboard' },
     { label: 'Meus Cursos', href: '/professor/cursos', icon: 'BookOpen' },
     { label: 'Faturamento', href: '/professor/faturamento', icon: 'DollarSign' },
+    // Decisão 8.5: escolher os produtos que aparecem em cada aula e pedir o
+    // cadastro de um que ainda não está no catálogo.
+    { label: 'Produtos', href: '/professor/produtos', icon: 'Package' },
     // 'Documentos' saiu daqui: /professor/documentos nunca existiu e o item
     // dava 404. A tabela `documents`, a RLS e o bucket já estão prontos —
     // quando a página existir, é só devolver a linha.

@@ -24,40 +24,97 @@ const productSchema = z.object({
 
 type ProductFormData = z.infer<typeof productSchema>
 
-export function ProductForm() {
+/** Pedido de cadastro feito por um professor (decisão 8.5), quando houver. */
+export interface PedidoDeProduto {
+  id: string
+  name: string
+  description: string | null
+  reference_url: string | null
+  suggested_price: number | null
+  teacherName?: string | null
+}
+
+export function ProductForm({ pedido }: { pedido?: PedidoDeProduto | null }) {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<ProductFormData>({
     resolver: zodResolver(productSchema) as any,
-    defaultValues: { name: '', description: '', price: 0, stock: 0, image_url: '' },
+    defaultValues: pedido
+      ? {
+          name: pedido.name,
+          description: pedido.description ?? '',
+          price: pedido.suggested_price ?? 0,
+          stock: 0,
+          image_url: '',
+        }
+      : { name: '', description: '', price: 0, stock: 0, image_url: '' },
   })
 
   async function onSubmit(data: ProductFormData) {
     setLoading(true)
     const supabase = createClient()
-    const { error } = await supabase.from('products').insert({
-      name: data.name,
-      description: data.description || null,
-      price: data.price,
-      stock: data.stock,
-      image_url: data.image_url || null,
-      is_active: true,
-    })
+    const { data: criado, error } = await supabase
+      .from('products')
+      .insert({
+        name: data.name,
+        description: data.description || null,
+        price: data.price,
+        stock: data.stock,
+        image_url: data.image_url || null,
+        is_active: true,
+      })
+      .select('id')
+      .single()
 
     if (error) {
       toast.error(error.message ?? 'Erro ao criar produto.')
-    } else {
-      toast.success('Produto criado!')
-      reset()
-      router.refresh()
+      setLoading(false)
+      return
     }
+
+    // Cadastrar a partir de um pedido fecha o pedido junto (8.5): sem isso o
+    // professor ficaria vendo "Em análise" com o produto já na prateleira.
+    if (pedido && criado?.id) {
+      const { error: pedidoError } = await supabase
+        .from('product_requests')
+        .update({ status: 'approved', product_id: criado.id })
+        .eq('id', pedido.id)
+      if (pedidoError) toast.error('Produto criado, mas o pedido do professor não foi baixado.')
+    }
+
+    toast.success(pedido ? 'Produto criado e pedido atendido!' : 'Produto criado!')
+    reset()
+    router.refresh()
+    if (pedido) router.push('/admin/produtos')
     setLoading(false)
   }
 
   return (
     <div className="bg-white rounded-md border border-cobalto/15 p-5">
-      <h2 className="font-display font-bold text-tinta mb-4 tracking-tight">Novo produto</h2>
+      <h2 className="font-display font-bold text-tinta mb-4 tracking-tight">
+        {pedido ? 'Cadastrar produto pedido' : 'Novo produto'}
+      </h2>
+      {pedido && (
+        <p className="-mt-2 mb-4 text-xs leading-relaxed text-tinta-suave">
+          Pedido de {pedido.teacherName ?? 'um professor'}.
+          {pedido.reference_url && (
+            <>
+              {' '}
+              <a
+                href={pedido.reference_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold text-cobalto underline-offset-4 hover:underline"
+              >
+                Ver referência
+              </a>
+              .
+            </>
+          )}{' '}
+          Salvar aqui cadastra o produto e baixa o pedido.
+        </p>
+      )}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-1">
           <Label htmlFor="name">Nome *</Label>

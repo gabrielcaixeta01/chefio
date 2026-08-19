@@ -163,6 +163,22 @@ export function TeacherApplicationForm({
         {errors.exclusividade && (
           <p className="mt-2 text-xs text-red-600">{errors.exclusividade.message}</p>
         )}
+        {/* Decisões 6.1 e 6.2: o curso continua sendo dele e a Chefio pode
+            usar trechos na divulgação. Dizer isso aqui é o "avisando" da
+            6.2 — o aviso chega antes de existir conteúdo pra divulgar. */}
+        <p className="mt-3 text-xs text-tinta-suave/70">
+          Seus cursos continuam sendo seus. Ao ensinar aqui você aceita a{' '}
+          <a
+            href="/politica-de-conteudo"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold text-cobalto underline-offset-4 hover:underline"
+          >
+            Política de conteúdo
+          </a>
+          , que explica a licença de exibição aos alunos e o uso de trechos das aulas na
+          divulgação da plataforma.
+        </p>
       </div>
 
       <Button type="submit" size="lg" loading={loading} loadingText="Enviando…">

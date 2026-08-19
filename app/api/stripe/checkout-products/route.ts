@@ -1,9 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { cotarFrete, normalizarCep } from '@/lib/frete'
 
-type CartRequestItem = { id: string; quantity: number }
+type CartRequestItem = { id: string; quantity: number; lessonId?: string | null }
 
+/**
+ * Checkout da loja (decisões 8.1, 8.2, 8.4).
+ *
+ * O pedido nasce aqui, em 'pending', antes de a pessoa ver a tela do Stripe.
+ * Antes ele era remontado no webhook a partir de um resumo `"<uuid>:<qtd>"`
+ * na metadata — que estourava o teto de 500 caracteres com ~12 produtos e não
+ * tinha onde caber frete nem a aula que originou cada item. Agora a metadata
+ * leva só o id do pedido.
+ */
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -14,67 +24,83 @@ export async function POST(req: NextRequest) {
   }
 
   let items: CartRequestItem[]
+  let cep: string
   try {
-    ({ items } = (await req.json()) as { items: CartRequestItem[] })
+    const body = (await req.json()) as { items: CartRequestItem[]; cep?: string }
+    items = body.items
+    cep = normalizarCep(body.cep ?? '')
   } catch {
     return NextResponse.json({ error: 'Requisição inválida' }, { status: 400 })
   }
+
   if (!Array.isArray(items) || items.length === 0) {
     return NextResponse.json({ error: 'Carrinho vazio' }, { status: 400 })
   }
 
-  // O mesmo produto pode chegar em duas linhas do carrinho. Sem somar antes,
-  // cada linha passava sozinha na checagem de estoque e o total pedido podia
-  // superar o saldo (2 linhas de 3 unidades com 4 em estoque).
-  const quantidadePorProduto = new Map<string, number>()
+  // Decisão 8.2: sem CEP não há frete, e sem frete não há total. O carrinho
+  // já bloqueia o botão, mas o valor não pode depender só disso.
+  if (cep.length !== 8) {
+    return NextResponse.json({ error: 'Informe um CEP válido para calcular o frete.' }, { status: 400 })
+  }
+
+  // O mesmo produto pode chegar em duas linhas do carrinho — uma da aba Loja
+  // e outra da página de uma aula. Elas não se somam: a origem é o que decide
+  // se o professor ganha comissão (8.4), então cada linha vira um item.
+  const linhas: { product_id: string; quantity: number; lesson_id: string | null }[] = []
+  let totalUnidades = 0
   for (const item of items) {
     const quantity = Math.floor(Number(item.quantity))
     if (!item?.id || !Number.isFinite(quantity) || quantity < 1) {
       return NextResponse.json({ error: 'Produto inválido' }, { status: 400 })
     }
-    quantidadePorProduto.set(item.id, (quantidadePorProduto.get(item.id) ?? 0) + quantity)
+    linhas.push({ product_id: item.id, quantity, lesson_id: item.lessonId || null })
+    totalUnidades += quantity
   }
 
-  // Preço, nome e estoque vêm sempre do banco — nunca do request.
-  const { data: products } = await supabase
-    .from('products')
-    .select('id, name, price, stock')
-    .in('id', [...quantidadePorProduto.keys()])
-    .eq('is_active', true)
-
-  const productById = new Map((products ?? []).map((p) => [p.id, p]))
-
-  const lineItems: NonNullable<Stripe.Checkout.SessionCreateParams['line_items']> = []
-  for (const [productId, quantity] of quantidadePorProduto) {
-    const product = productById.get(productId)
-    if (!product) {
-      return NextResponse.json({ error: 'Produto inválido' }, { status: 400 })
-    }
-    if (quantity > product.stock) {
-      return NextResponse.json({ error: `Estoque insuficiente para ${product.name}` }, { status: 400 })
-    }
-    lineItems.push({
-      price_data: {
-        currency: 'brl',
-        product_data: { name: product.name },
-        unit_amount: Math.round(product.price * 100),
-      },
-      quantity,
-    })
+  const frete = cotarFrete(cep, totalUnidades)
+  if (!frete) {
+    return NextResponse.json({ error: 'Não foi possível calcular o frete para este CEP.' }, { status: 400 })
   }
 
-  // Metadata do Stripe tem teto de 500 caracteres por valor. Cada par
-  // "<uuid>:<qtd>," come ~40, então o carrinho estoura por volta de 12 itens
-  // distintos — e o erro apareceria como 500 genérico na hora de pagar.
-  const itemsSummary = [...quantidadePorProduto]
-    .map(([id, qtd]) => `${id}:${qtd}`)
-    .join(',')
+  // Preço, estoque e a comissão do professor são resolvidos dentro da função,
+  // com a linha do produto travada. O cliente manda id e quantidade, nada mais.
+  const admin = createAdminClient()
+  const { data: criado, error: pedidoError } = await admin.rpc('create_pending_order', {
+    p_student_id: user.id,
+    p_items: linhas,
+    p_postal_code: cep,
+    p_shipping_cost: frete.valor,
+    p_shipping_days: frete.dias,
+  })
 
-  if (itemsSummary.length > 500) {
+  if (pedidoError || !criado?.[0]?.order_id) {
+    // As mensagens do raise já vêm prontas ("Estoque insuficiente para X").
     return NextResponse.json(
-      { error: 'Carrinho grande demais. Finalize em pedidos menores (até 12 produtos diferentes).' },
+      { error: pedidoError?.message ?? 'Não foi possível montar o pedido.' },
       { status: 400 }
     )
+  }
+
+  const orderId = criado[0].order_id
+
+  const { data: itensGravados } = await admin
+    .from('order_items')
+    .select('quantity, unit_price, product:products(name)')
+    .eq('order_id', orderId)
+
+  const lineItems: NonNullable<Stripe.Checkout.SessionCreateParams['line_items']> = (
+    itensGravados ?? []
+  ).map((item) => ({
+    price_data: {
+      currency: 'brl',
+      product_data: { name: (item.product as any)?.name ?? 'Produto' },
+      unit_amount: Math.round(Number(item.unit_price) * 100),
+    },
+    quantity: item.quantity,
+  }))
+
+  if (lineItems.length === 0) {
+    return NextResponse.json({ error: 'Pedido sem itens.' }, { status: 400 })
   }
 
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
@@ -84,11 +110,25 @@ export async function POST(req: NextRequest) {
     mode: 'payment',
     payment_method_types: ['card'],
     line_items: lineItems,
-    metadata: {
-      studentId: user.id,
-      type: 'products',
-      itemsSummary,
-    },
+    // Decisão 8.1: o endereço é coletado pelo próprio Stripe.
+    // Decisão 8.7: só Brasil, e a tabela de frete cobre as nove faixas de CEP.
+    shipping_address_collection: { allowed_countries: ['BR'] },
+    // A cotação já foi feita pelo CEP que a pessoa digitou no carrinho. Aqui
+    // ela vira uma linha fixa: o Stripe não recalcula frete pelo endereço.
+    shipping_options: [
+      {
+        shipping_rate_data: {
+          type: 'fixed_amount',
+          fixed_amount: { amount: Math.round(frete.valor * 100), currency: 'brl' },
+          display_name: `Entrega — ${frete.regiao}`,
+          delivery_estimate: {
+            minimum: { unit: 'business_day', value: Math.max(1, frete.dias - 2) },
+            maximum: { unit: 'business_day', value: frete.dias },
+          },
+        },
+      },
+    ],
+    metadata: { type: 'products', orderId },
     success_url: `${appUrl}/aluno/pedidos?success=true`,
     cancel_url: `${appUrl}/aluno/loja`,
   })

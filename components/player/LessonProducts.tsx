@@ -1,6 +1,5 @@
 'use client'
 
-import { useCart } from '@/contexts/CartContext'
 import { formatCurrency } from '@/lib/utils'
 import { AddToCartButton } from '@/components/store/AddToCartButton'
 import { ShoppingBag } from 'lucide-react'
@@ -13,7 +12,13 @@ interface Product {
   description: string | null
 }
 
-export function LessonProducts({ products }: { products: Product[] }) {
+export function LessonProducts({
+  products,
+  lessonId,
+}: {
+  products: Product[]
+  lessonId: string
+}) {
   if (products.length === 0) return null
 
   return (
@@ -41,7 +46,7 @@ export function LessonProducts({ products }: { products: Product[] }) {
               <p className="text-sm font-medium text-tinta truncate">{product.name}</p>
               <p className="text-xs text-brasa-escura font-semibold">{formatCurrency(product.price)}</p>
             </div>
-            <AddToCartButton product={product} />
+            <AddToCartButton product={product} lessonId={lessonId} />
           </div>
         ))}
       </div>

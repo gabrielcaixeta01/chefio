@@ -42,6 +42,69 @@ export function diasRestantesReembolso(matriculadoEm: string | Date): number {
   return Math.max(0, Math.ceil((limite - Date.now()) / 86_400_000))
 }
 
+/**
+ * Prazo de revisão de curso (decisão 5.5). Está escrito na tela do professor
+ * no momento em que ele envia — se mudar aqui, muda lá junto.
+ */
+export const PRAZO_REVISAO_DIAS_UTEIS = 2
+
+/**
+ * Soma dias úteis (segunda a sexta) a uma data. Feriado não entra na conta:
+ * manter um calendário nacional atualizado custa mais do que o prazo vale, e
+ * a promessa é "até 2 dias úteis" — errar pra menos é o lado seguro.
+ */
+export function somarDiasUteis(inicio: string | Date, dias: number): Date {
+  const data = new Date(inicio)
+  let restantes = dias
+  while (restantes > 0) {
+    data.setDate(data.getDate() + 1)
+    const diaDaSemana = data.getDay()
+    if (diaDaSemana !== 0 && diaDaSemana !== 6) restantes--
+  }
+  return data
+}
+
+/** Quando a revisão deste envio deveria estar respondida. */
+export function prazoDeRevisao(enviadoEm: string | Date): Date {
+  return somarDiasUteis(enviadoEm, PRAZO_REVISAO_DIAS_UTEIS)
+}
+
+/** Passou do prazo prometido e ninguém revisou. */
+export function revisaoAtrasada(enviadoEm: string | null | undefined): boolean {
+  if (!enviadoEm) return false
+  return Date.now() > prazoDeRevisao(enviadoEm).getTime()
+}
+
+/**
+ * Percentual que o professor recebe quando o produto é comprado pela página
+ * da aula dele (decisão 8.4). Comprado pela aba Loja, a receita é toda da
+ * plataforma e nada disso entra na conta.
+ *
+ * ⚠️ Provisório: a decisão diz "uma porcentagem a ser definida". Espelha
+ * `comissao_produto_professor()` na migration 00021 — mudar aqui exige mudar
+ * lá junto, e o valor gravado em `order_items.teacher_commission_rate` é o
+ * que vale para os pedidos já feitos.
+ */
+export const COMISSAO_PRODUTO_PROFESSOR = 10
+
+/**
+ * Janela de troca e devolução de produto físico (decisão 8.6). O mesmo prazo
+ * está em `request_product_return` (migration 00021). Conta do recebimento,
+ * não da compra — é o que o CDC manda.
+ */
+export const DEVOLUCAO_PRAZO_DIAS = 7
+
+/**
+ * Dias que faltam pro fim da janela de devolução. `null` quando o pedido
+ * ainda não foi entregue: o prazo nem começou, então não há contagem a
+ * mostrar. 0 quando já expirou.
+ */
+export function diasRestantesDevolucao(entregueEm: string | null | undefined): number | null {
+  if (!entregueEm) return null
+  const limite = new Date(entregueEm).getTime() + DEVOLUCAO_PRAZO_DIAS * 86_400_000
+  return Math.max(0, Math.ceil((limite - Date.now()) / 86_400_000))
+}
+
 export function formatCurrency(value: number): string {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
