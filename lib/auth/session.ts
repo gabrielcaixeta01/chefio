@@ -17,14 +17,22 @@ export const getAuthedUser = cache(async () => {
   return user
 })
 
-/** Role lido do JWT (app_metadata), sincronizado via trigger — sem SELECT em profiles. */
+/** Role cru lido do JWT (app_metadata), sincronizado via trigger — sem SELECT em profiles. */
 export function roleFromUser(user: User | null): Role | null {
   return (user?.app_metadata?.role as Role | undefined) ?? null
+}
+
+/** True quando a pessoa é o dono/financeiro (decisão 1.2 — só ele altera comissão). */
+export function isOwner(user: User | null): boolean {
+  return roleFromUser(user) === 'owner'
 }
 
 export async function requireRole(role: Role) {
   const user = await getAuthedUser()
   if (!user) redirect('/login')
-  if (roleFromUser(user) !== role) redirect('/')
+  // 'owner' é um admin com poderes a mais — passa em qualquer gate de admin.
+  const atual = roleFromUser(user)
+  const efetivo = atual === 'owner' ? 'admin' : atual
+  if (efetivo !== role) redirect('/')
   return user
 }

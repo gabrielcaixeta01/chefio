@@ -1,5 +1,5 @@
 // Tipos de domínio reutilizáveis
-export type Role = 'admin' | 'teacher' | 'student'
+export type Role = 'owner' | 'admin' | 'teacher' | 'student'
 export type CourseStatus = 'draft' | 'pending_review' | 'approved' | 'rejected'
 export type TeacherStatus = 'pending' | 'active' | 'suspended'
 export type OrderStatus = 'pending' | 'paid' | 'shipped' | 'delivered'

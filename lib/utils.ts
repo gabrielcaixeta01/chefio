@@ -16,6 +16,14 @@ export function slugify(text: string): string {
     .replace(/-+/g, '-')
 }
 
+/**
+ * Comissão da plataforma sobre cada matrícula (decisão de negócio 1.1).
+ * É o default de `teacher_profiles.commission_rate` no banco (migration 00015)
+ * e o fallback quando o professor ainda não tem linha em teacher_profiles.
+ * Mudar aqui exige mudar o default no banco junto — os dois têm que bater.
+ */
+export const COMISSAO_PADRAO = 15
+
 export function formatCurrency(value: number): string {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',

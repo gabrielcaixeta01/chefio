@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { COMISSAO_PADRAO } from '@/lib/utils'
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
@@ -69,7 +70,7 @@ export async function POST(req: NextRequest) {
     .maybeSingle()
 
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
-  const commissionRate = teacherProfile?.commission_rate ?? 20
+  const commissionRate = teacherProfile?.commission_rate ?? COMISSAO_PADRAO
   const priceInCents = Math.round(course.price * 100)
   const appFeeInCents = Math.round(priceInCents * (commissionRate / 100))
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'

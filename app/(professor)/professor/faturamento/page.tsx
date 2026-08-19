@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { getAuthedUser } from '@/lib/auth/session'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, COMISSAO_PADRAO } from '@/lib/utils'
 import { DollarSign, TrendingUp, Users, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -44,7 +44,7 @@ export default async function BillingPage({
     supabase.rpc('get_my_teacher_revenue_by_course'),
   ])
 
-  const commissionRate = teacherProfile?.commission_rate ?? 20
+  const commissionRate = teacherProfile?.commission_rate ?? COMISSAO_PADRAO
   const platformRate = commissionRate / 100
 
   const soldCourses = (revenueByCourse ?? []).filter((c) => c.sale_count > 0)

@@ -12,9 +12,13 @@ interface TeacherActionsProps {
   userId: string
   currentStatus: string
   currentCommission: number
+  /** Decisão 1.2: só o perfil dono/financeiro altera comissão. O banco também
+   *  barra (trigger guard_teacher_profile_admin_columns) — isto aqui só evita
+   *  oferecer um botão que ia falhar. */
+  podeEditarComissao: boolean
 }
 
-export function TeacherActions({ teacherProfileId, userId, currentStatus, currentCommission }: TeacherActionsProps) {
+export function TeacherActions({ teacherProfileId, userId, currentStatus, currentCommission, podeEditarComissao }: TeacherActionsProps) {
   const [loading, setLoading] = useState<string | null>(null)
   const [editingCommission, setEditingCommission] = useState(false)
   const [commission, setCommission] = useState(currentCommission)
@@ -46,7 +50,11 @@ export function TeacherActions({ teacherProfileId, userId, currentStatus, curren
       .update({ commission_rate: value })
       .eq('id', teacherProfileId)
 
-    if (error) toast.error('Erro ao atualizar comissão.')
+    if (error) toast.error(
+      error.message.includes('dono/financeiro')
+        ? 'Só o perfil dono/financeiro pode alterar a comissão.'
+        : 'Erro ao atualizar comissão.'
+    )
     else {
       toast.success(`Comissão atualizada para ${value}%.`)
       setEditingCommission(false)
@@ -77,15 +85,17 @@ export function TeacherActions({ teacherProfileId, userId, currentStatus, curren
         </div>
       ) : (
         <>
-          <Button
-            size="sm"
-            variant="outline"
-            className="gap-1 text-tinta-suave"
-            onClick={() => setEditingCommission(true)}
-          >
-            <Percent className="h-3.5 w-3.5" />
-            Comissão
-          </Button>
+          {podeEditarComissao && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1 text-tinta-suave"
+              onClick={() => setEditingCommission(true)}
+            >
+              <Percent className="h-3.5 w-3.5" />
+              Comissão
+            </Button>
+          )}
           <Button
             size="sm"
             variant="outline"

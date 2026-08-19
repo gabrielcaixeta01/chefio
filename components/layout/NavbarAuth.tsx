@@ -5,9 +5,10 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { ActionLink } from '@/components/ui/action-link'
 
-type Role = 'admin' | 'teacher' | 'student' | null
+type Role = 'owner' | 'admin' | 'teacher' | 'student' | null
 
 const DASHBOARD_BY_ROLE: Record<string, string> = {
+  owner: '/admin',
   admin: '/admin',
   teacher: '/professor',
   student: '/aluno',

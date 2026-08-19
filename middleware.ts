@@ -43,7 +43,10 @@ export async function middleware(request: NextRequest) {
   )
 
   // Role vem do JWT (app_metadata), sincronizado via trigger — sem SELECT em profiles.
-  const role = user?.app_metadata?.role as string | undefined
+  // 'owner' (dono/financeiro, migration 00015) é um admin com poderes a mais:
+  // mesmas rotas, mesmo dashboard. A diferença só aparece na edição de comissão.
+  const rawRole = user?.app_metadata?.role as string | undefined
+  const role = rawRole === 'owner' ? 'admin' : rawRole
 
   if (protectedPrefix) {
     // Não autenticado → redireciona para login

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, COMISSAO_PADRAO } from '@/lib/utils'
 import { BookOpen, Users, DollarSign, Clock, CreditCard, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -34,7 +34,7 @@ export default async function ProfessorDashboard() {
     .in('course_id', (courses ?? []).map((c) => c.id))
 
   const grossRevenue = (enrollments ?? []).reduce((sum, e) => sum + (e.amount_paid ?? 0), 0)
-  const commissionRate = teacherProfile?.commission_rate ?? 20
+  const commissionRate = teacherProfile?.commission_rate ?? COMISSAO_PADRAO
   const netRevenue = grossRevenue * (1 - commissionRate / 100)
 
   const needsStripeOnboarding = !teacherProfile?.stripe_account_id

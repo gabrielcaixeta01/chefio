@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient as createServerClient, SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
+import { COMISSAO_PADRAO } from '@/lib/utils'
 
 type SupabaseAdmin = SupabaseClient<Database>
 
@@ -76,7 +77,7 @@ async function handleCourseEnrollment(
       .eq('user_id', teacherId)
       .maybeSingle()
 
-    const commissionRate = teacherProfile?.commission_rate ?? 20
+    const commissionRate = teacherProfile?.commission_rate ?? COMISSAO_PADRAO
     const teacherAmount = amountPaid * (1 - commissionRate / 100)
 
     const { error: payoutError } = await supabase.from('teacher_payouts').insert({

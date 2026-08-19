@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
+import { getAuthedUser, isOwner } from '@/lib/auth/session'
 import { TeacherActions } from '@/components/admin/TeacherActions'
 import { PageHeader, PageBody } from '@/components/layout/PageShell'
 import { Panel } from '@/components/ui/panel'
@@ -12,6 +13,8 @@ export const metadata: Metadata = { title: 'Admin — Professores' }
 
 export default async function AdminTeachersPage() {
   const supabase = await createClient()
+
+  const podeEditarComissao = isOwner(await getAuthedUser())
 
   const { data: teachers } = await supabase
     .from('teacher_profiles')
@@ -64,6 +67,7 @@ export default async function AdminTeachersPage() {
                       userId={teacher.user_id}
                       currentStatus={teacher.status}
                       currentCommission={teacher.commission_rate}
+                      podeEditarComissao={podeEditarComissao}
                     />
                   </li>
                 )

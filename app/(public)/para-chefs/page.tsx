@@ -3,6 +3,7 @@ import { Video, CreditCard, ShoppingBag, Users } from 'lucide-react'
 import { AzulejoWall } from '@/components/layout/AzulejoWall'
 import { PassosNumerados } from '@/components/layout/PassosNumerados'
 import { ActionLink } from '@/components/ui/action-link'
+import { COMISSAO_PADRAO } from '@/lib/utils'
 
 export const metadata: Metadata = {
   title: 'Ensinar na Chefio',
@@ -10,9 +11,6 @@ export const metadata: Metadata = {
     'Publique seu curso de culinária, defina seu preço e receba por matrícula. A Chefio cuida do vídeo, do pagamento e da loja de ingredientes.',
 }
 
-/* Espelha o padrão aplicado no código (teacher_profiles.commission_rate ?? 20).
-   É configurável por professor — se a taxa padrão mudar, muda aqui também. */
-const COMISSAO_PADRAO = 20
 
 const PASSOS = [
   {
