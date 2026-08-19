@@ -19,6 +19,8 @@ export async function AdminSidebar() {
     { label: 'Produtos', href: '/admin/produtos', icon: 'Package' },
     { label: 'Pedidos', href: '/admin/pedidos', icon: 'ShoppingBag' },
     { label: 'Matrículas', href: '/admin/matriculas', icon: 'ClipboardList' },
+    { label: 'Reembolsos', href: '/admin/reembolsos', icon: 'RotateCcw' },
+    { label: 'Cupons', href: '/admin/cupons', icon: 'Ticket' },
   ] satisfies NavItem[]
 
   return (

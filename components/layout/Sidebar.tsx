@@ -18,7 +18,9 @@ import {
   LogOut,
   Menu,
   Package,
+  RotateCcw,
   ShoppingBag,
+  Ticket,
   Users,
   X,
 } from 'lucide-react'
@@ -26,7 +28,7 @@ import {
 export interface NavItem {
   label: string
   href: string
-  icon: 'LayoutDashboard' | 'Users' | 'BookOpen' | 'DollarSign' | 'Package' | 'ShoppingBag' | 'ClipboardList' | 'FileText' | 'CreditCard'
+  icon: 'LayoutDashboard' | 'Users' | 'BookOpen' | 'DollarSign' | 'Package' | 'ShoppingBag' | 'ClipboardList' | 'FileText' | 'CreditCard' | 'RotateCcw' | 'Ticket'
 }
 
 const iconMap = {
@@ -39,6 +41,8 @@ const iconMap = {
   ClipboardList,
   FileText,
   CreditCard,
+  RotateCcw,
+  Ticket,
 } satisfies Record<NavItem['icon'], typeof LayoutDashboard>
 
 interface SidebarProps {

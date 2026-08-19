@@ -43,6 +43,8 @@ export default async function LessonPlayerPage({
       .select('id')
       .eq('student_id', user!.id)
       .eq('course_id', course.id)
+      // Reembolsada não vale como matrícula (decisão 2.3).
+      .is('refunded_at', null)
       .maybeSingle(),
     supabase
       .from('lessons')

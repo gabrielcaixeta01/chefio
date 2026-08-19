@@ -46,6 +46,8 @@ export async function getStudentCourses(studentId: string): Promise<StudentCours
     .from('enrollments')
     .select('id, created_at, course:courses(id, title, slug, thumbnail_url, teacher:profiles(name))')
     .eq('student_id', studentId)
+    // Curso reembolsado sai da biblioteca na hora (decisão 2.3).
+    .is('refunded_at', null)
     .order('created_at', { ascending: false })
 
   const rows = ((enrollments ?? []) as unknown as EnrollmentRow[]).filter((e) => e.course)

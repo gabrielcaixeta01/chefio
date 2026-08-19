@@ -5,6 +5,7 @@ import { PageHeader, PageBody } from '@/components/layout/PageShell'
 import { Panel } from '@/components/ui/panel'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Pagination } from '@/components/ui/pagination'
+import { StatusBadge } from '@/components/ui/status-badge'
 import { ClipboardList } from 'lucide-react'
 
 export const metadata: Metadata = { title: 'Admin — Matrículas' }
@@ -63,6 +64,11 @@ export default async function AdminEnrollmentsPage({
                   <span className="shrink-0 text-sm font-semibold tabular-nums text-tinta">
                     {e.amount_paid === 0 ? 'Grátis' : formatCurrency(e.amount_paid ?? 0)}
                   </span>
+                  {/* A matrícula reembolsada continua listada, com o estado à
+                      mostra — some do faturamento, não do histórico. */}
+                  {e.refund_status !== 'none' && (
+                    <StatusBadge tipo="reembolso" status={e.refund_status} className="shrink-0" />
+                  )}
                 </li>
               ))}
             </ul>

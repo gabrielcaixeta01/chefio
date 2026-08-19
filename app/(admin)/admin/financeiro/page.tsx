@@ -34,6 +34,8 @@ export default async function AdminFinancialPage() {
     supabase
       .from('enrollments')
       .select('amount_paid, created_at, course:courses(title, teacher_id, teacher:profiles(name))')
+      // Venda reembolsada não é receita — sai também da lista (decisão 2.2).
+      .is('refunded_at', null)
       .order('created_at', { ascending: false })
       .limit(15),
     supabase

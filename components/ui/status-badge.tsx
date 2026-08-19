@@ -43,11 +43,20 @@ const PROFESSOR = {
   suspended: { label: 'Suspenso', tom: 'destructive' },
 } satisfies Record<string, Entrada>
 
+const REEMBOLSO = {
+  none: { label: 'Normal', tom: 'neutral' },
+  requested: { label: 'Em análise', tom: 'warning' },
+  refunded: { label: 'Reembolsado', tom: 'info' },
+  rejected: { label: 'Recusado', tom: 'destructive' },
+  chargeback: { label: 'Chargeback', tom: 'destructive' },
+} satisfies Record<string, Entrada>
+
 const MAPAS = {
   curso: CURSO,
   pedido: PEDIDO,
   repasse: REPASSE,
   professor: PROFESSOR,
+  reembolso: REEMBOLSO,
 } satisfies Record<string, Record<string, Entrada>>
 
 type Tipo = keyof typeof MAPAS

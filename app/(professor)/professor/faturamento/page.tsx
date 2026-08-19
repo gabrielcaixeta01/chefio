@@ -134,7 +134,12 @@ export default async function BillingPage({
                 <div key={payout.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
                   <div>
                     <p className="text-sm text-tinta">{formatCurrency(payout.amount)}</p>
-                    <p className="text-xs text-tinta-suave/70">{new Date(payout.created_at).toLocaleDateString('pt-BR')}</p>
+                    <p className="text-xs text-tinta-suave/70">
+                      {new Date(payout.created_at).toLocaleDateString('pt-BR')}
+                      {/* Valor negativo sem rótulo assusta: é o desconto de um
+                          curso que o aluno devolveu (decisão 2.2). */}
+                      {payout.type === 'refund_clawback' && ' · estorno de reembolso'}
+                    </p>
                   </div>
                   <StatusBadge tipo="repasse" status={payout.status} className="shrink-0" />
                 </div>

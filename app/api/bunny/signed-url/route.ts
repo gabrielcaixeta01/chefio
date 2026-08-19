@@ -30,7 +30,9 @@ export async function GET(req: NextRequest) {
       .select('id')
       .eq('student_id', user.id)
       .eq('course_id', lesson.course_id)
-      .single()
+      // Reembolsada não dá mais URL de vídeo (decisão 2.3).
+      .is('refunded_at', null)
+      .maybeSingle()
 
     if (!enrollment) {
       // Check if user is the teacher

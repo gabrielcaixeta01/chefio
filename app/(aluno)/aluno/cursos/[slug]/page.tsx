@@ -4,10 +4,12 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import { getAuthedUser } from '@/lib/auth/session'
-import { formatDuration } from '@/lib/utils'
+import { formatDuration, diasRestantesReembolso } from '@/lib/utils'
 import { PageHeader, PageBody } from '@/components/layout/PageShell'
 import { Panel, SectionHeading } from '@/components/ui/panel'
+import { Notice } from '@/components/ui/notice'
 import { Notebook } from '@/components/player/Notebook'
+import { RefundButton } from '@/components/aluno/RefundButton'
 import { CheckCircle, Circle, Play, Lock, Clock, ArrowRight } from 'lucide-react'
 
 export const metadata: Metadata = { title: 'Assistir curso' }
@@ -32,7 +34,7 @@ export default async function AlunoCourseOverviewPage({
   const [{ data: enrollment }, { data: lessons }, { data: notebook }] = await Promise.all([
     supabase
       .from('enrollments')
-      .select('id')
+      .select('id, created_at, refund_status, refunded_at')
       .eq('student_id', user!.id)
       .eq('course_id', course.id)
       .maybeSingle(),
@@ -49,7 +51,12 @@ export default async function AlunoCourseOverviewPage({
       .maybeSingle(),
   ])
 
-  if (!enrollment) redirect(`/curso/${slug}`)
+  // Reembolsada = acesso encerrado na hora (decisão 2.3). As policies de
+  // lessons/lesson_attachments já barram o conteúdo; aqui é só não deixar a
+  // pessoa numa página vazia sem explicação.
+  if (!enrollment || enrollment.refunded_at) redirect(`/curso/${slug}`)
+
+  const diasParaReembolso = diasRestantesReembolso(enrollment.created_at)
 
   const { data: progressRows } = await supabase
     .from('lesson_progress')
@@ -146,12 +153,28 @@ export default async function AlunoCourseOverviewPage({
             </div>
           </Panel>
 
-          <div>
+          <div className="flex flex-col gap-4">
             <Notebook
               courseId={course.id}
               studentId={user!.id}
               initialContent={notebook?.content}
             />
+
+            {/* Reembolso (decisão 2.1). Fica discreto e some sozinho quando os
+                7 dias passam — não é pra competir com o botão de assistir. */}
+            {enrollment.refund_status === 'requested' && (
+              <Notice tipo="info" titulo="Reembolso em análise">
+                Seu pedido está com a nossa equipe. Respondemos em até 2 dias úteis.
+              </Notice>
+            )}
+            {enrollment.refund_status === 'rejected' && (
+              <Notice tipo="atencao" titulo="Reembolso não aprovado">
+                Seu acesso ao curso continua liberado. Fale com o suporte se quiser rever o caso.
+              </Notice>
+            )}
+            {enrollment.refund_status === 'none' && diasParaReembolso > 0 && (
+              <RefundButton enrollmentId={enrollment.id} diasRestantes={diasParaReembolso} />
+            )}
           </div>
         </div>
       </PageBody>

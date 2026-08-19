@@ -63,13 +63,14 @@
 **🔴 2.1 — O aluno pode pedir reembolso de um curso?**
 *Hoje: não existe reembolso. Comprou, é definitivo — conflita com o direito de arrependimento de 7 dias do CDC.*
 ✅ **Sim, 7 dias corridos (mínimo legal)** — *discutir estratégias para mitigar reembolsos*
+> Detalhamento de 19/08/2026: sai automático quando o aluno assistiu até 30% do curso; acima disso vira pedido na fila do admin (/admin/reembolsos).
 
 **🔴 2.2 — Reembolsado o aluno, o que acontece com a parte que o professor já recebeu?**
 *Hoje: com split automático, o dinheiro já saiu para a conta do professor. A plataforma teria que devolver do próprio bolso.*
 ✅ **A plataforma devolve e desconta do próximo repasse do professor**
 
 **🟡 2.3 — O aluno perde o acesso ao curso quando é reembolsado?**
-⚠️ **PENDENTE — nenhuma opção marcada** (opções: na hora / ao fim do dia / não)
+✅ **Na hora** *(decidido em 19/08/2026)*
 
 **🔴 2.4 — Chargeback (aluno contesta no cartão): quem arca?**
 *Hoje: não há tratamento nenhum. O acesso continua liberado e o dinheiro do professor já foi.*
@@ -82,6 +83,7 @@
 **⚪ 2.6 — Existe cupom de desconto ou promoção?**
 *Hoje: não existe.*
 ✅ **Sim, precisa entrar no escopo**
+> Detalhamento de 19/08/2026: só admin/dono cria o cupom, e quem absorve o desconto é a plataforma (o professor recebe sobre o preço cheio). Por isso o desconto é limitado à comissão de 15% — acima disso a venda sairia com prejuízo.
 
 ---
 

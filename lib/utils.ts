@@ -24,6 +24,24 @@ export function slugify(text: string): string {
  */
 export const COMISSAO_PADRAO = 15
 
+/**
+ * Janela de arrependimento do CDC (decisão 2.1). O mesmo prazo está escrito
+ * na função `request_refund` (migration 00016) — mudar aqui exige mudar lá.
+ */
+export const REEMBOLSO_PRAZO_DIAS = 7
+
+/**
+ * Até este percentual de aulas concluídas o reembolso sai na hora; acima
+ * disso o pedido vai pra fila do admin (decisão 2.1).
+ */
+export const REEMBOLSO_AUTO_PROGRESSO_MAX = 30
+
+/** Dias que faltam para o fim da janela de reembolso. 0 quando já expirou. */
+export function diasRestantesReembolso(matriculadoEm: string | Date): number {
+  const limite = new Date(matriculadoEm).getTime() + REEMBOLSO_PRAZO_DIAS * 86_400_000
+  return Math.max(0, Math.ceil((limite - Date.now()) / 86_400_000))
+}
+
 export function formatCurrency(value: number): string {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',

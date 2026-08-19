@@ -12,6 +12,7 @@ import { CheckCircle } from 'lucide-react'
 const ERROS_CHECKOUT: Record<string, string> = {
   stripe_nao_configurado: 'Pagamentos estão temporariamente indisponíveis. Tente novamente em instantes.',
   matricula_falhou: 'Não foi possível concluir sua inscrição. Tente novamente em instantes.',
+  cupom_invalido: 'Esse cupom não é válido para este curso, expirou ou já foi todo usado.',
 }
 
 type Status = 'checking' | 'anonymous' | 'enrolled' | 'not_enrolled'
@@ -60,6 +61,8 @@ export function PurchaseBox({ courseId, courseSlug, price }: PurchaseBoxProps) {
           .select('id')
           .eq('student_id', session.user.id)
           .eq('course_id', courseId)
+          // Matrícula reembolsada volta a mostrar o botão de compra (2.3).
+          .is('refunded_at', null)
           .maybeSingle()
         if (ativo) setStatus(enrollment ? 'enrolled' : 'not_enrolled')
       })
@@ -99,8 +102,26 @@ export function PurchaseBox({ courseId, courseSlug, price }: PurchaseBoxProps) {
         )}
 
         {status === 'not_enrolled' && (
-          <form action="/api/stripe/checkout" method="POST">
+          <form action="/api/stripe/checkout" method="POST" className="flex flex-col gap-3">
             <input type="hidden" name="courseId" value={courseId} />
+            {/* Cupom (decisão 2.6). Só em curso pago — em curso grátis não há
+                o que descontar, e o campo só confundiria. */}
+            {price > 0 && (
+              <div>
+                <label htmlFor="cupom" className="mb-1 block text-xs font-medium text-tinta-suave">
+                  Cupom de desconto (opcional)
+                </label>
+                <input
+                  id="cupom"
+                  name="cupom"
+                  type="text"
+                  autoComplete="off"
+                  spellCheck={false}
+                  placeholder="Ex.: CHEFIO10"
+                  className="flex h-11 w-full rounded-sm border-2 border-cobalto/20 bg-white px-3.5 text-sm uppercase text-tinta transition-colors placeholder:normal-case placeholder:text-tinta-suave/60 hover:border-cobalto/40 focus:border-cobalto focus:outline-none"
+                />
+              </div>
+            )}
             <Button type="submit" className="w-full" size="lg">
               {price === 0 ? 'Inscrever-se grátis' : 'Comprar curso'}
             </Button>

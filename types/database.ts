@@ -4,6 +4,10 @@ export type CourseStatus = 'draft' | 'pending_review' | 'approved' | 'rejected'
 export type TeacherStatus = 'pending' | 'active' | 'suspended'
 export type OrderStatus = 'pending' | 'paid' | 'shipped' | 'delivered'
 export type PayoutStatus = 'pending' | 'paid' | 'failed'
+/** `refund_clawback` é a linha negativa que desconta um reembolso do próximo repasse (regra 2.2). */
+export type PayoutType = 'sale' | 'refund_clawback'
+/** `chargeback` é contestação no cartão: tira o acesso, mas quem arca é a plataforma (regra 2.4). */
+export type RefundStatus = 'none' | 'requested' | 'refunded' | 'rejected' | 'chargeback'
 
 // Tipos de linha (Row) por tabela
 export type Profile = Database['public']['Tables']['profiles']['Row']
@@ -19,6 +23,7 @@ export type Notebook = Database['public']['Tables']['notebooks']['Row']
 export type Order = Database['public']['Tables']['orders']['Row']
 export type OrderItem = Database['public']['Tables']['order_items']['Row']
 export type TeacherPayout = Database['public']['Tables']['teacher_payouts']['Row']
+export type Coupon = Database['public']['Tables']['coupons']['Row']
 export type Document = Database['public']['Tables']['documents']['Row']
 
 // CourseWithTeacher, LessonWithProducts e EnrollmentWithCourse viviam aqui e
@@ -190,9 +195,9 @@ export type Database = {
         Relationships: []
       }
       enrollments: {
-        Row: { id: string; student_id: string; course_id: string; stripe_payment_intent_id: string | null; amount_paid: number; created_at: string }
-        Insert: { id?: string; student_id: string; course_id: string; stripe_payment_intent_id?: string | null; amount_paid?: number; created_at?: string }
-        Update: { id?: string; student_id?: string; course_id?: string; stripe_payment_intent_id?: string | null; amount_paid?: number; created_at?: string }
+        Row: { id: string; student_id: string; course_id: string; stripe_payment_intent_id: string | null; amount_paid: number; created_at: string; refund_status: RefundStatus; refund_requested_at: string | null; refunded_at: string | null; refund_amount: number | null; refund_reason: string | null; refund_review_note: string | null; refunded_by: string | null; coupon_id: string | null; discount_amount: number }
+        Insert: { id?: string; student_id: string; course_id: string; stripe_payment_intent_id?: string | null; amount_paid?: number; created_at?: string; refund_status?: RefundStatus; refund_requested_at?: string | null; refunded_at?: string | null; refund_amount?: number | null; refund_reason?: string | null; refund_review_note?: string | null; refunded_by?: string | null; coupon_id?: string | null; discount_amount?: number }
+        Update: { id?: string; student_id?: string; course_id?: string; stripe_payment_intent_id?: string | null; amount_paid?: number; created_at?: string; refund_status?: RefundStatus; refund_requested_at?: string | null; refunded_at?: string | null; refund_amount?: number | null; refund_reason?: string | null; refund_review_note?: string | null; refunded_by?: string | null; coupon_id?: string | null; discount_amount?: number }
         Relationships: []
       }
       lesson_progress: {
@@ -220,9 +225,15 @@ export type Database = {
         Relationships: []
       }
       teacher_payouts: {
-        Row: { id: string; teacher_id: string; amount: number; status: string; stripe_transfer_id: string | null; period_start: string | null; period_end: string | null; created_at: string }
-        Insert: { id?: string; teacher_id: string; amount: number; status?: string; stripe_transfer_id?: string | null; period_start?: string | null; period_end?: string | null; created_at?: string }
-        Update: { id?: string; teacher_id?: string; amount?: number; status?: string; stripe_transfer_id?: string | null; period_start?: string | null; period_end?: string | null; created_at?: string }
+        Row: { id: string; teacher_id: string; amount: number; status: string; stripe_transfer_id: string | null; period_start: string | null; period_end: string | null; created_at: string; type: PayoutType; enrollment_id: string | null }
+        Insert: { id?: string; teacher_id: string; amount: number; status?: string; stripe_transfer_id?: string | null; period_start?: string | null; period_end?: string | null; created_at?: string; type?: PayoutType; enrollment_id?: string | null }
+        Update: { id?: string; teacher_id?: string; amount?: number; status?: string; stripe_transfer_id?: string | null; period_start?: string | null; period_end?: string | null; created_at?: string; type?: PayoutType; enrollment_id?: string | null }
+        Relationships: []
+      }
+      coupons: {
+        Row: { id: string; code: string; discount_percent: number; course_id: string | null; max_redemptions: number | null; redemptions: number; expires_at: string | null; active: boolean; created_by: string | null; created_at: string }
+        Insert: { id?: string; code: string; discount_percent: number; course_id?: string | null; max_redemptions?: number | null; redemptions?: number; expires_at?: string | null; active?: boolean; created_by?: string | null; created_at?: string }
+        Update: { id?: string; code?: string; discount_percent?: number; course_id?: string | null; max_redemptions?: number | null; redemptions?: number; expires_at?: string | null; active?: boolean; created_by?: string | null; created_at?: string }
         Relationships: []
       }
       documents: {
@@ -272,6 +283,18 @@ export type Database = {
       get_my_teacher_revenue_by_course: {
         Args: Record<PropertyKey, never>
         Returns: { course_id: string; title: string; sale_count: number; gross: number }[]
+      }
+      request_refund: {
+        Args: { p_enrollment_id: string; p_reason: string }
+        Returns: undefined
+      }
+      process_refund: {
+        Args: { p_enrollment_id: string; p_amount: number; p_clawback?: boolean; p_status?: RefundStatus }
+        Returns: undefined
+      }
+      redeem_coupon: {
+        Args: { p_coupon_id: string }
+        Returns: undefined
       }
     }
     Enums: Record<string, never>
