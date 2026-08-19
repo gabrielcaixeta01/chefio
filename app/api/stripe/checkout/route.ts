@@ -31,6 +31,13 @@ export async function POST(req: NextRequest) {
 
   if (!course) return NextResponse.redirect(new URL('/cursos?erro=curso_indisponivel', req.url), 302)
 
+  // Desde a decisão 4.3 a mesma conta ensina e compra — então dá pra chegar
+  // aqui no próprio curso. Pagar a si mesmo só geraria uma matrícula falsa e
+  // uma comissão paga à toa.
+  if (course.teacher_id === user.id) {
+    return NextResponse.redirect(new URL(`/professor/cursos/${courseId}`, req.url), 302)
+  }
+
   // Check not already enrolled. Matrícula reembolsada não conta: quem pediu
   // o dinheiro de volta pode comprar de novo, e o webhook reativa a linha
   // existente em vez de esbarrar no unique (student_id, course_id).

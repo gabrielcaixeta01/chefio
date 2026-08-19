@@ -76,6 +76,15 @@ export type Database = {
           commission_rate: number
           status: string
           created_at: string
+          document: string | null
+          phone: string | null
+          portfolio_url: string | null
+          experience: string | null
+          submitted_at: string | null
+          exclusivity_accepted_at: string | null
+          rejection_reason: string | null
+          reviewed_by: string | null
+          reviewed_at: string | null
         }
         Insert: {
           id?: string
@@ -85,6 +94,15 @@ export type Database = {
           commission_rate?: number
           status?: string
           created_at?: string
+          document?: string | null
+          phone?: string | null
+          portfolio_url?: string | null
+          experience?: string | null
+          submitted_at?: string | null
+          exclusivity_accepted_at?: string | null
+          rejection_reason?: string | null
+          reviewed_by?: string | null
+          reviewed_at?: string | null
         }
         Update: {
           id?: string
@@ -94,6 +112,15 @@ export type Database = {
           commission_rate?: number
           status?: string
           created_at?: string
+          document?: string | null
+          phone?: string | null
+          portfolio_url?: string | null
+          experience?: string | null
+          submitted_at?: string | null
+          exclusivity_accepted_at?: string | null
+          rejection_reason?: string | null
+          reviewed_by?: string | null
+          reviewed_at?: string | null
         }
         Relationships: [{ foreignKeyName: 'teacher_profiles_user_id_fkey'; columns: ['user_id']; referencedRelation: 'profiles'; referencedColumns: ['id'] }]
       }

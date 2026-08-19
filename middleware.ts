@@ -2,10 +2,12 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 import { verificarLimiteDeSessoes, limparSessaoLocal } from '@/lib/auth/sessoes'
 
+// `/aluno` não aparece aqui de propósito (decisão 4.3): a área do aluno é de
+// qualquer pessoa logada, porque professor e admin também compram curso. Quem
+// guarda ali é o layout, com requireAuth().
 const ROLE_ROUTES: Record<string, string> = {
   '/admin': 'admin',
   '/professor': 'teacher',
-  '/aluno': 'student',
 }
 
 const DASHBOARD_BY_ROLE: Record<string, string> = {
@@ -68,6 +70,7 @@ export async function middleware(request: NextRequest) {
   const protectedPrefix = Object.keys(ROLE_ROUTES).find((prefix) =>
     pathname.startsWith(prefix)
   )
+  const exigeSessao = protectedPrefix !== undefined || pathname.startsWith('/aluno')
 
   // Role vem do JWT (app_metadata), sincronizado via trigger — sem SELECT em profiles.
   // 'owner' (dono/financeiro, migration 00015) é um admin com poderes a mais:
@@ -75,7 +78,7 @@ export async function middleware(request: NextRequest) {
   const rawRole = user?.app_metadata?.role as string | undefined
   const role = rawRole === 'owner' ? 'admin' : rawRole
 
-  if (protectedPrefix) {
+  if (exigeSessao) {
     // Não autenticado → redireciona para login
     if (!user) {
       const loginUrl = request.nextUrl.clone()
@@ -83,7 +86,9 @@ export async function middleware(request: NextRequest) {
       loginUrl.searchParams.set('next', pathname)
       return redirectPreservandoSessao(loginUrl, supabaseResponse)
     }
+  }
 
+  if (protectedPrefix) {
     const requiredRole = ROLE_ROUTES[protectedPrefix]
 
     if (role !== requiredRole) {

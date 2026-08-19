@@ -41,6 +41,8 @@ const PROFESSOR = {
   pending: { label: 'Pendente', tom: 'warning' },
   active: { label: 'Ativo', tom: 'success' },
   suspended: { label: 'Suspenso', tom: 'destructive' },
+  // 'rejected' é diferente de 'suspended' (4.2): nunca chegou a dar aula.
+  rejected: { label: 'Recusado', tom: 'neutral' },
 } satisfies Record<string, Entrada>
 
 const REEMBOLSO = {

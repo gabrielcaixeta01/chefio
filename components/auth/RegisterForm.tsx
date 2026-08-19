@@ -90,6 +90,17 @@ export function RegisterForm({ papelInicial = 'student' }: { papelInicial?: Role
           <strong className="font-semibold text-tinta">{form.email}</strong>.
           Abra o link para ativar sua conta — sem isso o login não funciona.
         </p>
+        {/* Decisão 4.2: quem pede pra ensinar entra como aluno e só vira
+            professor depois de enviar a candidatura e um admin aprovar. Dizer
+            isso aqui evita a pergunta "cadastrei como chef, cadê meu painel?". */}
+        {role === 'teacher' && (
+          <p className="mt-4 leading-relaxed text-tinta-suave">
+            Depois de confirmar, preencha sua candidatura em{' '}
+            <strong className="font-semibold text-tinta">Quero ensinar</strong>: precisamos de
+            documento, contato e um resumo da sua experiência para liberar a publicação de cursos.
+            Até lá sua conta funciona normalmente como aluno.
+          </p>
+        )}
         <p className="mt-8 text-sm text-tinta-suave">
           Já confirmou?{' '}
           <Link

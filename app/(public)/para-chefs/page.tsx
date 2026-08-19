@@ -67,6 +67,16 @@ const DUVIDAS = [
     p: 'Como eu recebo o dinheiro?',
     r: 'Você conecta uma conta de recebimento no onboarding. Os repasses das matrículas caem nessa conta, e o extrato fica no seu painel de faturamento.',
   },
+  // Decisões 4.2 e 4.5: as duas condições de entrada que valem dizer antes do
+  // cadastro, não depois.
+  {
+    p: 'Qualquer pessoa pode dar aula aqui?',
+    r: 'Não automaticamente. Você se cadastra, envia uma candidatura com documento, contato e um resumo da sua experiência, e um admin analisa. Enquanto isso sua conta funciona normalmente como aluno.',
+  },
+  {
+    p: 'Posso vender o mesmo curso em outra plataforma?',
+    r: 'Não. Os cursos publicados na Chefio são exclusivos daqui enquanto estiverem no catálogo — o aceite dessa condição faz parte da candidatura. Você segue livre para dar aulas presenciais e publicar outro conteúdo onde quiser.',
+  },
 ]
 
 export default function ParaChefsPage() {

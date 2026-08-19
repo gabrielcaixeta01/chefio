@@ -31,9 +31,9 @@ export default async function AlunoDashboard() {
       // /professor/* nesse meio tempo, então o aviso mora aqui.
       supabase
         .from('teacher_profiles')
-        .select('status')
+        .select('status, submitted_at, rejection_reason')
         .eq('user_id', user!.id)
-        .eq('status', 'pending')
+        .in('status', ['pending', 'rejected'])
         .maybeSingle(),
       supabase
         .from('orders')
@@ -62,15 +62,36 @@ export default async function AlunoDashboard() {
       />
 
       <PageBody>
+        {/* Três estados diferentes, e o mais importante é o do meio: quem se
+            cadastrou como chef e nunca preencheu a candidatura ficava esperando
+            uma análise que nunca ia acontecer, porque não havia o que analisar
+            (decisão 4.2). */}
         {pendingTeacherProfile && (
           <Notice
             tipo="atencao"
             icon={ChefHat}
-            titulo="Seu cadastro como professor está em análise"
+            titulo={
+              pendingTeacherProfile.status === 'rejected'
+                ? 'Sua candidatura a professor foi recusada'
+                : pendingTeacherProfile.submitted_at
+                  ? 'Sua candidatura a professor está em análise'
+                  : 'Falta enviar sua candidatura a professor'
+            }
             className="mb-8"
+            acao={
+              <Link href="/aluno/candidatura">
+                <Button size="sm" variant="outline">
+                  {pendingTeacherProfile.submitted_at ? 'Ver candidatura' : 'Preencher agora'}
+                </Button>
+              </Link>
+            }
           >
-            Assim que for aprovado, você ganha acesso à área do professor pra publicar cursos e
-            configurar recebimentos. Enquanto isso, pode usar a plataforma normalmente como aluno.
+            {pendingTeacherProfile.status === 'rejected'
+              ? pendingTeacherProfile.rejection_reason ??
+                'Você pode corrigir os dados e enviar de novo.'
+              : pendingTeacherProfile.submitted_at
+                ? 'Assim que for aprovada, você ganha acesso à área do professor pra publicar cursos e configurar recebimentos. Enquanto isso, pode usar a plataforma normalmente como aluno.'
+                : 'A gente precisa de documento, contato e um resumo da sua experiência antes de liberar a publicação de cursos.'}
           </Notice>
         )}
 

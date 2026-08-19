@@ -27,6 +27,18 @@ export function isOwner(user: User | null): boolean {
   return roleFromUser(user) === 'owner'
 }
 
+/**
+ * Só exige sessão. É o portão de `/aluno`: desde a decisão 4.3 a mesma conta é
+ * aluna e professora, então quem ensina também tem biblioteca, carrinho e
+ * pedidos — barrar por role ali obrigava o chef a manter um segundo e-mail
+ * para comprar o curso de outro.
+ */
+export async function requireAuth() {
+  const user = await getAuthedUser()
+  if (!user) redirect('/login')
+  return user
+}
+
 export async function requireRole(role: Role) {
   const user = await getAuthedUser()
   if (!user) redirect('/login')

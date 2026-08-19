@@ -127,18 +127,22 @@
 **🟡 4.2 — O que o admin olha para aprovar um professor?**
 *Hoje: nada. A tela mostra só o nome e um botão "Ativar". Sem currículo, documento ou anotação.*
 ✅ **Precisa pedir: documento, portfólio, CNPJ, entrevista…**
+> Detalhamento de 19/08/2026: virou uma candidatura em /aluno/candidatura — CPF ou CNPJ, telefone, portfólio, resumo da experiência e aceite da exclusividade. O painel mostra tudo isso ao lado do botão, e o banco recusa aprovar quem não enviou. Recusar exige motivo, que o candidato lê e pode corrigir para reenviar.
 
 **🔴 4.3 — Uma mesma pessoa pode ser aluna e professora ao mesmo tempo?**
 *Hoje: não. Cada conta tem um papel só. Um chef que queira comprar o curso de outro precisa de um segundo e-mail.*
 ✅ **Sim, precisa ser possível — professor também compra curso**
+> Detalhamento de 19/08/2026: a conta é uma só. A área do aluno passou a ser de qualquer pessoa logada, e as duas barras laterais têm o atalho para o outro lado. Comprar o próprio curso é bloqueado no checkout.
 
 **🟡 4.4 — Professor suspenso: o que acontece com os cursos dele à venda?**
 *Hoje: nada. Os cursos continuam no catálogo e continuam vendendo normalmente.*
 ✅ **Saem do catálogo na hora, e quem já comprou continua assistindo**
+> Detalhamento de 19/08/2026: o corte é na RLS do catálogo, não numa query — suspender esconde os cursos da vitrine, da busca, da home e do checkout no mesmo instante. A leitura de quem tem matrícula (3.1) não olha o professor, então a biblioteca de quem pagou não muda.
 
 **⚪ 4.5 — O professor pode vender o mesmo curso em outra plataforma?**
 *Hoje: nada impede.*
 ✅ **Exclusividade obrigatória**
+> Detalhamento de 19/08/2026: aceite datado na candidatura (`exclusivity_accepted_at`) e declarado nas dúvidas da página /para-chefs. A fiscalização é contratual — nenhum sistema detecta o mesmo curso em outra plataforma.
 
 **⚪ 4.6 — Um curso pode ter mais de um professor?**
 *Hoje: não. Um curso pertence a um único professor, e o repasse vai todo para ele.*

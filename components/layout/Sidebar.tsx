@@ -10,11 +10,13 @@ import { Ladrilho } from '@/components/ui/ladrilho'
 import {
   ArrowUpRight,
   BookOpen,
+  ChefHat,
   ClipboardList,
   CreditCard,
   DollarSign,
   FileEdit,
   FileText,
+  GraduationCap,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -29,7 +31,7 @@ import {
 export interface NavItem {
   label: string
   href: string
-  icon: 'LayoutDashboard' | 'Users' | 'BookOpen' | 'DollarSign' | 'Package' | 'ShoppingBag' | 'ClipboardList' | 'FileText' | 'FileEdit' | 'CreditCard' | 'RotateCcw' | 'Ticket'
+  icon: 'LayoutDashboard' | 'Users' | 'BookOpen' | 'DollarSign' | 'Package' | 'ShoppingBag' | 'ClipboardList' | 'FileText' | 'FileEdit' | 'CreditCard' | 'RotateCcw' | 'Ticket' | 'ChefHat' | 'GraduationCap'
 }
 
 const iconMap = {
@@ -45,6 +47,8 @@ const iconMap = {
   CreditCard,
   RotateCcw,
   Ticket,
+  ChefHat,
+  GraduationCap,
 } satisfies Record<NavItem['icon'], typeof LayoutDashboard>
 
 interface SidebarProps {
