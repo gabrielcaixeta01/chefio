@@ -40,6 +40,9 @@ export default async function CourseDetailPage({
     `)
     .eq('slug', slug)
     .eq('status', 'approved')
+    // Fora do catálogo = fora da página de venda. Quem comprou continua
+    // assistindo por /aluno/cursos/[slug] (decisão 3.3).
+    .is('archived_at', null)
     .single()
 
   if (!course) notFound()

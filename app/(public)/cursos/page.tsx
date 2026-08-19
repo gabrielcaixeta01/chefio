@@ -55,6 +55,8 @@ export default async function CourseCatalogPage({
       .from('courses')
       .select('id, title, slug, thumbnail_url, price, category, teacher:profiles(name)', { count: 'exact' })
       .eq('status', 'approved')
+      // Arquivado sai do catálogo (decisão 3.3).
+      .is('archived_at', null)
       .order('created_at', { ascending: false })
       .range(from, to)
     if (category) query = query.eq('category', category)

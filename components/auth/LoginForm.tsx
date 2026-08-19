@@ -15,7 +15,7 @@ const DESTINOS: Record<string, string> = {
   student: '/aluno',
 }
 
-export function LoginForm({ next }: { next?: string }) {
+export function LoginForm({ next, aviso }: { next?: string; aviso?: string }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
@@ -74,6 +74,12 @@ export function LoginForm({ next }: { next?: string }) {
       <p className="mt-3 text-tinta-suave">
         Entre para continuar de onde você parou.
       </p>
+
+      {aviso && (
+        <Notice tipo="atencao" className="mt-6">
+          {aviso}
+        </Notice>
+      )}
 
       <div className="mt-9 flex flex-col gap-5">
         <AuthField

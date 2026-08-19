@@ -25,6 +25,8 @@ export async function POST(req: NextRequest) {
     .select('id, title, slug, price, teacher_id')
     .eq('id', courseId)
     .eq('status', 'approved')
+    // Curso arquivado não vende mais (decisão 3.3).
+    .is('archived_at', null)
     .maybeSingle()
 
   if (!course) return NextResponse.redirect(new URL('/cursos?erro=curso_indisponivel', req.url), 302)

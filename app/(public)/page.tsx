@@ -91,9 +91,13 @@ export default async function LandingPage() {
         .from('courses')
         .select('id, title, slug, thumbnail_url, price, teacher:profiles(name)')
         .eq('status', 'approved')
+        // Curso tirado do catálogo (decisão 3.3) some da vitrine mas continua
+        // valendo para quem já comprou — o filtro é explícito porque a policy
+        // do aluno matriculado enxerga o arquivado.
+        .is('archived_at', null)
         .order('created_at', { ascending: false })
         .limit(4),
-      supabase.from('courses').select('category, teacher_id').eq('status', 'approved'),
+      supabase.from('courses').select('category, teacher_id').eq('status', 'approved').is('archived_at', null),
     ])
     // supabase-js não lança em erro HTTP — sem ler `error`, um 401 de RLS
     // vira "nenhum curso" e a home anuncia catálogo em construção enquanto

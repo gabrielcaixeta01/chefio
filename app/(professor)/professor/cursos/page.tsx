@@ -7,6 +7,7 @@ import { PageHeader, PageBody } from '@/components/layout/PageShell'
 import { Panel } from '@/components/ui/panel'
 import { EmptyState } from '@/components/ui/empty-state'
 import { StatusBadge } from '@/components/ui/status-badge'
+import { Badge } from '@/components/ui/badge'
 import { Plus, BookOpen } from 'lucide-react'
 
 export const metadata: Metadata = { title: 'Meus Cursos' }
@@ -17,7 +18,7 @@ export default async function ProfessorCoursesPage() {
 
   const { data: courses } = await supabase
     .from('courses')
-    .select('id, title, slug, status, price, category, thumbnail_url, created_at')
+    .select('id, title, slug, status, price, category, thumbnail_url, archived_at, created_at')
     .eq('teacher_id', user!.id)
     .order('created_at', { ascending: false })
 
@@ -77,6 +78,9 @@ export default async function ProfessorCoursesPage() {
                     </p>
                   </div>
                   <StatusBadge tipo="curso" status={course.status} className="shrink-0" />
+                  {course.archived_at && (
+                    <Badge variant="neutral" className="shrink-0">Fora do catálogo</Badge>
+                  )}
                   <Link href={`/professor/cursos/${course.id}`} className="shrink-0">
                     <Button variant="outline" size="sm">Gerenciar</Button>
                   </Link>

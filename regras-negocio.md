@@ -100,10 +100,12 @@
 **🟡 3.3 — O professor pode apagar um curso que já tem alunos matriculados?**
 *Hoje: sim, e isso apaga junto as aulas, o progresso e o caderno de todos os alunos, sem aviso.*
 ✅ **Não pode. Só tirar do catálogo, e quem comprou continua vendo**
+> Detalhamento de 19/08/2026: "tirar do catálogo" virou o botão *Tirar do catálogo* na tela do curso (`courses.archived_at`) — some da vitrine e para de vender. A exclusão passou a ser recusada pelo próprio banco quando existe matrícula ativa, inclusive por cascade (apagar a conta do professor também falha).
 
 **🟡 3.4 — O professor pode remover ou trocar uma aula de um curso já vendido?**
 *Hoje: sim, livremente. O aluno pode perder uma aula que já tinha assistido.*
 ✅ **Só com aprovação do admin**
+> Detalhamento de 19/08/2026: só o que faz o aluno perder algo depende de aval — apagar a aula e trocar o vídeo que já está no ar. Título, descrição, ordem, anexos e aula nova continuam livres. Os pedidos caem em /admin/alteracoes.
 
 **⚪ 3.5 — O aluno pode baixar os vídeos?**
 *Hoje: não. Vídeo é sempre streaming com link assinado. Só o caderno vira PDF.*
@@ -112,6 +114,7 @@
 **🟡 3.6 — Vamos limitar quantos dispositivos usam a mesma conta?**
 *Hoje: não há limite. Uma conta pode ser usada por quantas pessoas quiserem, ao mesmo tempo.*
 ✅ **Limitar a 2 sessões simultâneas**
+> Detalhamento de 19/08/2026: quando entra uma terceira, cai a sessão parada há mais tempo — quem está assistindo agora não é derrubado. O aparelho derrubado vê o aviso na tela de login.
 
 ---
 

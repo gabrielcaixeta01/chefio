@@ -42,7 +42,8 @@ export function VideoUploader({ lessonId, onUploaded }: VideoUploaderProps) {
         throw new Error(err.error ?? 'Erro ao obter URL de upload')
       }
 
-      const { tusEndpoint, libraryId, videoId, signature, expiration } = await res.json()
+      const { tusEndpoint, libraryId, videoId, signature, expiration, aguardandoAprovacao } =
+        await res.json()
 
       // 2. Upload resumível direto para o Bunny via protocolo TUS
       await new Promise<void>((resolve, reject) => {
@@ -69,7 +70,12 @@ export function VideoUploader({ lessonId, onUploaded }: VideoUploaderProps) {
       })
 
       setDone(true)
-      toast.success('Vídeo enviado! O processamento pode levar alguns minutos.')
+      // Troca de vídeo em curso já vendido não entra no ar sozinha (decisão 3.4).
+      toast.success(
+        aguardandoAprovacao
+          ? 'Vídeo enviado e mandado para aprovação do admin. O vídeo atual continua no ar até a resposta.'
+          : 'Vídeo enviado! O processamento pode levar alguns minutos.'
+      )
       onUploaded?.()
     } catch (err: any) {
       toast.error(err.message ?? 'Erro no upload do vídeo.')

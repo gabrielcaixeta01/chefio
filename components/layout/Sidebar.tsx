@@ -13,6 +13,7 @@ import {
   ClipboardList,
   CreditCard,
   DollarSign,
+  FileEdit,
   FileText,
   LayoutDashboard,
   LogOut,
@@ -28,7 +29,7 @@ import {
 export interface NavItem {
   label: string
   href: string
-  icon: 'LayoutDashboard' | 'Users' | 'BookOpen' | 'DollarSign' | 'Package' | 'ShoppingBag' | 'ClipboardList' | 'FileText' | 'CreditCard' | 'RotateCcw' | 'Ticket'
+  icon: 'LayoutDashboard' | 'Users' | 'BookOpen' | 'DollarSign' | 'Package' | 'ShoppingBag' | 'ClipboardList' | 'FileText' | 'FileEdit' | 'CreditCard' | 'RotateCcw' | 'Ticket'
 }
 
 const iconMap = {
@@ -40,6 +41,7 @@ const iconMap = {
   ShoppingBag,
   ClipboardList,
   FileText,
+  FileEdit,
   CreditCard,
   RotateCcw,
   Ticket,

@@ -20,6 +20,7 @@ export async function AdminSidebar() {
     { label: 'Pedidos', href: '/admin/pedidos', icon: 'ShoppingBag' },
     { label: 'Matrículas', href: '/admin/matriculas', icon: 'ClipboardList' },
     { label: 'Reembolsos', href: '/admin/reembolsos', icon: 'RotateCcw' },
+    { label: 'Alterações', href: '/admin/alteracoes', icon: 'FileEdit' },
     { label: 'Cupons', href: '/admin/cupons', icon: 'Ticket' },
   ] satisfies NavItem[]
 

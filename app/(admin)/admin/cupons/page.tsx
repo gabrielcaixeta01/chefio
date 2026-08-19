@@ -23,6 +23,7 @@ export default async function AdminCouponsPage() {
       .from('courses')
       .select('id, title')
       .eq('status', 'approved')
+      .is('archived_at', null)
       .order('title', { ascending: true }),
   ])
 

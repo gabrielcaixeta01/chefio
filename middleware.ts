@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
+import { verificarLimiteDeSessoes, limparSessaoLocal } from '@/lib/auth/sessoes'
 
 const ROLE_ROUTES: Record<string, string> = {
   '/admin': 'admin',
@@ -35,7 +36,33 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  const { supabaseResponse, user } = await updateSession(request)
+  const { supabaseResponse, user, supabase } = await updateSession(request)
+
+  // Duas sessões simultâneas por conta (decisão 3.6). O carimbo só vai ao
+  // banco a cada 3 minutos; na rota que assina a URL do vídeo ele vai sempre,
+  // porque é ali que a conta emprestada valeria alguma coisa.
+  if (user) {
+    const derrubada = await verificarLimiteDeSessoes(request, supabaseResponse, supabase, {
+      forcar: pathname.startsWith('/api/bunny/signed-url'),
+    })
+
+    if (derrubada) {
+      // Rota de API respondendo HTML de login quebraria o player em silêncio.
+      if (pathname.startsWith('/api/')) {
+        const negado = NextResponse.json({ error: 'sessao_encerrada' }, { status: 401 })
+        limparSessaoLocal(request, negado)
+        return negado
+      }
+
+      const loginUrl = request.nextUrl.clone()
+      loginUrl.pathname = '/login'
+      loginUrl.search = ''
+      loginUrl.searchParams.set('erro', 'sessao_encerrada')
+      const saida = NextResponse.redirect(loginUrl)
+      limparSessaoLocal(request, saida)
+      return saida
+    }
+  }
 
   // Protege rotas privadas
   const protectedPrefix = Object.keys(ROLE_ROUTES).find((prefix) =>

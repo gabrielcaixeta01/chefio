@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
   // Verify teacher owns this lesson/course
   const { data: lesson } = await supabase
     .from('lessons')
-    .select('id, courses!inner(teacher_id)')
+    .select('id, title, course_id, bunny_video_id, courses!inner(teacher_id)')
     .eq('id', lessonId)
     .single()
 
@@ -22,6 +22,18 @@ export async function POST(req: NextRequest) {
   const course = (lesson as any).courses
   if (course.teacher_id !== user.id) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
+  // Trocar o vídeo de uma aula que já está no ar num curso vendido depende do
+  // admin (decisão 3.4). O upload acontece do mesmo jeito — o vídeo novo fica
+  // parado no Bunny e o antigo continua servindo o aluno até alguém decidir.
+  // Primeiro upload da aula (sem vídeo ainda) não é troca, passa direto.
+  let precisaAprovacao = false
+  if (lesson.bunny_video_id) {
+    const { data: temAluno } = await supabase.rpc('curso_tem_aluno', {
+      p_course_id: lesson.course_id,
+    })
+    precisaAprovacao = temAluno === true
   }
 
   const libraryId = process.env.BUNNY_STREAM_LIBRARY_ID
@@ -52,11 +64,38 @@ export async function POST(req: NextRequest) {
 
   const { guid: videoId } = await createRes.json()
 
-  // Save videoId to lesson immediately
-  await supabase
-    .from('lessons')
-    .update({ bunny_video_id: videoId })
-    .eq('id', lessonId)
+  if (precisaAprovacao) {
+    // Reenviar um vídeo por cima substitui o pedido anterior — só existe um
+    // pendente por aula (índice parcial na 00017).
+    await supabase
+      .from('lesson_change_requests')
+      .delete()
+      .eq('lesson_id', lessonId)
+      .eq('status', 'pending')
+      .eq('type', 'replace_video')
+
+    const { error: pedidoErro } = await supabase.from('lesson_change_requests').insert({
+      lesson_id: lessonId,
+      lesson_title: lesson.title,
+      course_id: lesson.course_id,
+      teacher_id: user.id,
+      type: 'replace_video',
+      new_bunny_video_id: videoId,
+    })
+
+    if (pedidoErro) {
+      return NextResponse.json(
+        { error: 'Já existe uma alteração em análise para esta aula.' },
+        { status: 409 }
+      )
+    }
+  } else {
+    // Save videoId to lesson immediately
+    await supabase
+      .from('lessons')
+      .update({ bunny_video_id: videoId })
+      .eq('id', lessonId)
+  }
 
   // Credenciais de upload TUS: a apiKey nunca sai do servidor, só a
   // assinatura. Formato exigido pelo Bunny Stream: sha256(libraryId + apiKey
@@ -72,5 +111,6 @@ export async function POST(req: NextRequest) {
     videoId,
     signature,
     expiration,
+    aguardandoAprovacao: precisaAprovacao,
   })
 }

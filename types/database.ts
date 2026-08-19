@@ -8,6 +8,9 @@ export type PayoutStatus = 'pending' | 'paid' | 'failed'
 export type PayoutType = 'sale' | 'refund_clawback'
 /** `chargeback` é contestação no cartão: tira o acesso, mas quem arca é a plataforma (regra 2.4). */
 export type RefundStatus = 'none' | 'requested' | 'refunded' | 'rejected' | 'chargeback'
+/** Mudança em aula de curso já vendido: só entra com aval do admin (regra 3.4). */
+export type LessonChangeType = 'remove' | 'replace_video'
+export type LessonChangeStatus = 'pending' | 'approved' | 'rejected'
 
 // Tipos de linha (Row) por tabela
 export type Profile = Database['public']['Tables']['profiles']['Row']
@@ -24,6 +27,8 @@ export type Order = Database['public']['Tables']['orders']['Row']
 export type OrderItem = Database['public']['Tables']['order_items']['Row']
 export type TeacherPayout = Database['public']['Tables']['teacher_payouts']['Row']
 export type Coupon = Database['public']['Tables']['coupons']['Row']
+export type LessonChangeRequest = Database['public']['Tables']['lesson_change_requests']['Row']
+export type ActiveSession = Database['public']['Tables']['active_sessions']['Row']
 export type Document = Database['public']['Tables']['documents']['Row']
 
 // CourseWithTeacher, LessonWithProducts e EnrollmentWithCourse viviam aqui e
@@ -104,6 +109,7 @@ export type Database = {
           category: string | null
           status: string
           rejection_reason: string | null
+          archived_at: string | null
           created_at: string
           updated_at: string
         }
@@ -118,6 +124,7 @@ export type Database = {
           category?: string | null
           status?: string
           rejection_reason?: string | null
+          archived_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -132,6 +139,7 @@ export type Database = {
           category?: string | null
           status?: string
           rejection_reason?: string | null
+          archived_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -236,6 +244,18 @@ export type Database = {
         Update: { id?: string; code?: string; discount_percent?: number; course_id?: string | null; max_redemptions?: number | null; redemptions?: number; expires_at?: string | null; active?: boolean; created_by?: string | null; created_at?: string }
         Relationships: []
       }
+      lesson_change_requests: {
+        Row: { id: string; lesson_id: string | null; lesson_title: string; course_id: string; teacher_id: string; type: LessonChangeType; new_bunny_video_id: string | null; reason: string | null; status: LessonChangeStatus; review_note: string | null; reviewed_by: string | null; reviewed_at: string | null; created_at: string }
+        Insert: { id?: string; lesson_id?: string | null; lesson_title: string; course_id: string; teacher_id: string; type: LessonChangeType; new_bunny_video_id?: string | null; reason?: string | null; status?: LessonChangeStatus; review_note?: string | null; reviewed_by?: string | null; reviewed_at?: string | null; created_at?: string }
+        Update: { id?: string; lesson_id?: string | null; lesson_title?: string; course_id?: string; teacher_id?: string; type?: LessonChangeType; new_bunny_video_id?: string | null; reason?: string | null; status?: LessonChangeStatus; review_note?: string | null; reviewed_by?: string | null; reviewed_at?: string | null; created_at?: string }
+        Relationships: []
+      }
+      active_sessions: {
+        Row: { session_id: string; user_id: string; user_agent: string | null; revoked_at: string | null; created_at: string; last_seen_at: string }
+        Insert: { session_id: string; user_id: string; user_agent?: string | null; revoked_at?: string | null; created_at?: string; last_seen_at?: string }
+        Update: { session_id?: string; user_id?: string; user_agent?: string | null; revoked_at?: string | null; created_at?: string; last_seen_at?: string }
+        Relationships: []
+      }
       documents: {
         Row: { id: string; teacher_id: string; name: string; file_url: string; file_type: string | null; created_at: string }
         Insert: { id?: string; teacher_id: string; name: string; file_url: string; file_type?: string | null; created_at?: string }
@@ -295,6 +315,14 @@ export type Database = {
       redeem_coupon: {
         Args: { p_coupon_id: string }
         Returns: undefined
+      }
+      curso_tem_aluno: {
+        Args: { p_course_id: string }
+        Returns: boolean
+      }
+      touch_session: {
+        Args: { p_session_id: string; p_user_agent?: string | null }
+        Returns: boolean
       }
     }
     Enums: Record<string, never>
