@@ -22,16 +22,16 @@ export async function ProfessorSidebar() {
     // dava 404. A tabela `documents`, a RLS e o bucket já estão prontos —
     // quando a página existir, é só devolver a linha.
     { label: 'Conta Stripe', href: '/professor/onboarding', icon: 'CreditCard' },
-    // Decisão 4.3: a conta é a mesma. O chef que comprou o curso de outro
-    // chega na biblioteca dele por aqui, sem trocar de login.
-    { label: 'Área de aluno', href: '/aluno', icon: 'GraduationCap' },
   ] satisfies NavItem[]
 
   return (
     <Sidebar
-      title="Professor"
+      title="Área do professor"
       items={items}
       userName={profile?.name}
+      // Decisão 4.3: a conta é a mesma. O chef que comprou o curso de outro
+      // chega na biblioteca dele por aqui, sem trocar de login.
+      troca={{ label: 'Área de aluno', href: '/aluno', icon: 'GraduationCap' }}
     />
   )
 }

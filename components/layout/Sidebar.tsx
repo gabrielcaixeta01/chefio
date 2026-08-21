@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { Ladrilho } from '@/components/ui/ladrilho'
 import {
+  ArrowRight,
   ArrowUpRight,
   BookOpen,
   ChefHat,
@@ -53,10 +54,29 @@ const iconMap = {
   User,
 } satisfies Record<NavItem['icon'], typeof LayoutDashboard>
 
+/**
+ * Atalho para o outro lado da MESMA conta (decisão 4.3).
+ *
+ * Não é um `NavItem` de propósito. Enquanto isso morou dentro da lista de
+ * navegação, "Área de aluno" se anunciava como página irmã de "Meus Cursos" e
+ * "Faturamento" — e clicar nela parecia ter trocado de usuário, porque o
+ * destino tem outra barra, outro título e outro conjunto de páginas. O que
+ * confunde não é o destino, é a lista dizer que ele é vizinho quando ele é
+ * uma saída. Separar o controle é o conserto.
+ */
+export interface TrocaDeArea {
+  /** Para onde vai — nomeado pelo lugar, não pelo papel de quem clica. */
+  label: string
+  href: string
+  icon: NavItem['icon']
+}
+
 interface SidebarProps {
+  /** Onde a pessoa ESTÁ ("Área do aluno"), não o que ela é ("Aluno"). */
   title: string
   items: NavItem[]
   userName?: string
+  troca?: TrocaDeArea
 }
 
 /** "Gabriel Caixeta Romero" → "GR". Sem nome, o ladrilho fica só com o ponto. */
@@ -79,7 +99,7 @@ function iniciais(nome?: string) {
  * Em telas < lg vira gaveta: barra fixa no topo + painel que desliza. Antes o
  * rail de 256px era fixo e comia dois terços de um celular.
  */
-export function Sidebar({ title, items, userName }: SidebarProps) {
+export function Sidebar({ title, items, userName, troca }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [aberto, setAberto] = useState(false)
@@ -155,6 +175,12 @@ export function Sidebar({ title, items, userName }: SidebarProps) {
 
   const sigla = iniciais(userName)
 
+  // A barra mobile divide 320px com o botão de menu e a marca, e
+  // "ÁREA DO PROFESSOR" em olho (caixa alta + tracking 0.18em) não cabe ali.
+  // No rail o título completo orienta; na barra ele é só relance, então o
+  // prefixo sai. `olho` já força caixa alta, então a minúscula não aparece.
+  const tituloCurto = title.replace(/^Área d[oaei]s?\s+/i, '')
+
   return (
     <>
       {/* ---------- Barra mobile ---------- */}
@@ -193,7 +219,7 @@ export function Sidebar({ title, items, userName }: SidebarProps) {
           <span className="font-display text-lg font-extrabold tracking-tight text-cal">Chefio</span>
         </Link>
 
-        <span className="olho ml-auto text-brasa-clara">{title}</span>
+        <span className="olho ml-auto shrink-0 text-brasa-clara">{tituloCurto}</span>
       </header>
 
       {/* ---------- Véu da gaveta ---------- */}
@@ -240,6 +266,37 @@ export function Sidebar({ title, items, userName }: SidebarProps) {
             </Link>
             <p className="olho mt-3 text-brasa-clara">{title}</p>
           </div>
+
+          {/* ---------- Troca de área (decisão 4.3) ----------
+              Fora da <nav> de propósito: não é uma página desta seção, é a
+              saída para o outro lado da mesma conta. O olho "Mesma conta" é a
+              frase que desfaz a confusão — sem ela o destino parece outro
+              login, porque muda a barra inteira. */}
+          {troca && (
+            <div className="px-3 pb-4">
+              <Link
+                href={troca.href}
+                className="group flex items-center gap-3 rounded-sm border border-cal/20 bg-cal/5 px-2.5 py-2.5 transition-colors hover:border-cal/40 hover:bg-cal/10"
+              >
+                <Ladrilho tom="apagado" tamanho="sm" className="group-hover:bg-cal/20 group-hover:text-cal">
+                  {(() => {
+                    const Icon = iconMap[troca.icon]
+                    return <Icon className="h-4 w-4" aria-hidden="true" />
+                  })()}
+                </Ladrilho>
+                <span className="min-w-0 flex-1">
+                  <span className="olho block text-[0.625rem] text-cal/50">Mesma conta</span>
+                  <span className="block truncate text-sm font-semibold text-cal">
+                    {troca.label}
+                  </span>
+                </span>
+                <ArrowRight
+                  aria-hidden="true"
+                  className="h-4 w-4 shrink-0 text-cal/40 transition-transform duration-200 ease-azulejo group-hover:translate-x-0.5 group-hover:text-cal motion-reduce:transition-none"
+                />
+              </Link>
+            </div>
+          )}
 
           {/* Menu */}
           <nav className="flex-1 space-y-0.5 overflow-y-auto px-3">

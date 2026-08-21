@@ -26,9 +26,12 @@ export async function AdminSidebar() {
 
   return (
     <Sidebar
-      title="Administrador"
+      title="Administração"
       items={items}
       userName={profile?.name}
+      // Faltava: o admin chegava em /aluno pela barra do aluno, mas não tinha
+      // como voltar do /admin. A decisão 4.3 vale para os três lados.
+      troca={{ label: 'Área de aluno', href: '/aluno', icon: 'GraduationCap' }}
     />
   )
 }

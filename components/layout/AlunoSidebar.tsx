@@ -1,7 +1,7 @@
 import { Sidebar } from './Sidebar'
 import { createClient } from '@/lib/supabase/server'
 import { getAuthedUser, roleFromUser } from '@/lib/auth/session'
-import type { NavItem } from './Sidebar'
+import type { NavItem, TrocaDeArea } from './Sidebar'
 
 export async function AlunoSidebar() {
   // getAuthedUser() é cache()-deduped — o layout já chamou requireAuth(),
@@ -32,10 +32,14 @@ export async function AlunoSidebar() {
     { label: 'Minha conta', href: '/aluno/perfil', icon: 'User' },
   ]
 
+  // Quem ensina ou administra sai por um controle separado (`troca`), não por
+  // um item de menu: o destino não é uma página desta área. Já a candidatura
+  // É uma página daqui, então continua na lista — a distinção é essa.
+  let troca: TrocaDeArea | undefined
   if (role === 'teacher') {
-    items.push({ label: 'Área de professor', href: '/professor', icon: 'ChefHat' })
+    troca = { label: 'Área de professor', href: '/professor', icon: 'ChefHat' }
   } else if (role === 'admin' || role === 'owner') {
-    items.push({ label: 'Administração', href: '/admin', icon: 'ClipboardList' })
+    troca = { label: 'Administração', href: '/admin', icon: 'ClipboardList' }
   } else {
     items.push({
       label: candidatura ? 'Minha candidatura' : 'Quero ensinar',
@@ -46,9 +50,10 @@ export async function AlunoSidebar() {
 
   return (
     <Sidebar
-      title="Aluno"
+      title="Área do aluno"
       items={items}
       userName={profile?.name}
+      troca={troca}
     />
   )
 }
