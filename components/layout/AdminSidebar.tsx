@@ -22,6 +22,7 @@ export async function AdminSidebar() {
     { label: 'Reembolsos', href: '/admin/reembolsos', icon: 'RotateCcw' },
     { label: 'Alterações', href: '/admin/alteracoes', icon: 'FileEdit' },
     { label: 'Cupons', href: '/admin/cupons', icon: 'Ticket' },
+    { label: 'Minha conta', href: '/admin/conta', icon: 'User' },
   ] satisfies NavItem[]
 
   return (
@@ -29,9 +30,17 @@ export async function AdminSidebar() {
       title="Administração"
       items={items}
       userName={profile?.name}
-      // Faltava: o admin chegava em /aluno pela barra do aluno, mas não tinha
-      // como voltar do /admin. A decisão 4.3 vale para os três lados.
-      troca={{ label: 'Área de aluno', href: '/aluno', icon: 'GraduationCap' }}
+      // Sem `troca` aqui, e isso é uma correção do que eu mesmo tinha feito.
+      // O atalho "Área de aluno" foi posto no admin por simetria com as
+      // barras do aluno e do professor — mas simetria não era o argumento da
+      // decisão 4.3. Ali o ponto é concreto: a conta do chef é a mesma que
+      // compra curso dos outros, então ele precisa da biblioteca dele. Quem
+      // administra não tem esse outro lado — chega em /aluno e encontra
+      // biblioteca vazia, carrinho vazio e pedidos de mais ninguém. O atalho
+      // anunciava uma segunda identidade que não existe.
+      //
+      // Para conferir a loja como um visitante vê, o rodapé da barra já tem
+      // "Ver o site" — que é o destino honesto para essa intenção.
     />
   )
 }

@@ -24,6 +24,10 @@ export function RegisterForm({ papelInicial = 'student' }: { papelInicial?: Role
   const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '' })
   const [erros, setErros] = useState<Erros>({})
   const [done, setDone] = useState(false)
+  // Separado de `erros.email` porque muda o que a tela OFERECE, não só o que
+  // ela diz: com o e-mail em uso as duas saídas (login e recuperar senha)
+  // aparecem logo abaixo do campo, sem obrigar a pessoa a caçar no rodapé.
+  const [emailEmUso, setEmailEmUso] = useState(false)
 
   function validar(): Erros {
     const e: Erros = {}
@@ -49,7 +53,7 @@ export function RegisterForm({ papelInicial = 'student' }: { papelInicial?: Role
       // "Criando conta…" para sempre: sem erro na tela e sem como tentar
       // de novo, porque o setLoading(false) nunca chegava a rodar.
       const supabase = createClient()
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email: form.email,
         password: form.password,
         options: {
@@ -61,6 +65,25 @@ export function RegisterForm({ papelInicial = 'student' }: { papelInicial?: Role
       if (error) {
         toast.error(error.message)
         setErros({ email: error.message })
+        setLoading(false)
+        return
+      }
+
+      // E-mail já cadastrado NÃO vem como erro. Com a confirmação por e-mail
+      // ligada, o GoTrue devolve sucesso e um usuário obfuscado — `identities`
+      // vazio — para não deixar ninguém varrer a base descobrindo quem tem
+      // conta. O preço disso era a pessoa cair na tela "Confirme seu email" e
+      // esperar para sempre um e-mail que nunca ia chegar.
+      //
+      // Optamos por avisar. Sim, isso permite confirmar se um e-mail tem
+      // conta aqui — mas o /login e o "esqueci minha senha" já respondem a
+      // mesma pergunta, então o silêncio no cadastro só atrapalhava quem é
+      // dono do endereço.
+      if (data.user && (data.user.identities?.length ?? 0) === 0) {
+        const aviso = 'Este email já tem conta na Chefio. Faça login ou use "Esqueci minha senha".'
+        toast.error(aviso)
+        setErros({ email: aviso })
+        setEmailEmUso(true)
         setLoading(false)
         return
       }
@@ -189,9 +212,29 @@ export function RegisterForm({ papelInicial = 'student' }: { papelInicial?: Role
           placeholder="seu@email.com"
           erro={erros.email}
           value={form.email}
-          onChange={(e) => setForm({ ...form, email: e.target.value })}
+          onChange={(e) => {
+            setForm({ ...form, email: e.target.value })
+            if (emailEmUso) setEmailEmUso(false)
+          }}
           required
         />
+
+        {emailEmUso && (
+          <div className="-mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+            <Link
+              href={`/login?email=${encodeURIComponent(form.email)}`}
+              className="font-semibold text-cobalto underline-offset-4 hover:underline"
+            >
+              Fazer login
+            </Link>
+            <Link
+              href={`/esqueci-senha?email=${encodeURIComponent(form.email)}`}
+              className="font-semibold text-cobalto underline-offset-4 hover:underline"
+            >
+              Esqueci minha senha
+            </Link>
+          </div>
+        )}
 
         <AuthField
           label="Senha"

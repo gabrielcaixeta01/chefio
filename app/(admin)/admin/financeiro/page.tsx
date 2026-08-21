@@ -51,8 +51,24 @@ export default async function AdminFinancialPage() {
   const totalSales = totals?.total_sales ?? 0
   const platformRevenue = totalGross - totalPayouts
 
-  const meses: [string, number][] = (monthlyRows ?? []).map((r) => [r.month, r.total])
+  // A RPC agrupa por mês e devolve SÓ os meses que tiveram matrícula. Dois
+  // efeitos ruins vinham daí: mês sem venda nenhuma sumia do eixo (o gráfico
+  // pulava de Maio pra Agosto como se Junho e Julho não existissem), e banco
+  // sem venda alguma devolvia lista vazia — aí o painel inteiro desaparecia
+  // da tela, sem dizer que estava vazio. O eixo agora é montado fixo aqui e
+  // os valores da RPC são encaixados nele.
+  const MESES_NO_GRAFICO = 6
+  const porMes = new Map((monthlyRows ?? []).map((r) => [r.month, Number(r.total) || 0]))
+  const hoje = new Date()
+  const meses: [string, number][] = Array.from({ length: MESES_NO_GRAFICO }, (_, i) => {
+    const d = new Date(
+      Date.UTC(hoje.getUTCFullYear(), hoje.getUTCMonth() - (MESES_NO_GRAFICO - 1 - i), 1)
+    )
+    const chave = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`
+    return [chave, porMes.get(chave) ?? 0]
+  })
   const maxMensal = Math.max(...meses.map(([, v]) => v), 1)
+  const temReceita = meses.some(([, valor]) => valor > 0)
 
   return (
     <>
@@ -80,11 +96,19 @@ export default async function AdminFinancialPage() {
           <StatTile icon={Users} label="Repasses a professores" valor={formatCurrency(totalPayouts)} />
         </div>
 
-        {meses.length > 0 && (
-          <Panel className="mb-6 p-5 sm:p-6">
-            <SectionHeading titulo="Receita mensal" />
-            {/* Colunas de largura igual com min-w-0: sem isso o rótulo de valor
-                empurrava a barra e o gráfico estourava a largura no celular. */}
+        <Panel className="mb-6 p-5 sm:p-6">
+          <SectionHeading titulo="Receita mensal" />
+          {!temReceita ? (
+            <div className="mt-4">
+              <EmptyState
+                icon={TrendingUp}
+                titulo="Nenhuma venda nos últimos 6 meses"
+                descricao="O gráfico acende sozinho na primeira matrícula paga. Matrícula reembolsada não entra na conta."
+              />
+            </div>
+          ) : (
+            /* Colunas de largura igual com min-w-0: sem isso o rótulo de valor
+               empurrava a barra e o gráfico estourava a largura no celular. */
             <div className="flex h-44 items-end gap-2 sm:gap-3">
               {meses.map(([mes, valor]) => {
                 const pct = (valor / maxMensal) * 100
@@ -108,8 +132,8 @@ export default async function AdminFinancialPage() {
                 )
               })}
             </div>
-          </Panel>
-        )}
+          )}
+        </Panel>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <Panel>
