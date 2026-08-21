@@ -219,7 +219,7 @@ export function Sidebar({ title, items, userName, troca }: SidebarProps) {
           <span className="font-display text-lg font-extrabold tracking-tight text-cal">Chefio</span>
         </Link>
 
-        <span className="olho ml-auto shrink-0 text-brasa-clara">{tituloCurto}</span>
+        <span className="olho ml-auto text-brasa-clara">{title}</span>
       </header>
 
       {/* ---------- Véu da gaveta ---------- */}
