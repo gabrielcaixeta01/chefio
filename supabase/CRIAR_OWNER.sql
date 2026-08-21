@@ -23,7 +23,7 @@
 
 do $$
 declare
-  v_email text := 'dono@gmail.com.br';   -- <<< EDITE
+  v_email text := 'dono@gmail.com';   -- <<< EDITE
   v_senha text := 'senha123';     -- <<< EDITE
   v_nome  text := 'Dono Chefio';
   v_id    uuid;
