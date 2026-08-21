@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { BookOpen, Search, X } from 'lucide-react'
 import { createPublicClient } from '@/lib/supabase/public'
+import { getCourseMeta } from '@/lib/data/course-meta'
 import { COURSE_CATEGORIES } from '@/lib/utils'
 import { CourseCard, type CourseCardData } from '@/components/curso/CourseCard'
 import { ActionLink } from '@/components/ui/action-link'
@@ -63,7 +64,9 @@ export default async function CourseCatalogPage({
     if (q) query = query.ilike('title', `%${q}%`)
     const { data, count, error } = await query
     if (error) throw error
-    courses = (data as CourseCardData[] | null) ?? []
+    const base = (data as CourseCardData[] | null) ?? []
+    const meta = await getCourseMeta(supabase, base.map((c) => c.id))
+    courses = base.map((c) => ({ ...c, ...meta.get(c.id) }))
     total = count ?? 0
   } catch (err) {
     falhou = true
@@ -87,9 +90,9 @@ export default async function CourseCatalogPage({
     <>
       {/* ---------- Cabeçalho ---------- */}
       <section className="azulejo-escuro">
-        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-          <p className="olho text-brasa">Catálogo</p>
-          <h1 className="mt-4 font-display text-[clamp(2.5rem,5vw,4rem)] font-extrabold leading-[1.02] tracking-[-0.02em] text-cal">
+        <div className="mx-auto max-w-7xl px-4 py-cabecalho sm:px-6 lg:px-8">
+          <p className="olho text-brasa-clara">Catálogo</p>
+          <h1 className="mt-4 font-display text-titulo font-extrabold text-cal">
             Todos os cursos
           </h1>
           <p className="mt-4 text-cal/70">{resumo}</p>
@@ -118,7 +121,7 @@ export default async function CourseCatalogPage({
                 defaultValue={q ?? ''}
                 placeholder="Buscar por título…"
                 aria-label="Buscar cursos por título"
-                className="h-12 w-full rounded-sm border-2 border-cobalto/20 bg-white pl-11 pr-3 text-tinta transition-colors placeholder:text-tinta-suave/60 hover:border-cobalto/40 focus:border-cobalto focus:outline-none"
+                className="h-12 w-full rounded-sm border-2 border-cobalto/20 bg-white pl-11 pr-3 text-tinta transition-colors placeholder:text-tinta-suave/90 hover:border-cobalto/40 focus:border-cobalto focus:outline-none"
               />
             </div>
             <button
@@ -179,7 +182,7 @@ export default async function CourseCatalogPage({
 
       {/* ---------- Resultados ---------- */}
       <section className="bg-cal">
-        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl px-4 py-corpo sm:px-6 lg:px-8">
           {total > 0 ? (
             <>
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">

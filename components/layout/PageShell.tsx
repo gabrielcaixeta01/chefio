@@ -61,7 +61,7 @@ export function PageHeader({
         <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-5">
           <div className="min-w-0">
             <p className="olho text-brasa-escura">{olho}</p>
-            <h1 className="mt-3 font-display text-[clamp(1.85rem,3.4vw,2.6rem)] font-extrabold leading-[1.03] tracking-[-0.02em] text-tinta">
+            <h1 className="mt-3 font-display text-painel font-extrabold text-tinta">
               {titulo}
             </h1>
             {descricao && (

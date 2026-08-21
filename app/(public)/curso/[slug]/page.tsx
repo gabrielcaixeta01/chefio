@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Ladrilho } from '@/components/ui/ladrilho'
 import { Skeleton } from '@/components/ui/skeleton'
 import { PurchaseBox } from '@/components/curso/PurchaseBox'
-import { formatCurrency, formatDuration } from '@/lib/utils'
+import { formatCurrency, formatDuration, formatCourseDuration } from '@/lib/utils'
 import { Lock, Play, Clock, ChefHat, BookOpen } from 'lucide-react'
 
 export const revalidate = 300
@@ -31,20 +31,26 @@ export default async function CourseDetailPage({
   const { slug } = await params
   const supabase = createPublicClient()
 
-  const { data: course } = await supabase
+  const { data: course, error } = await supabase
     .from('courses')
     .select(`
       *,
-      teacher:profiles(id, name, avatar_url),
-      lessons(id, title, duration_seconds, is_free_preview, order_index)
+      teacher:profiles(id, name, avatar_url)
     `)
     .eq('slug', slug)
     .eq('status', 'approved')
     // Fora do catálogo = fora da página de venda. Quem comprou continua
     // assistindo por /aluno/cursos/[slug] (decisão 3.3).
     .is('archived_at', null)
-    .single()
+    .maybeSingle()
 
+  // `maybeSingle` devolve `data: null` sem erro quando o curso não existe, o
+  // que deixa `error` significando só uma coisa: falhou de verdade (RLS,
+  // rede, schema). Com `.single()` os dois casos vinham como erro e o
+  // `if (!course) notFound()` respondia 404 para ambos — foi assim que a
+  // recursão de policy corrigida na 00024 deixou TODAS as páginas de curso
+  // dizendo "não encontrado", que parece catálogo despublicado e não incidente.
+  if (error) throw error
   if (!course) notFound()
 
   // View pública (só user_id + bio) — o resto de teacher_profiles, como
@@ -55,9 +61,21 @@ export default async function CourseDetailPage({
     .eq('user_id', course.teacher_id)
     .maybeSingle()
 
-  const lessons = (course.lessons as any[]).sort((a, b) => a.order_index - b.order_index)
-  const totalDuration = lessons.reduce((sum: number, l: any) => sum + (l.duration_seconds ?? 0), 0)
-  const previas = lessons.filter((l: any) => l.is_free_preview).length
+  // Currículo pela view pública (00025) e não pelo embed de `lessons`: sob RLS
+  // o anônimo só enxerga as aulas de prévia, então esta página anunciava
+  // "1 aula" e listava um item em cursos de cinco. A view mostra o curso
+  // inteiro sem entregar `bunny_video_id`.
+  const { data: lessonsData, error: erroAulas } = await supabase
+    .from('lessons_publicas')
+    .select('id, title, duration_seconds, is_free_preview, order_index')
+    .eq('course_id', course.id)
+    .order('order_index', { ascending: true })
+
+  if (erroAulas) throw erroAulas
+
+  const lessons = lessonsData ?? []
+  const totalDuration = lessons.reduce((sum, l) => sum + (l.duration_seconds ?? 0), 0)
+  const previas = lessons.filter((l) => l.is_free_preview).length
 
   return (
     <>
@@ -66,9 +84,9 @@ export default async function CourseDetailPage({
           direto na miniatura: era a única tela pública que começava sem a
           marca, e parecia ter caído de outro site. */}
       <section className="azulejo-escuro">
-        <div className="relative mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8">
-          {course.category && <p className="olho text-brasa">{course.category}</p>}
-          <h1 className="mt-4 max-w-3xl font-display text-[clamp(2rem,4vw,3.25rem)] font-extrabold leading-[1.04] tracking-[-0.02em] text-cal">
+        <div className="relative mx-auto max-w-6xl px-4 py-cabecalho sm:px-6 lg:px-8">
+          {course.category && <p className="olho text-brasa-clara">{course.category}</p>}
+          <h1 className="mt-4 max-w-3xl font-display text-secao font-extrabold text-cal">
             {course.title}
           </h1>
           <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-cal/70">
@@ -80,14 +98,14 @@ export default async function CourseDetailPage({
             {totalDuration > 0 && (
               <span className="flex items-center gap-1.5">
                 <Clock className="h-4 w-4" aria-hidden="true" />
-                {formatDuration(totalDuration)}
+                {formatCourseDuration(totalDuration)}
               </span>
             )}
           </div>
         </div>
       </section>
 
-      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl px-4 py-corpo sm:px-6 lg:px-8">
         {/* A caixa de compra vem antes no DOM e volta pra direita a partir de
             lg. No mobile ela ficava depois da lista inteira de aulas: o preço
             e o botão só apareciam depois de uns três scrolls. */}

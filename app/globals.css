@@ -21,7 +21,61 @@
 
   --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-bricolage), var(--font-archivo), ui-sans-serif, sans-serif;
-  --radius: 0.5rem;
+
+  /* --- Escala de título ---------------------------------------------------
+     Eram nove expressões `clamp` soltas no meio das classes, seis delas
+     separadas por 0,25rem — diferença que ninguém escolheu, foi digitada.
+     São quatro papéis de verdade, e cada um carrega seu próprio leading e
+     tracking: título grande fecha o espaço entre linhas (0.95) e aperta a
+     letra (-0.03em), título pequeno precisa do contrário. Amarrar os três
+     eixos no token é o que impede a próxima tela de reinventar o meio-termo.
+
+     `--text-*` no @theme gera o utilitário `text-*` no Tailwind v4, e os
+     sufixos `--line-height`/`--letter-spacing` viajam junto com ele. */
+
+  /* Hero das duas landings (home e /para-chefs) — o maior tipo do produto. */
+  --text-hero: clamp(2.5rem, 6.5vw, 5rem);
+  --text-hero--line-height: 0.95;
+  --text-hero--letter-spacing: -0.03em;
+
+  /* Título de página pública, na faixa de azulejo. */
+  --text-titulo: clamp(2.5rem, 5vw, 4rem);
+  --text-titulo--line-height: 1.02;
+  --text-titulo--letter-spacing: -0.02em;
+
+  /* h2 de seção. É o degrau mais usado do produto. */
+  --text-secao: clamp(2rem, 4vw, 3.25rem);
+  --text-secao--line-height: 1.02;
+  --text-secao--letter-spacing: -0.02em;
+
+  /* Título de página da área logada (PageShell) e de painel lateral: menor
+     de propósito, porque divide a tela com menu e conteúdo. */
+  --text-painel: clamp(1.85rem, 3.4vw, 2.6rem);
+  --text-painel--line-height: 1.03;
+  --text-painel--letter-spacing: -0.02em;
+
+  /* --- Ritmo vertical -----------------------------------------------------
+     Seis alturas de respiro (py-12 a py-28) sem regra discernível: /cursos
+     abria com 64px, /curso/[slug] com 56px, a home fechava com 112px. Quatro
+     degraus nomeados pelo PAPEL da faixa, não pelo número. */
+  --spacing-hero: 7rem;       /* respiro do hero (só a partir de lg) */
+  --spacing-secao: 6rem;      /* faixa de seção de conteúdo */
+  --spacing-cabecalho: 4rem;  /* faixa de título de página */
+  --spacing-corpo: 3.5rem;    /* corpo de página e listagens */
+
+  /* --- Raio ---------------------------------------------------------------
+     Existia um `--radius: 0.5rem` aqui que nada lia: no Tailwind v4 quem
+     manda são `--radius-sm`/`--radius-md`. A regra real do produto já era
+     seguida à risca, só não estava escrita — controle é mais fechado que
+     superfície:
+
+       rounded-sm  controles  (botão, input, badge, paginação, nav)
+       rounded-md  superfícies (card, painel, notice, stat-tile)
+
+     Declarados no valor que já vigorava, então nada muda de pixel; agora a
+     convenção tem onde morar. */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
 
   /* Curva única de movimento da marca — a mesma dos ladrilhos que acendem.
      Sai rápido, chega devagar: o elemento "assenta" em vez de frear. */

@@ -324,6 +324,18 @@ export type Database = {
         Row: { user_id: string; bio: string | null }
         Relationships: []
       }
+      /** Currículo público — sem `bunny_video_id` (00025_aulas_publicas.sql). */
+      lessons_publicas: {
+        Row: {
+          id: string
+          course_id: string
+          title: string
+          duration_seconds: number | null
+          is_free_preview: boolean
+          order_index: number
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_my_role: {

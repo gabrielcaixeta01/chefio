@@ -59,7 +59,7 @@ export function AuthField({
           aria-describedby={descrito || undefined}
           className={cn(
             'h-12 w-full rounded-sm border-2 bg-white px-3.5 text-tinta transition-colors',
-            'placeholder:text-tinta-suave/60',
+            'placeholder:text-tinta-suave/90',
             'focus:outline-none focus:border-cobalto',
             erro ? 'border-red-600' : 'border-cobalto/20 hover:border-cobalto/40',
             revelavel && 'pr-12',

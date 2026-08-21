@@ -23,12 +23,16 @@ export default async function AlunoCourseOverviewPage({
   const supabase = await createClient()
   const user = await getAuthedUser()
 
-  const { data: course } = await supabase
+  const { data: course, error } = await supabase
     .from('courses')
     .select('id, title, slug, thumbnail_url, teacher:profiles(name)')
     .eq('slug', slug)
-    .single()
+    .maybeSingle()
 
+  // Esta é a página do acesso vitalício (3.1). Responder 404 numa falha de
+  // leitura diz ao aluno que o curso que ele comprou não existe mais — o
+  // oposto exato da promessa. Erro de verdade tem que aparecer como erro.
+  if (error) throw error
   if (!course) notFound()
 
   const [{ data: enrollment }, { data: lessons }, { data: notebook }] = await Promise.all([

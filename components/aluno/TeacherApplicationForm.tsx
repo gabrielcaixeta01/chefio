@@ -128,7 +128,7 @@ export function TeacherApplicationForm({
           id="experience"
           rows={5}
           placeholder="Onde você cozinhou, o que ensina, há quanto tempo."
-          className="flex w-full rounded-sm border-2 border-cobalto/20 bg-white px-3.5 py-2.5 text-sm text-tinta transition-colors placeholder:text-tinta-suave/60 hover:border-cobalto/40 focus:border-cobalto focus:outline-none"
+          className="flex w-full rounded-sm border-2 border-cobalto/20 bg-white px-3.5 py-2.5 text-sm text-tinta transition-colors placeholder:text-tinta-suave/90 hover:border-cobalto/40 focus:border-cobalto focus:outline-none"
           {...register('experience')}
         />
         {errors.experience && <p className="text-xs text-red-600">{errors.experience.message}</p>}
@@ -140,7 +140,7 @@ export function TeacherApplicationForm({
           id="bio"
           rows={3}
           placeholder="É o texto que aparece na página dos seus cursos."
-          className="flex w-full rounded-sm border-2 border-cobalto/20 bg-white px-3.5 py-2.5 text-sm text-tinta transition-colors placeholder:text-tinta-suave/60 hover:border-cobalto/40 focus:border-cobalto focus:outline-none"
+          className="flex w-full rounded-sm border-2 border-cobalto/20 bg-white px-3.5 py-2.5 text-sm text-tinta transition-colors placeholder:text-tinta-suave/90 hover:border-cobalto/40 focus:border-cobalto focus:outline-none"
           {...register('bio')}
         />
         {errors.bio && <p className="text-xs text-red-600">{errors.bio.message}</p>}

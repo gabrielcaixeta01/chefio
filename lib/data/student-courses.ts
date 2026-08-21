@@ -42,7 +42,7 @@ type EnrollmentRow = {
 export async function getStudentCourses(studentId: string): Promise<StudentCourse[]> {
   const supabase = await createClient()
 
-  const { data: enrollments } = await supabase
+  const { data: enrollments, error: erroMatriculas } = await supabase
     .from('enrollments')
     .select('id, created_at, course:courses(id, title, slug, thumbnail_url, teacher:profiles(name))')
     .eq('student_id', studentId)
@@ -50,25 +50,41 @@ export async function getStudentCourses(studentId: string): Promise<StudentCours
     .is('refunded_at', null)
     .order('created_at', { ascending: false })
 
+  // Sem ler `error`, uma falha de RLS vira `[]` e a biblioteca anuncia
+  // "você ainda não tem cursos" para quem pagou — a mentira mais cara que
+  // esta função pode contar, porque o caminho de saída que ela oferece é
+  // comprar de novo. Deixar estourar manda para o boundary de erro, que ao
+  // menos diz a verdade. Aconteceu com a recursão de policy da 00024.
+  if (erroMatriculas) throw erroMatriculas
+
   const rows = ((enrollments ?? []) as unknown as EnrollmentRow[]).filter((e) => e.course)
   if (rows.length === 0) return []
 
   const courseIds = rows.map((e) => e.course!.id)
 
-  const { data: lessons } = await supabase
+  const { data: lessons, error: erroAulas } = await supabase
     .from('lessons')
     .select('id, course_id, title, order_index')
     .in('course_id', courseIds)
     .order('order_index', { ascending: true })
 
+  // Mesma regra das matrículas: falhar calado aqui devolve `totalLessons: 0`,
+  // que a UI mostra como curso sem aula e progresso zerado — some o "continue
+  // de onde parou" de quem estava na metade.
+  if (erroAulas) throw erroAulas
+
   const lessonRows = lessons ?? []
-  const { data: progress } = lessonRows.length > 0
+  const { data: progress, error: erroProgresso } = lessonRows.length > 0
     ? await supabase
         .from('lesson_progress')
         .select('lesson_id, completed_at')
         .eq('student_id', studentId)
         .in('lesson_id', lessonRows.map((l) => l.id))
-    : { data: [] }
+    : { data: [], error: null }
+
+  // Progresso que não carrega zera a barra de todo mundo: o aluno vê 0% num
+  // curso que terminou e é mandado de volta para a aula 1.
+  if (erroProgresso) throw erroProgresso
 
   const completedAtByLesson = new Map<string, string>()
   for (const p of progress ?? []) {

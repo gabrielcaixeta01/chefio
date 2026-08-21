@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { createPublicClient } from '@/lib/supabase/public'
+import { getCourseMeta } from '@/lib/data/course-meta'
 import { ActionLink } from '@/components/ui/action-link'
 import { AzulejoWall } from '@/components/layout/AzulejoWall'
 import { PassosNumerados } from '@/components/layout/PassosNumerados'
@@ -104,7 +105,9 @@ export default async function LandingPage() {
     // o problema é permissão. Aconteceu de verdade em 10/08/2026.
     if (destaques.error) throw destaques.error
     if (catalogo.error) throw catalogo.error
-    featuredCourses = destaques.data ?? []
+    const base = destaques.data ?? []
+    const meta = await getCourseMeta(supabase, base.map((c) => c.id))
+    featuredCourses = base.map((c) => ({ ...c, ...meta.get(c.id) }))
     numeros = montarNumeros(catalogo.data ?? [])
   } catch (err) {
     falhou = true
@@ -120,13 +123,13 @@ export default async function LandingPage() {
             O padding-left replica o eixo do container da Navbar
             (max-w-7xl = 80rem, lg:px-8 = 2rem) para o texto alinhar com o logo. */}
         <div className="grid items-stretch lg:grid-cols-[1fr_44%]">
-          <div className="flex flex-col justify-center px-4 py-16 sm:px-6 lg:py-28 lg:pr-16 lg:pl-[max(2rem,calc((100vw-80rem)/2+2rem))]">
+          <div className="flex flex-col justify-center px-4 py-cabecalho sm:px-6 lg:py-hero lg:pr-16 lg:pl-[max(2rem,calc((100vw-80rem)/2+2rem))]">
             <p className="olho surge text-brasa-escura">
               Cursos de culinária · Brasil
             </p>
 
             <h1
-              className="surge mt-6 font-display text-[clamp(2.75rem,7vw,5.25rem)] font-extrabold leading-[0.94] tracking-[-0.03em] text-tinta"
+              className="surge mt-6 font-display text-hero font-extrabold text-tinta"
               style={{ animationDelay: '80ms' }}
             >
               Cozinha brasileira,
@@ -164,7 +167,7 @@ export default async function LandingPage() {
       {/* ---------- Números ---------- */}
       {numeros.length > 0 && (
         <section className="bg-cobalto-escuro">
-          <div className="mx-auto max-w-5xl px-4 py-14 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-5xl px-4 py-corpo sm:px-6 lg:px-8">
             <dl className="grid grid-cols-1 gap-10 sm:grid-cols-3">
               {numeros.map((n) => (
                 <div
@@ -187,10 +190,10 @@ export default async function LandingPage() {
 
       {/* ---------- Como funciona ---------- */}
       <section className="bg-cal-fundo">
-        <div className="mx-auto max-w-6xl px-4 py-24 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl px-4 py-secao sm:px-6 lg:px-8">
           <div className="max-w-2xl">
             <p className="olho text-brasa-escura">Como funciona</p>
-            <h2 className="mt-4 font-display text-[clamp(2rem,4vw,3.25rem)] font-extrabold leading-[1.02] tracking-[-0.02em] text-tinta">
+            <h2 className="mt-4 font-display text-secao font-extrabold text-tinta">
               Três passos, do catálogo à panela.
             </h2>
           </div>
@@ -201,11 +204,11 @@ export default async function LandingPage() {
 
       {/* ---------- Cursos em destaque ---------- */}
       <section className="bg-cal">
-        <div className="mx-auto max-w-6xl px-4 py-24 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl px-4 py-secao sm:px-6 lg:px-8">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="olho text-brasa-escura">Catálogo</p>
-              <h2 className="mt-4 font-display text-[clamp(2rem,4vw,3.25rem)] font-extrabold leading-[1.02] tracking-[-0.02em] text-tinta">
+              <h2 className="mt-4 font-display text-secao font-extrabold text-tinta">
                 Cursos em destaque
               </h2>
             </div>
@@ -254,9 +257,9 @@ export default async function LandingPage() {
 
       {/* ---------- Chamada para professores ---------- */}
       <section className="azulejo-escuro relative">
-        <div className="relative mx-auto max-w-4xl px-4 py-28 text-center sm:px-6 lg:px-8">
-          <p className="olho text-brasa">Para quem ensina</p>
-          <h2 className="mt-5 font-display text-[clamp(2rem,4.5vw,3.5rem)] font-extrabold leading-[1.02] tracking-[-0.02em] text-cal">
+        <div className="relative mx-auto max-w-4xl px-4 py-hero text-center sm:px-6 lg:px-8">
+          <p className="olho text-brasa-clara">Para quem ensina</p>
+          <h2 className="mt-5 font-display text-secao font-extrabold text-cal">
             Ensine o que você faz todo dia.
           </h2>
           <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-cal/70">

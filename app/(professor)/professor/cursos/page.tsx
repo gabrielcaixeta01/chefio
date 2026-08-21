@@ -16,11 +16,16 @@ export default async function ProfessorCoursesPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const { data: courses } = await supabase
+  const { data: courses, error } = await supabase
     .from('courses')
     .select('id, title, slug, status, price, category, thumbnail_url, archived_at, created_at')
     .eq('teacher_id', user!.id)
     .order('created_at', { ascending: false })
+
+  // Falha de leitura aqui mostrava "0 cursos criados" e o convite para criar
+  // o primeiro — para um professor que já tem catálogo publicado. Estourar
+  // manda para o boundary de erro em vez de sugerir refazer o trabalho.
+  if (error) throw error
 
   return (
     <>

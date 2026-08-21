@@ -100,11 +100,11 @@ export default function ParaChefsPage() {
       {/* ---------- Hero ---------- */}
       <section className="border-b border-cobalto/15 bg-cal">
         <div className="grid items-stretch lg:grid-cols-[1fr_44%]">
-          <div className="flex flex-col justify-center px-4 py-16 sm:px-6 lg:py-28 lg:pr-16 lg:pl-[max(2rem,calc((100vw-80rem)/2+2rem))]">
+          <div className="flex flex-col justify-center px-4 py-cabecalho sm:px-6 lg:py-hero lg:pr-16 lg:pl-[max(2rem,calc((100vw-80rem)/2+2rem))]">
             <p className="olho surge text-brasa-escura">Para quem ensina</p>
 
             <h1
-              className="surge mt-6 font-display text-[clamp(2.5rem,6vw,4.5rem)] font-extrabold leading-[0.96] tracking-[-0.03em] text-tinta"
+              className="surge mt-6 font-display text-hero font-extrabold text-tinta"
               style={{ animationDelay: '80ms' }}
             >
               Sua cozinha já é{' '}
@@ -139,9 +139,9 @@ export default function ParaChefsPage() {
 
       {/* ---------- Comissão ---------- */}
       <section className="bg-cobalto-escuro">
-        <div className="mx-auto flex max-w-5xl flex-col items-start gap-8 px-4 py-16 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
+        <div className="mx-auto flex max-w-5xl flex-col items-start gap-8 px-4 py-cabecalho sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
           <div>
-            <p className="olho text-brasa">O acordo</p>
+            <p className="olho text-brasa-clara">O acordo</p>
             <p className="mt-4 max-w-lg font-display text-3xl font-extrabold leading-tight tracking-tight text-cal">
               Você fica com {100 - COMISSAO_PADRAO}% de cada matrícula.
             </p>
@@ -163,10 +163,10 @@ export default function ParaChefsPage() {
 
       {/* ---------- Como funciona ---------- */}
       <section className="bg-cal-fundo">
-        <div className="mx-auto max-w-6xl px-4 py-24 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl px-4 py-secao sm:px-6 lg:px-8">
           <div className="max-w-2xl">
             <p className="olho text-brasa-escura">Como funciona</p>
-            <h2 className="mt-4 font-display text-[clamp(2rem,4vw,3.25rem)] font-extrabold leading-[1.02] tracking-[-0.02em] text-tinta">
+            <h2 className="mt-4 font-display text-secao font-extrabold text-tinta">
               Do vídeo ao repasse, em três passos.
             </h2>
           </div>
@@ -177,10 +177,10 @@ export default function ParaChefsPage() {
 
       {/* ---------- O que a Chefio cuida ---------- */}
       <section className="bg-cal">
-        <div className="mx-auto max-w-6xl px-4 py-24 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl px-4 py-secao sm:px-6 lg:px-8">
           <div className="max-w-2xl">
             <p className="olho text-brasa-escura">O que fica com a gente</p>
-            <h2 className="mt-4 font-display text-[clamp(2rem,4vw,3.25rem)] font-extrabold leading-[1.02] tracking-[-0.02em] text-tinta">
+            <h2 className="mt-4 font-display text-secao font-extrabold text-tinta">
               Você cozinha. O resto é problema nosso.
             </h2>
           </div>
@@ -209,9 +209,9 @@ export default function ParaChefsPage() {
 
       {/* ---------- Dúvidas ---------- */}
       <section className="bg-cal-fundo">
-        <div className="mx-auto max-w-3xl px-4 py-24 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-3xl px-4 py-secao sm:px-6 lg:px-8">
           <p className="olho text-brasa-escura">Dúvidas</p>
-          <h2 className="mt-4 font-display text-[clamp(2rem,4vw,3rem)] font-extrabold leading-[1.02] tracking-[-0.02em] text-tinta">
+          <h2 className="mt-4 font-display text-secao font-extrabold text-tinta">
             Antes de você perguntar.
           </h2>
 
@@ -239,8 +239,8 @@ export default function ParaChefsPage() {
 
       {/* ---------- CTA final ---------- */}
       <section className="azulejo-escuro">
-        <div className="mx-auto max-w-3xl px-4 py-24 text-center sm:px-6 lg:px-8">
-          <h2 className="font-display text-[clamp(2rem,4.5vw,3.25rem)] font-extrabold leading-[1.02] tracking-[-0.02em] text-cal">
+        <div className="mx-auto max-w-3xl px-4 py-secao text-center sm:px-6 lg:px-8">
+          <h2 className="font-display text-secao font-extrabold text-cal">
             Comece pelo primeiro curso.
           </h2>
           <p className="mx-auto mt-5 max-w-lg leading-relaxed text-cal/70">

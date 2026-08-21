@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatCourseDuration } from '@/lib/utils'
 
 export interface CourseCardData {
   id: string
@@ -10,6 +10,9 @@ export interface CourseCardData {
   price: number
   category?: string | null
   teacher?: { name: string | null } | null
+  /** Tamanho do curso. Opcional: quem não passar simplesmente não mostra a linha. */
+  aulas?: number
+  duracaoSegundos?: number
 }
 
 /** Card usado na home e no catálogo — mesma peça, um lugar só para mudar. */
@@ -32,7 +35,7 @@ export function CourseCard({
             alt={course.title}
             fill
             sizes={sizes}
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            className="object-cover"
           />
         ) : (
           /* Sem thumbnail o próprio azulejo entra no lugar */
@@ -55,7 +58,23 @@ export function CourseCard({
             por {course.teacher.name}
           </p>
         )}
-        <p className="mt-5 font-display text-xl font-extrabold tabular-nums text-brasa-escura">
+
+        {/* Tamanho do curso: é o que separa dois cards de mesmo preço. Fica no
+            grupo de cima, não colado no preço, para que a presença ou ausência
+            da linha não empurre o preço de altura. */}
+        {course.aulas ? (
+          <p className="mt-2 text-sm tabular-nums text-tinta-suave">
+            {course.aulas} {course.aulas === 1 ? 'aula' : 'aulas'}
+            {course.duracaoSegundos
+              ? ` · ${formatCourseDuration(course.duracaoSegundos)}`
+              : ''}
+          </p>
+        ) : null}
+
+        {/* `mt-auto` e não `mt-5`: num grid de 4 colunas, título de uma linha e
+            de duas colocavam o preço em alturas diferentes e a fileira de
+            preços serrilhava. Ancorado no rodapé do card, alinha sempre. */}
+        <p className="mt-auto pt-5 font-display text-xl font-extrabold tabular-nums text-brasa-escura">
           {course.price === 0 ? 'Grátis' : formatCurrency(course.price)}
         </p>
       </div>

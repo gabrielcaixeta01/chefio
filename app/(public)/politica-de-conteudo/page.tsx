@@ -57,9 +57,9 @@ export default function PoliticaDeConteudoPage() {
     <>
       {/* ---------- Cabeçalho ---------- */}
       <section className="azulejo-escuro">
-        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-          <p className="olho text-brasa">Regras da casa</p>
-          <h1 className="mt-4 font-display text-[clamp(2.5rem,5vw,4rem)] font-extrabold leading-[1.02] tracking-[-0.02em] text-cal">
+        <div className="mx-auto max-w-7xl px-4 py-cabecalho sm:px-6 lg:px-8">
+          <p className="olho text-brasa-clara">Regras da casa</p>
+          <h1 className="mt-4 font-display text-titulo font-extrabold text-cal">
             Política de conteúdo
           </h1>
           <p className="mt-4 max-w-2xl text-cal/70">
@@ -69,7 +69,7 @@ export default function PoliticaDeConteudoPage() {
       </section>
 
       <section className="bg-cal-fundo">
-        <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-3xl px-4 py-corpo sm:px-6 lg:px-8">
           {/* ---------- 6.1 ---------- */}
           <h2 className="font-display text-2xl font-extrabold tracking-tight text-tinta">
             De quem é o conteúdo

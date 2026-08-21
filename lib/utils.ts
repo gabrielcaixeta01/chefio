@@ -133,3 +133,15 @@ export const COURSE_CATEGORIES = [
   'Bebidas e Coquetéis',
   'Nutrição e Alimentação Saudável',
 ] as const
+
+/**
+ * Duração total de um curso. Diferente de `formatDuration`, que serve para uma
+ * aula e desce a segundos: numa vitrine "2h 15min" decide a compra, "2h 15min
+ * 42s" só polui. Minuto é a menor unidade que importa aqui.
+ */
+export function formatCourseDuration(seconds: number): string {
+  const h = Math.floor(seconds / 3600)
+  const m = Math.round((seconds % 3600) / 60)
+  if (h > 0) return m > 0 ? `${h}h ${m}min` : `${h}h`
+  return `${m}min`
+}

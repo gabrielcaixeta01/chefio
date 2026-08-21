@@ -118,7 +118,7 @@ export function PurchaseBox({ courseId, courseSlug, price }: PurchaseBoxProps) {
                   autoComplete="off"
                   spellCheck={false}
                   placeholder="Ex.: CHEFIO10"
-                  className="flex h-11 w-full rounded-sm border-2 border-cobalto/20 bg-white px-3.5 text-sm uppercase text-tinta transition-colors placeholder:normal-case placeholder:text-tinta-suave/60 hover:border-cobalto/40 focus:border-cobalto focus:outline-none"
+                  className="flex h-11 w-full rounded-sm border-2 border-cobalto/20 bg-white px-3.5 text-sm uppercase text-tinta transition-colors placeholder:normal-case placeholder:text-tinta-suave/90 hover:border-cobalto/40 focus:border-cobalto focus:outline-none"
                 />
               </div>
             )}

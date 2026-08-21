@@ -30,8 +30,8 @@ export function AuthLayout({
         <AzulejoWall className="absolute inset-0" />
 
         <div className="relative z-10 p-12 xl:p-16">
-          <p className="olho text-brasa">{olho}</p>
-          <p className="mt-5 max-w-md font-display text-[clamp(2rem,3vw,2.75rem)] font-extrabold leading-[1.04] tracking-[-0.02em] text-cal">
+          <p className="olho text-brasa-clara">{olho}</p>
+          <p className="mt-5 max-w-md font-display text-painel font-extrabold text-cal">
             {titulo}
           </p>
           <p className="mt-4 max-w-sm leading-relaxed text-cal/70">

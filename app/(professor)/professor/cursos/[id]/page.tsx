@@ -21,13 +21,17 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const { data: course } = await supabase
+  const { data: course, error } = await supabase
     .from('courses')
     .select('*')
     .eq('id', id)
     .eq('teacher_id', user!.id)
-    .single()
+    .maybeSingle()
 
+  // `maybeSingle` separa "não é seu / não existe" (data null, sem erro) de
+  // falha real. Com `.single()` os dois viravam 404 e o professor concluía
+  // que o curso tinha sido apagado.
+  if (error) throw error
   if (!course) notFound()
 
   const [{ data: lessons }, { count: alunos }, { data: pedidos }] = await Promise.all([

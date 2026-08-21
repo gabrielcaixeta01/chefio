@@ -88,7 +88,7 @@ export default async function AlunoCoursesPage({
                   defaultValue={q ?? ''}
                   placeholder="Buscar nos seus cursos…"
                   aria-label="Buscar nos seus cursos por título"
-                  className="h-11 w-full rounded-sm border-2 border-cobalto/20 bg-white pl-11 pr-3 text-sm text-tinta transition-colors placeholder:text-tinta-suave/60 hover:border-cobalto/40 focus:border-cobalto focus:outline-none"
+                  className="h-11 w-full rounded-sm border-2 border-cobalto/20 bg-white pl-11 pr-3 text-sm text-tinta transition-colors placeholder:text-tinta-suave/90 hover:border-cobalto/40 focus:border-cobalto focus:outline-none"
                 />
               </div>
               <button

@@ -36,7 +36,12 @@ export default async function AdminCoursesPage({
 
   if (status) query = query.eq('status', status)
 
-  const { data: courses, count } = await query
+  const { data: courses, count, error } = await query
+
+  // A fila de revisão vazia é indistinguível de "nada pendente". Um admin que
+  // vê fila limpa para de olhar — e curso nenhum é aprovado enquanto o erro
+  // durar (prazo de revisão da seção 5 correndo o tempo todo).
+  if (error) throw error
 
   const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE))
 

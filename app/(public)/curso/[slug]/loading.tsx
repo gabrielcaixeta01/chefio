@@ -2,7 +2,7 @@ import { Skeleton, SkeletonText } from '@/components/ui/skeleton'
 
 export default function Loading() {
   return (
-    <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-6xl px-4 py-corpo sm:px-6 lg:px-8">
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-3">
         {/* Coluna principal: capa, título, sobre, instrutor, aulas */}
         <div className="lg:col-span-2">

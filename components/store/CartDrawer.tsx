@@ -226,7 +226,7 @@ function CartDrawer({
                     placeholder="00000-000"
                     value={formatarCep(cep)}
                     onChange={(e) => setCep(normalizarCep(e.target.value))}
-                    className="h-10 w-32 rounded-sm border-2 border-cobalto/20 bg-white px-2.5 text-sm tabular-nums text-tinta transition-colors placeholder:text-tinta-suave/60 hover:border-cobalto/40 focus:border-cobalto focus:outline-none"
+                    className="h-10 w-32 rounded-sm border-2 border-cobalto/20 bg-white px-2.5 text-sm tabular-nums text-tinta transition-colors placeholder:text-tinta-suave/90 hover:border-cobalto/40 focus:border-cobalto focus:outline-none"
                   />
                   {frete ? (
                     <span className="text-xs text-tinta-suave">

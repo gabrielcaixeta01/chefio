@@ -4,7 +4,7 @@ export default function Loading() {
   return (
     <div>
       {/* Hero */}
-      <div className="azulejo-claro border-b border-cobalto/15 px-4 py-20 sm:px-6 lg:px-8">
+      <div className="azulejo-claro border-b border-cobalto/15 px-4 py-cabecalho sm:px-6 lg:px-8">
         <div className="mx-auto flex max-w-3xl flex-col items-center gap-5">
           <Skeleton className="h-6 w-40 rounded-full" />
           <Skeleton className="h-12 w-full" />
@@ -13,7 +13,7 @@ export default function Loading() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-5xl px-4 py-corpo sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-3">
           {Array.from({ length: 3 }, (_, i) => (
             <div key={i} className="flex flex-col gap-4">
