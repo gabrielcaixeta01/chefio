@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { cotarFrete, normalizarCep } from '@/lib/frete'
+import { origemConfiavel } from '@/lib/auth/origem'
 
 type CartRequestItem = { id: string; quantity: number; lessonId?: string | null }
 
@@ -15,6 +16,10 @@ type CartRequestItem = { id: string; quantity: number; lessonId?: string | null 
  * leva só o id do pedido.
  */
 export async function POST(req: NextRequest) {
+  if (!origemConfiavel(req)) {
+    return NextResponse.json({ error: 'Origem não permitida.' }, { status: 403 })
+  }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

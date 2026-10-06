@@ -182,6 +182,22 @@ export function LessonList({
     }
 
     if (!confirm('Tem certeza que deseja excluir esta aula?')) return
+
+    // Apagar só a linha deixaria o arquivo no Bunny, cobrando armazenamento
+    // sem ninguém poder ver ou remover. A rota tira o vídeo da aula e do
+    // Bunny; se ela falhar, a aula fica (ainda dá para tentar de novo).
+    if (lesson.bunny_video_id) {
+      const res = await fetch('/api/bunny/video', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lessonId: lesson.id, videoId: lesson.bunny_video_id }),
+      }).catch(() => null)
+      if (!res?.ok) {
+        toast.error('Não foi possível remover o vídeo da aula. Tente novamente.')
+        return
+      }
+    }
+
     const supabase = createClient()
     const { error } = await supabase.from('lessons').delete().eq('id', lesson.id)
     if (error) {

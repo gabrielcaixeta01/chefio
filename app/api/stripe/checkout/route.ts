@@ -2,8 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { COMISSAO_PADRAO } from '@/lib/utils'
+import { origemConfiavel } from '@/lib/auth/origem'
 
 export async function POST(req: NextRequest) {
+  // Vem de um <form> real, que qualquer site consegue postar com os cookies
+  // da pessoa logada (CSRF) — por isso a origem é conferida antes de tudo.
+  if (!origemConfiavel(req)) {
+    return NextResponse.redirect(new URL('/cursos?erro=curso_invalido', req.url), 302)
+  }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.redirect(new URL('/login', req.url), 302)

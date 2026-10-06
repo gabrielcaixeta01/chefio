@@ -102,7 +102,7 @@ Os itens de 06/08 e os 4 achados de 10/08 foram resolvidos. Ressalva histórica:
 
   Chegou a existir como `00013_default_privileges_hardening.sql` e foi **removida sem ser aplicada em 10/08/2026**, por decisão consciente: esquecer o `GRANT` numa migration futura passa a dar `permission denied`, e enquanto o `error` for descartado em toda query isso reapareceria como tela zerada em silêncio — exatamente o sintoma que a 00010 ausente produziu. Retomar **depois** do item acima. Até lá, o controle é manual: toda migration que criar função termina com `GRANT`/`REVOKE` explícito, como a 00012.
 
-- [ ] **CSRF no formulário de checkout** — `components/curso/PurchaseBox.tsx:82` posta um `<form>` real pra `/api/stripe/checkout`. Route handlers não têm a proteção que Server Actions têm de graça; um site externo consegue disparar matrícula em curso grátis no nome de quem estiver logado. Baixo impacto hoje (só cursos grátis mudam estado sem passar pelo Stripe), mas é dívida real.
+- [x] **CSRF no formulário de checkout** — `components/curso/PurchaseBox.tsx:82` posta um `<form>` real pra `/api/stripe/checkout`. Route handlers não têm a proteção que Server Actions têm de graça; um site externo consegue disparar matrícula em curso grátis no nome de quem estiver logado. Baixo impacto hoje (só cursos grátis mudam estado sem passar pelo Stripe), mas é dívida real. **Resolvido em 06/10/2026:** `lib/auth/origem.ts` confere `Origin` contra o host nas rotas de checkout.
 
 - [ ] **`/aluno` e `/aluno/cursos` são quase o mesmo arquivo** — ~100 linhas duplicadas entre `app/(aluno)/aluno/page.tsx` e `app/(aluno)/aluno/cursos/page.tsx`: mesma query, mesmo grid, mesmo banner de professor pendente. Só o título e o subtítulo mudam.
 
@@ -112,7 +112,7 @@ Os itens de 06/08 e os 4 achados de 10/08 foram resolvidos. Ressalva histórica:
 
 - [x] ~~**Números fictícios na home**~~ — resolvido em 17/08/2026. `app/(public)/page.tsx`: os três valores fixos ("500+ aulas, 50+ chefs, 10k+ alunos formados") saíram; agora vêm de uma segunda query em `courses` aprovados — cursos publicados, chefs distintos e categorias distintas — em paralelo com a dos destaques. **"Aulas" ficou de fora de propósito:** `lessons_free_preview_read` (00002) só deixa `anon` ler aula com `is_free_preview = true`, então o client público contaria uma aula por curso; número errado é pior que número ausente. Catálogo vazio ou query com erro esconde a seção inteira em vez de estampar "0". Rótulos flexionam no singular. Verificado: `tsc --noEmit` limpo e `/` continua `○ Static` no build — a query extra não derrubou o prerender.
 
-- [ ] **Deletar aula não remove o vídeo no Bunny** — `components/courses/LessonList.tsx:139` apaga a linha e deixa o arquivo lá, cobrando storage pra sempre.
+- [x] **Deletar aula não remove o vídeo no Bunny** — `components/courses/LessonList.tsx:139` apaga a linha e deixa o arquivo lá, cobrando storage pra sempre. **Resolvido em 06/10/2026:** `handleDelete` chama `DELETE /api/bunny/video` antes de apagar a linha.
 
 - [ ] **Sem lint** — `package.json` tem só `dev`/`build`/`start`, sem `eslint-config-next` instalado. O commit `f326195 "melhorias finais de lint"` não deixou configuração nenhuma no repo.
 
@@ -124,7 +124,7 @@ Os itens de 06/08 e os 4 achados de 10/08 foram resolvidos. Ressalva histórica:
 
 - [ ] **Comissão ainda hardcoded em `?? 20` em 4 arquivos** — a coluna `commission_rate` é a fonte única de verdade, mas o fallback se repete em vez de vir de um só lugar. (A variável `PLATFORM_COMMISSION_RATE`, que não era lida em canto nenhum, saiu do `.env.example` na limpeza de 06/08/2026 — essa parte já não é mais duplicação.)
 
-- [ ] **Sem `error.tsx` por rota** — só o global em `app/error.tsx`. Uma query que falha em `/aluno/...` derruba a tela toda em vez de degradar a seção.
+- [x] **Sem `error.tsx` por rota** — só o global em `app/error.tsx`. Uma query que falha em `/aluno/...` derruba a tela toda em vez de degradar a seção. **Resolvido em 06/10/2026:** `error.tsx` em `(aluno)`, `(professor)` e `(admin)`, com a sidebar preservada.
 
 ---
 
