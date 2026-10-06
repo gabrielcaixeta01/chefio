@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
 
   // Free preview: skip enrollment check
   if (!lesson.is_free_preview) {
-    const { data: enrollment } = await supabase
+    const { data: enrollment, error: enrollmentErro } = await supabase
       .from('enrollments')
       .select('id')
       .eq('student_id', user.id)
@@ -35,13 +35,25 @@ export async function GET(req: NextRequest) {
       .is('refunded_at', null)
       .maybeSingle()
 
+    // Erro de banco não é "não matriculado": 403 faria o player mostrar
+    // "sem acesso" para quem pagou.
+    if (enrollmentErro) {
+      console.error('[bunny/signed-url] matrícula não lida:', enrollmentErro)
+      return NextResponse.json({ error: 'Não foi possível verificar o acesso.' }, { status: 500 })
+    }
+
     if (!enrollment) {
       // Check if user is the teacher
-      const { data: courseOwner } = await supabase
+      const { data: courseOwner, error: ownerErro } = await supabase
         .from('courses')
         .select('teacher_id')
         .eq('id', lesson.course_id)
         .single()
+
+      if (ownerErro) {
+        console.error('[bunny/signed-url] curso não lido:', ownerErro)
+        return NextResponse.json({ error: 'Não foi possível verificar o acesso.' }, { status: 500 })
+      }
 
       if (courseOwner?.teacher_id !== user.id) {
         return NextResponse.json({ error: 'Not enrolled' }, { status: 403 })

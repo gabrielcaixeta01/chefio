@@ -35,7 +35,11 @@ export default async function AlunoCourseOverviewPage({
   if (error) throw error
   if (!course) notFound()
 
-  const [{ data: enrollment }, { data: lessons }, { data: notebook }] = await Promise.all([
+  const [
+    { data: enrollment, error: enrollmentError },
+    { data: lessons, error: lessonsError },
+    { data: notebook },
+  ] = await Promise.all([
     supabase
       .from('enrollments')
       .select('id, created_at, refund_status, refunded_at')
@@ -55,6 +59,11 @@ export default async function AlunoCourseOverviewPage({
       .maybeSingle(),
   ])
 
+  // Mesmo raciocínio do curso acima: falha de leitura da matrícula redirecionaria
+  // quem pagou para a página de venda como se não tivesse comprado.
+  if (enrollmentError) throw enrollmentError
+  if (lessonsError) throw lessonsError
+
   // Reembolsada = acesso encerrado na hora (decisão 2.3). As policies de
   // lessons/lesson_attachments já barram o conteúdo; aqui é só não deixar a
   // pessoa numa página vazia sem explicação.
@@ -62,11 +71,13 @@ export default async function AlunoCourseOverviewPage({
 
   const diasParaReembolso = diasRestantesReembolso(enrollment.created_at)
 
-  const { data: progressRows } = await supabase
+  const { data: progressRows, error: progressError } = await supabase
     .from('lesson_progress')
     .select('lesson_id, completed_at')
     .eq('student_id', user!.id)
     .in('lesson_id', (lessons ?? []).map((l) => l.id))
+
+  if (progressError) throw progressError
 
   const completedIds = new Set((progressRows ?? []).filter((p) => p.completed_at).map((p) => p.lesson_id))
 

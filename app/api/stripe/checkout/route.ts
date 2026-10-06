@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
   // a RLS de `teacher_profiles` não deixa o aluno ler a linha do professor —
   // um `!inner` sumiria com o curso. Por isso são duas queries, a segunda
   // com service role.
-  const { data: course } = await supabase
+  const { data: course, error: courseError } = await supabase
     .from('courses')
     .select('id, title, slug, price, teacher_id')
     .eq('id', courseId)
@@ -29,6 +29,7 @@ export async function POST(req: NextRequest) {
     .is('archived_at', null)
     .maybeSingle()
 
+  if (courseError) console.error('Checkout: curso não lido:', courseError)
   if (!course) return NextResponse.redirect(new URL('/cursos?erro=curso_indisponivel', req.url), 302)
 
   // Desde a decisão 4.3 a mesma conta ensina e compra — então dá pra chegar
@@ -41,13 +42,19 @@ export async function POST(req: NextRequest) {
   // Check not already enrolled. Matrícula reembolsada não conta: quem pediu
   // o dinheiro de volta pode comprar de novo, e o webhook reativa a linha
   // existente em vez de esbarrar no unique (student_id, course_id).
-  const { data: existing } = await supabase
+  const { data: existing, error: existingError } = await supabase
     .from('enrollments')
     .select('id')
     .eq('student_id', user.id)
     .eq('course_id', courseId)
     .is('refunded_at', null)
     .maybeSingle()
+
+  // Seguir com a consulta falha abriria cobrança de um curso que o aluno já tem.
+  if (existingError) {
+    console.error('Checkout: matrícula existente não lida:', existingError)
+    return NextResponse.redirect(new URL(`/curso/${course.slug}?erro=matricula_falhou`, req.url), 302)
+  }
 
   if (existing) {
     return NextResponse.redirect(new URL(`/aluno/cursos/${course.slug}`, req.url), 302)
@@ -83,11 +90,17 @@ export async function POST(req: NextRequest) {
   }
 
   const admin = createAdminClient()
-  const { data: teacherProfile } = await admin
+  const { data: teacherProfile, error: teacherError } = await admin
     .from('teacher_profiles')
     .select('stripe_account_id, commission_rate')
     .eq('user_id', course.teacher_id)
     .maybeSingle()
+
+  // Sem o perfil a venda sairia sem split e com a comissão padrão.
+  if (teacherError) {
+    console.error('Checkout: perfil do professor não lido:', teacherError)
+    return NextResponse.redirect(new URL(`/curso/${course.slug}?erro=matricula_falhou`, req.url), 302)
+  }
 
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
   const commissionRate = teacherProfile?.commission_rate ?? COMISSAO_PADRAO
@@ -101,12 +114,17 @@ export async function POST(req: NextRequest) {
   let coupon: { id: string; discount_percent: number } | null = null
 
   if (cupomCode) {
-    const { data } = await admin
+    const { data, error: cupomError } = await admin
       .from('coupons')
       .select('id, discount_percent, course_id, max_redemptions, redemptions, expires_at')
       .eq('code', cupomCode)
       .eq('active', true)
       .maybeSingle()
+
+    if (cupomError) {
+      console.error('Checkout: cupom não lido:', cupomError)
+      return NextResponse.redirect(new URL(`/curso/${course.slug}?erro=matricula_falhou`, req.url), 302)
+    }
 
     const valido =
       data &&

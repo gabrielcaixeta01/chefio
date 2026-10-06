@@ -15,7 +15,10 @@ export default async function AdminDashboard() {
 
   // Uma RPC no lugar de 5 round trips — a soma de amount_paid roda no
   // Postgres, não puxa a tabela de enrollments inteira pro Node.
-  const { data: statsRows } = await supabase.rpc('get_admin_dashboard_stats')
+  const { data: statsRows, error: statsError } = await supabase.rpc('get_admin_dashboard_stats')
+
+  // Zeros no painel do admin por falha de leitura seriam lidos como números reais.
+  if (statsError) throw statsError
   const s = statsRows?.[0]
 
   const totalCourses = s?.total_courses ?? 0

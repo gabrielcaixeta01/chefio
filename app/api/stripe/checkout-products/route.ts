@@ -83,10 +83,17 @@ export async function POST(req: NextRequest) {
 
   const orderId = criado[0].order_id
 
-  const { data: itensGravados } = await admin
+  const { data: itensGravados, error: itensError } = await admin
     .from('order_items')
     .select('quantity, unit_price, product:products(name)')
     .eq('order_id', orderId)
+
+  // Sem os itens o Stripe receberia um checkout vazio e o pedido ficaria
+  // pendente à toa.
+  if (itensError) {
+    console.error('Checkout produtos: itens não lidos:', itensError, 'pedido:', orderId)
+    return NextResponse.json({ error: 'Não foi possível montar o pedido.' }, { status: 500 })
+  }
 
   const lineItems: NonNullable<Stripe.Checkout.SessionCreateParams['line_items']> = (
     itensGravados ?? []

@@ -21,19 +21,23 @@ export async function DELETE(req: NextRequest) {
   const { lessonId, videoId } = await req.json().catch(() => ({}))
   if (!lessonId || !videoId) return NextResponse.json({ error: 'Missing params' }, { status: 400 })
 
-  const { data: lesson } = await supabase
+  const { data: lesson, error: lessonErro } = await supabase
     .from('lessons')
     .select('id, course_id, bunny_video_id, video_status, courses!inner(teacher_id)')
     .eq('id', lessonId)
     .maybeSingle()
 
+  if (lessonErro) {
+    console.error('[bunny/video] aula não lida:', lessonErro)
+    return NextResponse.json({ error: 'Não foi possível consultar a aula.' }, { status: 500 })
+  }
   if (!lesson) return NextResponse.json({ error: 'Lesson not found' }, { status: 404 })
   if ((lesson as any).courses.teacher_id !== user.id) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
   // 1. Troca pendente
-  const { data: pedido } = await supabase
+  const { data: pedido, error: pedidoErro } = await supabase
     .from('lesson_change_requests')
     .select('id')
     .eq('lesson_id', lessonId)
@@ -42,8 +46,17 @@ export async function DELETE(req: NextRequest) {
     .eq('new_bunny_video_id', videoId)
     .maybeSingle()
 
+  if (pedidoErro) {
+    console.error('[bunny/video] pedido não lido:', pedidoErro)
+    return NextResponse.json({ error: 'Não foi possível consultar a aula.' }, { status: 500 })
+  }
+
   if (pedido) {
-    await supabase.from('lesson_change_requests').delete().eq('id', pedido.id)
+    const { error: desistirErro } = await supabase.from('lesson_change_requests').delete().eq('id', pedido.id)
+    if (desistirErro) {
+      console.error('[bunny/video] pedido não removido:', desistirErro)
+      return NextResponse.json({ error: 'Não foi possível cancelar a troca.' }, { status: 500 })
+    }
     await apagarVideoNoBunny(videoId)
     return NextResponse.json({ ok: true, tipo: 'pedido' })
   }
@@ -52,7 +65,13 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: 'Vídeo não pertence a esta aula.' }, { status: 404 })
   }
 
-  const { data: temAluno } = await supabase.rpc('curso_tem_aluno', { p_course_id: lesson.course_id })
+  const { data: temAluno, error: alunoErro } = await supabase.rpc('curso_tem_aluno', { p_course_id: lesson.course_id })
+  // Falha fechada: sem saber se há aluno, remover o vídeo poderia atropelar a
+  // regra 3.4 (vídeo de curso vendido só sai pelo admin).
+  if (alunoErro) {
+    console.error('[bunny/video] curso_tem_aluno falhou:', alunoErro)
+    return NextResponse.json({ error: 'Não foi possível verificar o curso. Tente novamente.' }, { status: 500 })
+  }
   const jaAssistivel = lesson.video_status === 'ready' || lesson.video_status === 'processing'
 
   if (temAluno === true && jaAssistivel) {

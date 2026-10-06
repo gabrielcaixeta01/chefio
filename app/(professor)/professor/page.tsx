@@ -18,20 +18,26 @@ export default async function ProfessorDashboard() {
   const { data: { user } } = await supabase.auth.getUser()
 
   const [
-    { data: courses },
-    { data: teacherProfile },
+    { data: courses, error: coursesError },
+    { data: teacherProfile, error: profileError },
   ] = await Promise.all([
     supabase.from('courses').select('id, title, status, price').eq('teacher_id', user!.id),
     supabase.from('teacher_profiles').select('*').eq('user_id', user!.id).maybeSingle(),
   ])
 
+  // Painel financeiro com zeros por falha de leitura passa por "não vendi nada".
+  if (coursesError) throw coursesError
+  if (profileError) throw profileError
+
   const approvedCourses = courses?.filter((c) => c.status === 'approved') ?? []
   const pendingCourses = courses?.filter((c) => c.status === 'pending_review') ?? []
 
-  const { data: enrollments } = await supabase
+  const { data: enrollments, error: enrollmentsError } = await supabase
     .from('enrollments')
     .select('amount_paid, course_id')
     .in('course_id', (courses ?? []).map((c) => c.id))
+
+  if (enrollmentsError) throw enrollmentsError
 
   const grossRevenue = (enrollments ?? []).reduce((sum, e) => sum + (e.amount_paid ?? 0), 0)
   const commissionRate = teacherProfile?.commission_rate ?? COMISSAO_PADRAO

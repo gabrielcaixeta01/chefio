@@ -19,11 +19,14 @@ export default async function OnboardingPage({
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const { data: teacherProfile } = await supabase
+  const { data: teacherProfile, error: profileError } = await supabase
     .from('teacher_profiles')
     .select('stripe_account_id, status')
     .eq('user_id', user!.id)
     .maybeSingle()
+
+  // Falha de leitura mostraria "conectar Stripe" a quem já conectou.
+  if (profileError) throw profileError
 
   const isConnected = !!teacherProfile?.stripe_account_id
   const isActive = teacherProfile?.status === 'active'

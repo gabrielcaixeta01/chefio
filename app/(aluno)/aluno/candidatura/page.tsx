@@ -25,11 +25,14 @@ export default async function CandidaturaPage() {
   if (roleFromUser(user) === 'teacher') redirect('/professor')
 
   const supabase = await createClient()
-  const { data: candidatura } = await supabase
+  const { data: candidatura, error: candidaturaError } = await supabase
     .from('teacher_profiles')
     .select('*')
     .eq('user_id', user.id)
     .maybeSingle()
+
+  // Sem isso quem já enviou veria o formulário em branco, como se não tivesse candidatura.
+  if (candidaturaError) throw candidaturaError
 
   const enviada = !!candidatura?.submitted_at
   const recusada = candidatura?.status === 'rejected'

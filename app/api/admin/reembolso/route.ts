@@ -21,11 +21,16 @@ export async function POST(req: NextRequest) {
   }
 
   const admin = createAdminClient()
-  const { data: enrollment } = await admin
+  const { data: enrollment, error: enrollmentError } = await admin
     .from('enrollments')
     .select('id, amount_paid, stripe_payment_intent_id, refund_status')
     .eq('id', enrollmentId)
     .maybeSingle()
+
+  if (enrollmentError) {
+    console.error('Admin reembolso: matrícula não lida:', enrollmentError)
+    return NextResponse.json({ erro: 'Erro ao buscar a matrícula.' }, { status: 500 })
+  }
 
   if (!enrollment) {
     return NextResponse.json({ erro: 'Matrícula não encontrada.' }, { status: 404 })
@@ -35,7 +40,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (decisao === 'recusar') {
-    await admin
+    const { error: recusaError } = await admin
       .from('enrollments')
       .update({
         refund_status: 'rejected',
@@ -43,6 +48,10 @@ export async function POST(req: NextRequest) {
         refunded_by: user!.id,
       })
       .eq('id', enrollmentId)
+    if (recusaError) {
+      console.error('Admin reembolso: recusa não gravada:', recusaError)
+      return NextResponse.json({ erro: 'Não foi possível registrar a recusa.' }, { status: 500 })
+    }
     return NextResponse.json({ status: 'rejected' })
   }
 
@@ -51,10 +60,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ erro: resultado.erro }, { status: 502 })
   }
 
-  await admin
+  // O dinheiro já voltou; falha aqui só perde a nota e o autor, então não
+  // derruba a resposta.
+  const { error: notaError } = await admin
     .from('enrollments')
     .update({ refund_review_note: nota ?? null, refunded_by: user!.id })
     .eq('id', enrollmentId)
+  if (notaError) console.error('Admin reembolso: nota/autor não gravados:', notaError)
 
   return NextResponse.json({ status: 'refunded' })
 }

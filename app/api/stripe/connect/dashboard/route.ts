@@ -23,11 +23,16 @@ export async function GET(req: NextRequest) {
   if (roleFromUser(user) !== 'teacher') return NextResponse.redirect(new URL('/', req.url))
 
   const supabase = await createClient()
-  const { data: teacherProfile } = await supabase
+  const { data: teacherProfile, error: profileError } = await supabase
     .from('teacher_profiles')
     .select('stripe_account_id')
     .eq('user_id', user.id)
     .maybeSingle()
+
+  if (profileError) {
+    console.error('Connect dashboard: perfil não lido:', profileError)
+    return falha('falha_temporaria')
+  }
 
   if (!teacherProfile?.stripe_account_id) return falha('conta_nao_conectada')
 

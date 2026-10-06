@@ -73,7 +73,7 @@ async function handleCourseEnrollment(
       // saiu da primeira vez, nada a fazer) ou recompra de um curso que tinha
       // sido reembolsado — o unique (student_id, course_id) não deixa inserir
       // outra, então reativa a que está lá e segue pro payout.
-      const { data: revivida } = await supabase
+      const { data: revivida, error: revivaError } = await supabase
         .from('enrollments')
         .update({
           refund_status: 'none',
@@ -93,6 +93,12 @@ async function handleCourseEnrollment(
         .select('id')
         .maybeSingle()
 
+      if (revivaError) {
+        // 500 pro Stripe retentar: sem isso uma falha passageira do banco
+        // deixaria o aluno que pagou a recompra sem acesso.
+        console.error('Reativação de matrícula falhou:', revivaError)
+        return NextResponse.json({ error: 'Enrollment failed' }, { status: 500 })
+      }
       if (!revivida) return NextResponse.json({ ok: true })
     } else {
       console.error('Enrollment error:', enrollError)
@@ -109,11 +115,18 @@ async function handleCourseEnrollment(
 
   // Só cria payout quando a matrícula foi de fato criada agora.
   if (teacherId) {
-    const { data: teacherProfile } = await supabase
+    const { data: teacherProfile, error: teacherError } = await supabase
       .from('teacher_profiles')
       .select('commission_rate')
       .eq('user_id', teacherId)
       .maybeSingle()
+
+    // Não dá pra devolver 500 aqui: a matrícula já foi gravada e o retry
+    // cairia no 23505 sem criar payout. Segue com a comissão padrão, mas deixa
+    // rastro pra conferir o repasse.
+    if (teacherError) {
+      console.error('Comissão do professor não lida, usando padrão:', teacherId, teacherError)
+    }
 
     const commissionRate = teacherProfile?.commission_rate ?? COMISSAO_PADRAO
     // Base é o preço cheio, não o valor cobrado: com cupom quem banca o
@@ -148,11 +161,18 @@ async function handleDispute(supabase: SupabaseAdmin, dispute: Stripe.Dispute) {
 
   if (!paymentIntentId) return NextResponse.json({ ok: true })
 
-  const { data: enrollment } = await supabase
+  const { data: enrollment, error: enrollmentError } = await supabase
     .from('enrollments')
     .select('id, amount_paid')
     .eq('stripe_payment_intent_id', paymentIntentId)
     .maybeSingle()
+
+  if (enrollmentError) {
+    // Sem 500 a disputa seria tratada como "sem matrícula" e o aluno
+    // manteria o acesso a um curso estornado.
+    console.error('Dispute lookup error:', enrollmentError)
+    return NextResponse.json({ error: 'Dispute lookup failed' }, { status: 500 })
+  }
 
   if (!enrollment) {
     // Pode ser disputa de pedido da loja. O questionário não decidiu o que
@@ -169,7 +189,10 @@ async function handleDispute(supabase: SupabaseAdmin, dispute: Stripe.Dispute) {
     p_status: 'chargeback',
   })
 
-  if (error) console.error('Dispute error:', error)
+  if (error) {
+    console.error('Dispute error:', error)
+    return NextResponse.json({ error: 'Dispute failed' }, { status: 500 })
+  }
   return NextResponse.json({ ok: true })
 }
 

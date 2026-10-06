@@ -22,17 +22,20 @@ export default async function LessonPlayerPage({
   const supabase = await createClient()
   const user = await getAuthedUser()
 
-  const { data: course } = await supabase
+  const { data: course, error: courseError } = await supabase
     .from('courses')
     .select('id, title, slug')
     .eq('slug', slug)
-    .single()
+    .maybeSingle()
 
+  // `.single()` devolvia erro também para "não achou"; com maybeSingle só erro
+  // de verdade chega aqui, e ele não deve virar 404 para quem comprou.
+  if (courseError) throw courseError
   if (!course) notFound()
 
   const [
-    { data: enrollment },
-    { data: lesson },
+    { data: enrollment, error: enrollmentError },
+    { data: lesson, error: lessonError },
     { data: allLessons },
     { data: progress },
     { data: notebook },
@@ -75,6 +78,9 @@ export default async function LessonPlayerPage({
       .eq('lesson_id', lessonId),
   ])
 
+  // Erro de leitura não é "não comprou": redirecionar tiraria da aula quem pagou.
+  if (enrollmentError) throw enrollmentError
+  if (lessonError) throw lessonError
   if (!enrollment) redirect(`/curso/${slug}`)
   if (!lesson) notFound()
 

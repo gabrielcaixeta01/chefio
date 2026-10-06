@@ -31,11 +31,17 @@ export async function POST(req: NextRequest) {
   }
 
   const admin = createAdminClient()
-  const { data: enrollment } = await admin
+  const { data: enrollment, error: enrollmentError } = await admin
     .from('enrollments')
     .select('id, student_id, course_id, amount_paid, stripe_payment_intent_id')
     .eq('id', enrollmentId)
     .maybeSingle()
+
+  if (enrollmentError) {
+    // O pedido já está gravado; o admin resolve na fila.
+    console.error('Reembolso: matrícula não lida:', enrollmentError)
+    return NextResponse.json({ status: 'requested' })
+  }
 
   if (!enrollment) {
     return NextResponse.json({ status: 'requested' })

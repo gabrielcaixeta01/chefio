@@ -23,12 +23,16 @@ export async function POST(req: NextRequest) {
   }
 
   const admin = createAdminClient()
-  const { data: pedido } = await admin
+  const { data: pedido, error: pedidoError } = await admin
     .from('lesson_change_requests')
     .select('id, lesson_id, type, new_bunny_video_id, status')
     .eq('id', requestId)
     .maybeSingle()
 
+  if (pedidoError) {
+    console.error('Alteração de aula: pedido não lido:', pedidoError)
+    return NextResponse.json({ erro: 'Erro ao buscar o pedido.' }, { status: 500 })
+  }
   if (!pedido) return NextResponse.json({ erro: 'Pedido não encontrado.' }, { status: 404 })
   if (pedido.status !== 'pending') {
     return NextResponse.json({ erro: 'Este pedido já foi resolvido.' }, { status: 409 })
@@ -67,7 +71,7 @@ export async function POST(req: NextRequest) {
 
   // Depois do delete acima o `lesson_id` do pedido vira null (on delete set
   // null) — o pedido continua no histórico com o título guardado.
-  await admin
+  const { error: decisaoError } = await admin
     .from('lesson_change_requests')
     .update({
       status: decisao === 'aprovar' ? 'approved' : 'rejected',
@@ -76,6 +80,13 @@ export async function POST(req: NextRequest) {
       reviewed_at: new Date().toISOString(),
     })
     .eq('id', requestId)
+
+  if (decisaoError) {
+    // Em aprovação a mudança já foi aplicada à aula; sem o log o pedido fica
+    // pendente na fila sem ninguém saber por quê.
+    console.error('Alteração de aula: decisão não gravada:', decisaoError, 'pedido:', requestId)
+    return NextResponse.json({ erro: 'Não foi possível registrar a decisão.' }, { status: 500 })
+  }
 
   return NextResponse.json({ status: decisao === 'aprovar' ? 'approved' : 'rejected' })
 }

@@ -23,19 +23,24 @@ export default async function OrdersPage({
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const { data: orders } = await supabase
+  const { data: orders, error: ordersError } = await supabase
     .from('orders')
     .select('*')
     .eq('student_id', user!.id)
     .order('created_at', { ascending: false })
 
+  // Falha de leitura não pode virar "você ainda não tem pedidos".
+  if (ordersError) throw ordersError
+
   const orderIds = (orders ?? []).map((o) => o.id)
-  const { data: orderItemsRaw } = orderIds.length > 0
+  const { data: orderItemsRaw, error: itemsError } = orderIds.length > 0
     ? await supabase
         .from('order_items')
         .select('*, product:products(name, image_url)')
         .in('order_id', orderIds)
-    : { data: [] }
+    : { data: [], error: null }
+
+  if (itemsError) throw itemsError
 
   const itemsByOrder: Record<string, any[]> = {}
   for (const item of orderItemsRaw ?? []) {

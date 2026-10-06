@@ -19,12 +19,16 @@ export async function GET(req: NextRequest) {
   const videoIdPedido = req.nextUrl.searchParams.get('videoId')
   if (!lessonId) return NextResponse.json({ error: 'Missing lessonId' }, { status: 400 })
 
-  const { data: lesson } = await supabase
+  const { data: lesson, error: lessonErro } = await supabase
     .from('lessons')
     .select('id, bunny_video_id, courses!inner(teacher_id)')
     .eq('id', lessonId)
     .maybeSingle()
 
+  if (lessonErro) {
+    console.error('[bunny/status] aula não lida:', lessonErro)
+    return NextResponse.json({ error: 'Não foi possível consultar a aula.' }, { status: 500 })
+  }
   if (!lesson) return NextResponse.json({ error: 'Lesson not found' }, { status: 404 })
   if ((lesson as any).courses.teacher_id !== user.id) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
@@ -41,13 +45,17 @@ export async function GET(req: NextRequest) {
 
   // Só o vídeo pendente DESTA aula, que o professor mesmo enviou — senão a
   // rota viraria uma consulta livre ao Bunny por guid.
-  const { data: pedido } = await supabase
+  const { data: pedido, error: pedidoErro } = await supabase
     .from('lesson_change_requests')
     .select('id')
     .eq('lesson_id', lessonId)
     .eq('status', 'pending')
     .eq('new_bunny_video_id', videoId)
     .maybeSingle()
+  if (pedidoErro) {
+    console.error('[bunny/status] pedido não lido:', pedidoErro)
+    return NextResponse.json({ error: 'Não foi possível consultar a aula.' }, { status: 500 })
+  }
   if (!pedido) return NextResponse.json({ error: 'Vídeo não pertence a esta aula.' }, { status: 404 })
 
   const noBunny = await buscarVideoNoBunny(videoId)

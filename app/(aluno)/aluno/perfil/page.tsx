@@ -17,11 +17,14 @@ export default async function PerfilPage() {
   const user = await requireAuth()
   const supabase = await createClient()
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('name, avatar_url, marketing_opt_in')
     .eq('id', user.id)
     .maybeSingle()
+
+  // Formulário vazio por falha de leitura convidaria a salvar por cima do perfil.
+  if (profileError) throw profileError
 
   return (
     <>

@@ -32,11 +32,13 @@ export default async function ProfessorProdutosPage() {
   const user = await getAuthedUser()
   const supabase = await createClient()
 
-  const { data: cursos } = await supabase
+  const { data: cursos, error: cursosError } = await supabase
     .from('courses')
     .select('id, title, lessons(id, title, order_index)')
     .eq('teacher_id', user!.id)
     .order('created_at', { ascending: false })
+
+  if (cursosError) throw cursosError
 
   const lessonIds = (cursos ?? []).flatMap((c) => ((c.lessons as any[]) ?? []).map((l) => l.id))
 

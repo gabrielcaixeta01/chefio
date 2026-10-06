@@ -24,11 +24,16 @@ export async function POST(req: NextRequest) {
   }
 
   const admin = createAdminClient()
-  const { data: order } = await admin
+  const { data: order, error: orderError } = await admin
     .from('orders')
     .select('id, total, stripe_payment_intent_id, return_status')
     .eq('id', orderId)
     .maybeSingle()
+
+  if (orderError) {
+    console.error('Devolução: pedido não lido:', orderError)
+    return NextResponse.json({ erro: 'Erro ao buscar o pedido.' }, { status: 500 })
+  }
 
   if (!order) {
     return NextResponse.json({ erro: 'Pedido não encontrado.' }, { status: 404 })
@@ -46,7 +51,8 @@ export async function POST(req: NextRequest) {
     if (error) {
       return NextResponse.json({ erro: 'Não foi possível registrar a recusa.' }, { status: 500 })
     }
-    await admin.from('orders').update({ return_reviewed_by: user!.id }).eq('id', orderId)
+    const { error: autorError } = await admin.from('orders').update({ return_reviewed_by: user!.id }).eq('id', orderId)
+    if (autorError) console.error('Devolução: autor da decisão não gravado:', autorError)
     return NextResponse.json({ status: 'rejected' })
   }
 
@@ -88,6 +94,7 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  await admin.from('orders').update({ return_reviewed_by: user!.id }).eq('id', orderId)
+  const { error: autorError } = await admin.from('orders').update({ return_reviewed_by: user!.id }).eq('id', orderId)
+  if (autorError) console.error('Devolução: autor da decisão não gravado:', autorError)
   return NextResponse.json({ status: 'refunded' })
 }

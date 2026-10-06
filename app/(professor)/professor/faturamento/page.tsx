@@ -18,6 +18,7 @@ const ERROS: Record<string, string> = {
   stripe_nao_configurado: 'Pagamentos estão temporariamente indisponíveis.',
   conta_nao_conectada: 'Conecte sua conta Stripe antes de abrir o painel.',
   onboarding_incompleto: 'Termine o cadastro no Stripe para liberar o painel financeiro.',
+  falha_temporaria: 'Não foi possível abrir o painel agora. Tente novamente em instantes.',
 }
 
 export default async function BillingPage({

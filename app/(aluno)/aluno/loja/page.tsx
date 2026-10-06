@@ -24,12 +24,14 @@ export default async function StorePagePage({
 
   const supabase = await createClient()
 
-  const { data: products, count } = await supabase
+  const { data: products, count, error: productsError } = await supabase
     .from('products')
     .select('id, name, description, price, image_url', { count: 'exact' })
     .eq('is_active', true)
     .order('created_at', { ascending: false })
     .range(from, to)
+
+  if (productsError) throw productsError
 
   const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE))
 

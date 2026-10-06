@@ -58,7 +58,13 @@ export async function POST(req: NextRequest) {
   let temAluno = false
   let precisaAprovacao = false
   if (lesson.bunny_video_id) {
-    const { data } = await supabase.rpc('curso_tem_aluno', { p_course_id: lesson.course_id })
+    const { data, error: alunoErro } = await supabase.rpc('curso_tem_aluno', { p_course_id: lesson.course_id })
+    // Falha fechada: tratar o erro como "sem aluno" deixaria o professor
+    // trocar o vídeo de um curso vendido sem passar pelo admin.
+    if (alunoErro) {
+      console.error('[bunny/upload-url] curso_tem_aluno falhou:', alunoErro)
+      return NextResponse.json({ error: 'Não foi possível verificar o curso. Tente novamente.' }, { status: 500 })
+    }
     temAluno = data === true
     precisaAprovacao =
       temAluno && (lesson.video_status === 'ready' || lesson.video_status === 'processing')
@@ -91,7 +97,7 @@ export async function POST(req: NextRequest) {
   if (precisaAprovacao) {
     // Reenviar um vídeo por cima substitui o pedido anterior — só existe um
     // pendente por aula (índice parcial na 00017).
-    const { data: anterior } = await supabase
+    const { data: anterior, error: anteriorErro } = await supabase
       .from('lesson_change_requests')
       .select('new_bunny_video_id')
       .eq('lesson_id', lessonId)
@@ -99,12 +105,18 @@ export async function POST(req: NextRequest) {
       .eq('type', 'replace_video')
       .maybeSingle()
 
-    await supabase
+    const { error: limparErro } = await supabase
       .from('lesson_change_requests')
       .delete()
       .eq('lesson_id', lessonId)
       .eq('status', 'pending')
       .eq('type', 'replace_video')
+
+    if (anteriorErro || limparErro) {
+      console.error('[bunny/upload-url] pedido anterior não tratado:', anteriorErro ?? limparErro)
+      await apagarVideoNoBunny(videoId)
+      return NextResponse.json({ error: 'Não foi possível preparar o envio.' }, { status: 500 })
+    }
 
     const { error: pedidoErro } = await supabase.from('lesson_change_requests').insert({
       lesson_id: lessonId,
