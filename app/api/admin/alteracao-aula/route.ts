@@ -1,34 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import { getAuthedUser, roleFromUser } from '@/lib/auth/session'
-
-/**
- * Metadados do vídeo novo direto no Bunny.
- *
- * O webhook de encoding do Bunny casa por `bunny_video_id` na tabela `lessons`
- * — e enquanto a troca está pendente o vídeo novo não está em lesson nenhuma,
- * então aquele webhook passou batido. Quem preenche url e duração é isto aqui,
- * na hora da aprovação.
- */
-async function metadadosDoVideo(videoId: string) {
-  const libraryId = process.env.BUNNY_STREAM_LIBRARY_ID
-  const apiKey = process.env.BUNNY_STREAM_API_KEY
-  const cdnHostname = process.env.BUNNY_STREAM_CDN_HOSTNAME
-
-  const url = cdnHostname ? `https://${cdnHostname}/${libraryId}/${videoId}/play` : null
-  if (!libraryId || !apiKey) return { url, duracao: null as number | null }
-
-  try {
-    const res = await fetch(`https://video.bunnycdn.com/library/${libraryId}/videos/${videoId}`, {
-      headers: { AccessKey: apiKey },
-    })
-    if (!res.ok) return { url, duracao: null }
-    const video = await res.json()
-    return { url, duracao: typeof video?.length === 'number' ? video.length : null }
-  } catch {
-    return { url, duracao: null }
-  }
-}
+import { buscarVideoNoBunny, urlDoVideo } from '@/lib/bunny'
 
 /**
  * Decisão do admin sobre uma mudança em aula de curso já vendido (decisão 3.4).
@@ -69,13 +42,20 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ erro: 'Não foi possível remover a aula.' }, { status: 500 })
       }
     } else if (pedido.new_bunny_video_id) {
-      const { url, duracao } = await metadadosDoVideo(pedido.new_bunny_video_id)
+      // O webhook do Bunny casa por `bunny_video_id` na tabela `lessons` — e
+      // enquanto a troca está pendente o vídeo novo não está em lesson nenhuma,
+      // então ele passou batido. Status, url e duração saem do Bunny agora.
+      // Se a consulta falhar, cai em `processing`: o player e o painel
+      // reconsultam sozinhos e acertam.
+      const noBunny = await buscarVideoNoBunny(pedido.new_bunny_video_id)
+      const video = noBunny && noBunny !== 'inexistente' ? noBunny : null
       const { error } = await admin
         .from('lessons')
         .update({
           bunny_video_id: pedido.new_bunny_video_id,
-          bunny_video_url: url,
-          duration_seconds: duracao,
+          bunny_video_url: video?.status === 'ready' ? urlDoVideo(pedido.new_bunny_video_id) : null,
+          duration_seconds: video?.duracao ?? null,
+          video_status: noBunny === 'inexistente' ? 'failed' : (video?.status ?? 'processing'),
         })
         .eq('id', pedido.lesson_id)
       if (error) {

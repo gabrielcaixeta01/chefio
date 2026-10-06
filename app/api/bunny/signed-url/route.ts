@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createHash } from 'crypto'
+import { sincronizarVideoDaAula } from '@/lib/bunny'
 
 export async function GET(req: NextRequest) {
   const supabase = await createClient()
@@ -13,7 +14,7 @@ export async function GET(req: NextRequest) {
   // Fetch lesson + course
   const { data: lesson } = await supabase
     .from('lessons')
-    .select('id, bunny_video_id, is_free_preview, course_id, courses!inner(id, status)')
+    .select('id, bunny_video_id, video_status, is_free_preview, course_id, courses!inner(id, status)')
     .eq('id', lessonId)
     .single()
 
@@ -48,6 +49,23 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // Autorizado, mas o vídeo pode ainda não existir de verdade: subindo,
+  // codificando ou quebrado. Dizer isso é melhor que entregar um iframe com a
+  // tela de erro do Bunny dentro. Quando o status gravado não é `ready`,
+  // reconsulta o Bunny — cobre o webhook que não chegou.
+  let status: string = lesson.video_status
+  let progresso = 0
+  if (status !== 'ready') {
+    const atual = await sincronizarVideoDaAula(lesson.id, lesson.bunny_video_id)
+    if (atual) {
+      status = atual.status
+      progresso = atual.progresso
+    }
+  }
+  if (status !== 'ready') {
+    return NextResponse.json({ status, progresso }, { status: 202 })
+  }
+
   const libraryId = process.env.BUNNY_STREAM_LIBRARY_ID
   const tokenAuthKey = process.env.BUNNY_STREAM_TOKEN_AUTH_KEY
 
@@ -67,5 +85,5 @@ export async function GET(req: NextRequest) {
   // URL de embed do player (iframe), não a de CDN direta.
   const signedUrl = `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}?token=${token}&expires=${expiresAt}`
 
-  return NextResponse.json({ signedUrl })
+  return NextResponse.json({ status: 'ready', signedUrl })
 }

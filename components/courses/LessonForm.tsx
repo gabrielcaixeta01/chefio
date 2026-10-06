@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, type ComponentProps } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
@@ -26,9 +26,25 @@ interface LessonFormProps {
    */
   onSaved: (lesson: Lesson, manterAberto: boolean) => void
   onCancel: () => void
+  /** Curso com aluno matriculado (decisão 3.4) — muda o que o uploader oferece. */
+  temAlunos?: boolean
+  /** Vídeo novo desta aula que espera aprovação do admin, se houver. */
+  pedidoVideoId?: string | null
+  onVideoChange?: ComponentProps<typeof VideoUploader>['onChange']
+  onPedidoChange?: (videoId: string | null) => void
 }
 
-export function LessonForm({ courseId, lesson, orderIndex, onSaved, onCancel }: LessonFormProps) {
+export function LessonForm({
+  courseId,
+  lesson,
+  orderIndex,
+  onSaved,
+  onCancel,
+  temAlunos,
+  pedidoVideoId,
+  onVideoChange,
+  onPedidoChange,
+}: LessonFormProps) {
   const [loading, setLoading] = useState(false)
   const [savedLessonId, setSavedLessonId] = useState<string | null>(lesson?.id ?? null)
   const isEditing = !!lesson
@@ -137,7 +153,16 @@ export function LessonForm({ courseId, lesson, orderIndex, onSaved, onCancel }: 
       {savedLessonId && (
         <div className="mt-4 pt-4 border-t border-brasa/30">
           <Label className="mb-2 block">Vídeo da aula</Label>
-          <VideoUploader lessonId={savedLessonId} />
+          <VideoUploader
+            lessonId={savedLessonId}
+            initialStatus={lesson?.video_status}
+            initialDuration={lesson?.duration_seconds}
+            initialVideoId={lesson?.bunny_video_id}
+            temAlunos={temAlunos}
+            pedidoVideoId={pedidoVideoId}
+            onChange={onVideoChange}
+            onPedidoChange={onPedidoChange}
+          />
         </div>
       )}
     </div>

@@ -25,7 +25,7 @@ import { LessonForm } from './LessonForm'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Notice } from '@/components/ui/notice'
-import { GripVertical, Plus, Pencil, Trash2, Lock, Eye, Video, Clock } from 'lucide-react'
+import { GripVertical, Plus, Pencil, Trash2, Lock, Eye, Video, Clock, Loader2, AlertTriangle } from 'lucide-react'
 import { formatDuration } from '@/lib/utils'
 
 interface LessonListProps {
@@ -37,7 +37,7 @@ interface LessonListProps {
    * descubra a regra por uma mensagem de erro.
    */
   temAlunos?: boolean
-  pedidosPendentes?: Pick<LessonChangeRequest, 'id' | 'lesson_id' | 'type'>[]
+  pedidosPendentes?: Pick<LessonChangeRequest, 'id' | 'lesson_id' | 'type' | 'new_bunny_video_id'>[]
 }
 
 function SortableLesson({
@@ -94,10 +94,21 @@ function SortableLesson({
           )}
         </div>
         <div className="flex items-center gap-2 mt-0.5">
-          {lesson.bunny_video_id ? (
+          {lesson.bunny_video_id && lesson.video_status === 'failed' ? (
+            <span className="inline-flex items-center gap-1 text-xs text-red-700">
+              <AlertTriangle className="h-3 w-3" />
+              Falha no vídeo — envie de novo
+            </span>
+          ) : lesson.bunny_video_id &&
+            (lesson.video_status === 'processing' || lesson.video_status === 'uploading') ? (
+            <span className="inline-flex items-center gap-1 text-xs text-tinta-suave">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              {lesson.video_status === 'uploading' ? 'Enviando vídeo…' : 'Processando vídeo…'}
+            </span>
+          ) : lesson.bunny_video_id ? (
             <span className="inline-flex items-center gap-1 text-xs text-cobalto">
               <Video className="h-3 w-3" />
-              {lesson.duration_seconds ? formatDuration(lesson.duration_seconds) : 'Vídeo enviado'}
+              {lesson.duration_seconds ? formatDuration(lesson.duration_seconds) : 'Vídeo pronto'}
             </span>
           ) : (
             <span className="text-xs text-tinta-suave/70">Sem vídeo</span>
@@ -197,7 +208,7 @@ export function LessonList({
         type: 'remove',
         reason: motivo.trim() || null,
       })
-      .select('id, lesson_id, type')
+      .select('id, lesson_id, type, new_bunny_video_id')
       .single()
 
     if (error) {
@@ -218,6 +229,22 @@ export function LessonList({
   function handleEdit(lesson: Lesson) {
     setEditingLesson(lesson)
     setShowForm(true)
+  }
+
+  /** O uploader mudou o vídeo/status da aula: reflete na lista sem recarregar. */
+  function handleVideoChange(lessonId: string, patch: Partial<Lesson>) {
+    setLessons((prev) => prev.map((l) => (l.id === lessonId ? { ...l, ...patch } : l)))
+  }
+
+  function handlePedidoChange(lessonId: string, videoId: string | null) {
+    setPedidos((prev) => {
+      const semEste = prev.filter((p) => !(p.lesson_id === lessonId && p.type === 'replace_video'))
+      if (!videoId) return semEste
+      return [
+        ...semEste,
+        { id: `local-${lessonId}`, lesson_id: lessonId, type: 'replace_video', new_bunny_video_id: videoId },
+      ]
+    })
   }
 
   function handleFormClose() {
@@ -310,6 +337,15 @@ export function LessonList({
           orderIndex={lessons.length + 1}
           onSaved={handleLessonSaved}
           onCancel={handleFormClose}
+          temAlunos={temAlunos}
+          pedidoVideoId={
+            editingLesson
+              ? pedidos.find((p) => p.lesson_id === editingLesson.id && p.type === 'replace_video')
+                  ?.new_bunny_video_id ?? null
+              : null
+          }
+          onVideoChange={(patch) => editingLesson && handleVideoChange(editingLesson.id, patch)}
+          onPedidoChange={(videoId) => editingLesson && handlePedidoChange(editingLesson.id, videoId)}
         />
       ) : (
         <button

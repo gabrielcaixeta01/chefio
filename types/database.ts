@@ -20,6 +20,9 @@ export type LessonChangeStatus = 'pending' | 'approved' | 'rejected'
 export type Profile = Database['public']['Tables']['profiles']['Row']
 export type TeacherProfile = Database['public']['Tables']['teacher_profiles']['Row']
 export type Course = Database['public']['Tables']['courses']['Row']
+/** Ciclo de vida do vídeo de uma aula (migration 00026). */
+export type VideoStatus = 'none' | 'uploading' | 'processing' | 'ready' | 'failed'
+
 export type Lesson = Database['public']['Tables']['lessons']['Row']
 export type LessonAttachment = Database['public']['Tables']['lesson_attachments']['Row']
 export type Product = Database['public']['Tables']['products']['Row']
@@ -204,6 +207,7 @@ export type Database = {
           bunny_video_id: string | null
           bunny_video_url: string | null
           duration_seconds: number | null
+          video_status: VideoStatus
           order_index: number
           is_free_preview: boolean
           created_at: string
@@ -216,6 +220,7 @@ export type Database = {
           bunny_video_id?: string | null
           bunny_video_url?: string | null
           duration_seconds?: number | null
+          video_status?: VideoStatus
           order_index?: number
           is_free_preview?: boolean
           created_at?: string
@@ -228,6 +233,7 @@ export type Database = {
           bunny_video_id?: string | null
           bunny_video_url?: string | null
           duration_seconds?: number | null
+          video_status?: VideoStatus
           order_index?: number
           is_free_preview?: boolean
           created_at?: string

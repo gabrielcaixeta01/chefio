@@ -168,6 +168,9 @@ telas com valores ligeiramente diferentes. Cartões de curso agora mostram taman
 | Catálogo público, busca por título e categoria | ✅ Funcionando |
 | Página de venda do curso com currículo visível | ✅ Funcionando |
 | Player de vídeo com proteção de acesso | ✅ Funcionando |
+| Upload de vídeo: arrastar e soltar, pausar/retomar/cancelar, velocidade e tempo restante | ✅ Pronto (depende do Bunny configurado) |
+| Status do vídeo (enviando → processando → pronto/falhou) no painel do professor e no player | ✅ Pronto |
+| Retomar de onde parou, concluir a aula ao fim do vídeo e ir para a próxima com contagem | ✅ Pronto |
 | Progresso do aluno (marcação manual) | ✅ Funcionando |
 | Caderno de anotações | ✅ Funcionando |
 | Candidatura e aprovação de professor | ✅ Funcionando |
@@ -225,8 +228,6 @@ Itens que nunca entraram no escopo desta versão. **Decisão do PO se entram na 
 |---|---|
 | Avaliação e nota do curso pelo aluno | Não existe |
 | Certificado de conclusão | Não existe |
-| Retomar o vídeo de onde parou | O banco guarda o dado, o player não usa |
-| Marcar aula como vista automaticamente ao terminar o vídeo | Só o botão manual conta |
 | Materiais em PDF anexos à aula | Banco e permissões prontos, falta a tela |
 | Perguntas do aluno para o professor | Não existe |
 | Assinatura mensal com acesso a tudo | Só venda avulsa |

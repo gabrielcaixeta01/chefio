@@ -49,7 +49,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
       .is('refunded_at', null),
     supabase
       .from('lesson_change_requests')
-      .select('id, lesson_id, type')
+      .select('id, lesson_id, type, new_bunny_video_id')
       .eq('course_id', id)
       .eq('status', 'pending'),
   ])

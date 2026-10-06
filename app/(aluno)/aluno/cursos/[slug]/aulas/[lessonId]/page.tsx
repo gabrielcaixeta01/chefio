@@ -3,7 +3,7 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { getAuthedUser } from '@/lib/auth/session'
-import { VideoPlayer } from '@/components/player/VideoPlayer'
+import { LessonPlayer } from '@/components/player/LessonPlayer'
 import { LessonProgressButton } from '@/components/player/LessonProgressButton'
 import { Notebook } from '@/components/player/Notebook'
 import { LessonProducts } from '@/components/player/LessonProducts'
@@ -59,7 +59,7 @@ export default async function LessonPlayerPage({
       .order('order_index', { ascending: true }),
     supabase
       .from('lesson_progress')
-      .select('completed_at')
+      .select('completed_at, last_watched_seconds')
       .eq('student_id', user!.id)
       .eq('lesson_id', lessonId)
       .maybeSingle(),
@@ -106,7 +106,13 @@ export default async function LessonPlayerPage({
 
       <div className="mb-4">
         {lesson.bunny_video_id ? (
-          <VideoPlayer lessonId={lessonId} />
+          <LessonPlayer
+            lessonId={lessonId}
+            courseSlug={slug}
+            isCompleted={isCompleted}
+            startAt={progress?.last_watched_seconds ?? 0}
+            nextLesson={nextLesson ? { id: nextLesson.id, title: nextLesson.title } : null}
+          />
         ) : (
           <div className="aspect-video bg-cobalto/10 rounded-md flex items-center justify-center">
             <div className="text-center text-tinta-suave/70">

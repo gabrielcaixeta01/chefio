@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { marcarAulaConcluida } from '@/lib/actions/progress'
@@ -22,6 +22,12 @@ export function LessonProgressButton({
 }: LessonProgressButtonProps) {
   const [completed, setCompleted] = useState(initialCompleted)
   const [pendente, startTransition] = useTransition()
+
+  // O player pode concluir a aula sozinho (fim do vídeo); a página revalida e
+  // a prop chega nova — sem isto o botão seguiria dizendo "Marcar como concluída".
+  useEffect(() => {
+    setCompleted(initialCompleted)
+  }, [initialCompleted])
   const router = useRouter()
 
   function irParaProxima() {
